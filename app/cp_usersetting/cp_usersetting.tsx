@@ -32,7 +32,14 @@ export default function cp_usersetting() {
       <div className="card">
         {/* dockedItems: toolbar atas */}
         <div className="toolbar">
-          <Btn pid="btrefresh" icon="refresh" title="Refresh Data" onClick={() => btrefresh_click(grid.current)}>Refresh</Btn>
+          <Btn
+            pid="btrefresh"
+            iconOnly
+            icon="refresh"
+            title="Refresh Data"
+            aria-label="Refresh Data"
+            onClick={() => btrefresh_click(grid.current)}
+          />
           <Btn pid="btnew" className="primary" icon="add" onClick={() => btnew_click(grid.current)}>Create User</Btn>
         </div>
 

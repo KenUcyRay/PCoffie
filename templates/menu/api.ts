@@ -8,14 +8,15 @@ import { apiPost } from '@/lib/api';
 // GANTI: segmen endpoint backend, mis. 'home/msupplier/msupplier'.
 const SEGMENT = 'home/mod/mod';
 
-// read_data: isi grid (paging + pencarian). Backend harus mengembalikan
+// read_data: isi grid (paging + filter per kolom). Backend harus mengembalikan
 // { success:'true', Rows, TotalRows } dan menerima limit/offset/q.
-export async function read_data(opts: { limit?: number; offset?: number; q?: string } = {}) {
+export async function read_data(opts: { limit?: number; offset?: number; q?: string; filters?: Record<string, string> } = {}) {
   return apiPost(SEGMENT, {
     method: 'read_data',
     limit: opts.limit,
     offset: opts.offset,
     q: opts.q,
+    filters: opts.filters ? JSON.stringify(opts.filters) : undefined,
   });
 }
 

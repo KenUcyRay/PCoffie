@@ -419,6 +419,68 @@ Catatan: app-core **tidak memakai konsep department**. Kolom `CPUSER.USERDEPT`
 masih ada di tabel tapi tidak diisi lagi oleh `Mcpuser::create_user_akses` /
 `edit_user_akses`, dan tidak ada lagi UI/endpoint department.
 
+### Grid: satu komponen untuk semua menu
+
+**Jangan menulis ulang markup tabel per halaman.** Semua grid memakai
+`components/DataTable.tsx` — kolom didefinisikan lewat konfigurasi, lalu
+komponen itu yang merender header, baris filter, isi, dan baris paging.
+
+```tsx
+import { DataTable, GridPager, noColumn, actionsColumn, selectColumn,
+         type Column, type Filters } from '@/components/DataTable';
+
+function buildColumns(h: { onEdit: (r: Row) => void; onRemove: (r: Row) => void }): Column<Row>[] {
+  return [
+    noColumn,                                   // kolom # — tanpa filter
+    actionsColumn<Row>((r) => <>…Del… …Edit…</>), // kolom aksi — tanpa filter
+    { key: 'KODE', label: 'Kode', width: 140 },      // filter: text (default)
+    { key: 'NAMA', label: 'Nama', width: 240 },      // filter: text (default)
+    selectColumn<Row>('AKTIF', 'Aktif', ['YES', 'NO']), // filter: dropdown
+  ];
+}
+```
+
+| Helper | Untuk |
+|---|---|
+| `noColumn` | kolom nomor urut (`filter: false`) |
+| `actionsColumn(render, width?)` | kolom edit/hapus (`filter: false`, default width 88px) |
+| `selectColumn(key, label, options)` | kolom dengan filter dropdown (Semua + opsi) |
+
+`filter` kosong pada kolom = **text** (bukan tanpa filter). Tulis
+`filter: false` untuk kolom yang memang tidak perlu filter.
+
+Standar yang berlaku di semua menu:
+
+- **Toolbar (mainpage)**: Refresh **icon-only** (`iconOnly`) lalu tombol aksi utama.
+  Tidak ada lagi kotak pencarian global maupun tombol "Cari".
+- **Baris filter** langsung di bawah header, satu kontrol per kolom data.
+- Filter jalan otomatis **debounce 300ms** (`DataTable`) dan **reset ke halaman 1**.
+- Penamaan state seragam: `filters`, `page`, `total`, `loading`.
+
+### `filters` ke backend
+
+`api.ts` mengirim filter kolom sebagai JSON string pada parameter `filters`:
+
+```ts
+proxy.read_data({ limit: PAGE_SIZE, offset: p * PAGE_SIZE, q: '', filters: next });
+```
+
+Backend memakainya lewat trait `appservice/app/Models/ColumnFilter.php`:
+
+```php
+use ColumnFilter;
+[$fWhere, $fArgs] = self::buildColumnFilter($param);   // " AND A.KOLOM LIKE ?" per kolom
+$where .= $fWhere;
+$args   = array_merge($args, $fArgs);
+```
+
+Nama kolom dibersihkan (hanya `A-Z a-z 0-9 _`) sebelum masuk SQL, dan nilai
+`""` / `ALL` / `__ALL__` berarti tanpa filter. **Backward compatible** —
+`q` tetap berfungsi kalau `filters` tidak dikirim.
+
+Model yang sudah memakai trait: `Mcpuser`, `Mcpuserlogin`, `Mcpusergroup`.
+Menu baru cukup `use ColumnFilter;` + 3 baris di atas di `read_data()`.
+
 ### Pola halaman menu (mainpage)
 
 ```tsx

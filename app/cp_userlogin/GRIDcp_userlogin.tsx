@@ -1,11 +1,16 @@
 // GRIDcp_userlogin — padanan GRIDcp_userlogin.js langit_v2, sekaligus
-// "store + proxy"-nya: state, paging, pencarian, dan aksi grid lived di sini.
-// Mainpage (cp_userlogin.tsx) cuma nyambungin toolbar -> controller -> grid.
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
-import { Btn, EmptyRow, Icon } from '@/components/Icon';
+// "store + proxy"-nya. Pakai komponen reusable components/DataTable.tsx.
+//
+// State: filters, page, total, loading  |  Kolom: buildColumns(handlers)
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { useModal } from '@/components/Modal';
 import { toast } from '@/components/toast';
 import { parseBoolean } from '@/lib/api';
+import { Btn } from '@/components/Icon';
+import {
+  DataTable, GridPager, noColumn, actionsColumn, selectColumn,
+  type Column, type Filters,
+} from '@/components/DataTable';
 import FRMcp_userlogin, { type UserLoginForm } from './FRMcp_userlogin';
 import * as proxy from './api';
 
@@ -19,11 +24,9 @@ export type UserLoginRow = {
   USERGROUP?: string;
   USEREMAIL?: string;
   USERACTIVE?: string;
-  USERDEPT?: string;
   USERGROUPNAME?: string;
 };
 
-// Yang diexpose ke controller (ExtJS: reference ke grid).
 export type GridApi = {
   refresh: () => void;
   create: () => void;
@@ -40,21 +43,45 @@ const toForm = (u: UserLoginRow): UserLoginForm => ({
   USERACTIVE: u.USERACTIVE || 'YES',
 });
 
+function buildColumns(h: { onEdit: (u: UserLoginRow) => void; onRemove: (u: UserLoginRow) => void }): Column<UserLoginRow>[] {
+  return [
+    noColumn,
+    actionsColumn<UserLoginRow>((u) => (
+      <>
+        <Btn
+          className="danger btn-sm" iconOnly icon="del"
+          title={`Delete ${u.USERLOGIN}`} aria-label={`Delete ${u.USERLOGIN}`}
+          onClick={() => h.onRemove(u)}
+        />
+        <Btn
+          className="btn-sm" iconOnly icon="edit"
+          title={`Edit ${u.USERLOGIN}`} aria-label={`Edit ${u.USERLOGIN}`}
+          onClick={() => h.onEdit(u)}
+        />
+      </>
+    )),
+    { key: 'USERLOGIN', label: 'User Login', width: 120, render: (u) => <a href="#">{u.USERLOGIN}</a> },
+    { key: 'USERNAME', label: 'User Name', width: 160 },
+    { key: 'USERGROUPNAME', label: 'Group', width: 110 },
+    { key: 'USEREMAIL', label: 'Email', width: 200 },
+    selectColumn<UserLoginRow>('USERACTIVE', 'Aktif', ['YES', 'NO']),
+  ];
+}
+
 const GRIDcp_userlogin = forwardRef<GridApi>(function GRIDcp_userlogin(_props, ref) {
   const { open } = useModal();
   const [users, setUsers] = useState<UserLoginRow[]>([]);
-  const [filter, setFilter] = useState('');
-  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<Filters>({});
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const load = useCallback(async (opts?: { page?: number; q?: string }) => {
+  const load = useCallback(async (opts?: { page?: number; filters?: Filters }) => {
     const p = Math.max(0, opts?.page ?? page);
-    const q = opts?.q ?? search;
+    const f = opts?.filters ?? filters;
     setLoading(true);
     try {
-      const res: any = await proxy.read_data({ limit: PAGE_SIZE, offset: p * PAGE_SIZE, q });
+      const res: any = await proxy.read_data({ limit: PAGE_SIZE, offset: p * PAGE_SIZE, q: '', filters: f });
       if (parseBoolean(res?.success)) {
         setUsers(res.Rows || []);
         setTotal(Number(res.TotalRows) || 0);
@@ -65,108 +92,58 @@ const GRIDcp_userlogin = forwardRef<GridApi>(function GRIDcp_userlogin(_props, r
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, filters]);
 
-  // Dipanggil controller btrefresh_click.
   const refresh = useCallback(() => {
-    setFilter('');
-    setSearch('');
-    load({ page: 0, q: '' });
+    setFilters({});
+    load({ page: 0, filters: {} });
   }, [load]);
 
-  const doSearch = useCallback(() => {
-    setSearch(filter);
-    load({ page: 0, q: filter });
-  }, [filter, load]);
+  const onFilter = useCallback((next: Filters) => {
+    setFilters(next);
+    load({ page: 0, filters: next });
+  }, [load]);
 
-  // Dipanggil controller btnew_click.
-  const create = useCallback(() => {
-    open(<FRMcp_userlogin isNew onSaved={() => load({ page: 0 })} />);
-  }, [load, open]);
-
-  const edit = useCallback((u: UserLoginRow) => {
+  const openUser = useCallback((u: UserLoginRow) => {
     open(<FRMcp_userlogin isNew={false} initial={toForm(u)} onSaved={() => load({ page })} />);
   }, [load, open, page]);
 
-  const remove = useCallback(async (u: UserLoginRow) => {
+  const removeUser = useCallback(async (u: UserLoginRow) => {
     if (!window.confirm(`Hapus User Login: ${u.USERLOGIN}?`)) return;
     const res: any = await proxy.process_delete(u);
     if (parseBoolean(res?.success)) { toast('Success', res.message, 'ok'); load({ page }); }
     else toast('Error', res?.message, 'err');
   }, [load, page]);
 
-  useImperativeHandle(ref, () => ({ refresh, create, edit, remove }), [refresh, create, edit, remove]);
+  const create = useCallback(() => {
+    open(<FRMcp_userlogin isNew onSaved={() => load({ page: 0 })} />);
+  }, [load, open]);
+
+  const columns = useMemo(() => buildColumns({ onEdit: openUser, onRemove: removeUser }), [openUser, removeUser]);
+
+  useImperativeHandle(
+    ref,
+    () => ({ refresh, create, edit: openUser, remove: removeUser }),
+    [refresh, create, openUser, removeUser],
+  );
 
   useEffect(() => {
-    load({ page: 0, q: '' });
+    load({ page: 0, filters: {} });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startRow = page * PAGE_SIZE;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
   return (
     <div className="grid-box">
-      {/* tbar ala ExtJS */}
-      <div className="toolbar">
-        <span className="field-with-icon">
-          <Icon name="search" size={15} />
-          <input
-            className="input"
-            style={{ maxWidth: 260 }}
-            placeholder="Cari user (login/nama/group/email)"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') doSearch(); }}
-          />
-        </span>
-        <Btn icon="search" onClick={doSearch}>Cari</Btn>
-        {loading && <span className="loading-hint"><Icon name="loading" size={14} className="spin" /> Memuat…</span>}
-      </div>
-
-      <div className="table-wrap">
-        <table className="grid">
-          <thead>
-            <tr>
-              <th style={{ width: 44 }}>#</th>
-              <th style={{ width: 44 }} />
-              <th style={{ width: 44 }} />
-              <th>User Login</th>
-              <th>User Name</th>
-              <th>Group</th>
-              <th>Email</th>
-              <th>Aktif</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u, i) => (
-              <tr key={u.USERID ?? u.USERLOGIN}>
-                <td className="grid-num">{startRow + i + 1}</td>
-                <td><Btn className="danger btn-sm" iconOnly icon="del" title={`Delete ${u.USERLOGIN}`} aria-label={`Delete ${u.USERLOGIN}`} onClick={() => remove(u)} /></td>
-                <td><Btn className="btn-sm" iconOnly icon="edit" title={`Edit ${u.USERLOGIN}`} aria-label={`Edit ${u.USERLOGIN}`} onClick={() => edit(u)} /></td>
-                <td>{u.USERLOGIN}</td>
-                <td>{u.USERNAME}</td>
-                <td>{u.USERGROUP}</td>
-                <td>{u.USEREMAIL}</td>
-                <td>
-                  <span className={u.USERACTIVE === 'YES' ? 'badge ok' : 'badge off'}>{u.USERACTIVE}</span>
-                </td>
-              </tr>
-            ))}
-            {!users.length && <EmptyRow colSpan={8} loading={loading} />}
-          </tbody>
-        </table>
-      </div>
-
-      {/* bbar ala ExtJS: paging toolbar */}
-      <div className="toolbar bbar">
-        <span className="count">
-          {total === 0 ? '0 data' : `${startRow + 1}–${Math.min(startRow + PAGE_SIZE, total)} dari ${total}`}
-        </span>
-        <Btn icon="prev" disabled={page <= 0} onClick={() => load({ page: page - 1 })}>Prev</Btn>
-        <span className="pageinfo">{page + 1}/{totalPages}</span>
-        <Btn icon="next" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => load({ page: page + 1 })}>Next</Btn>
-      </div>
+      <DataTable<UserLoginRow>
+        columns={columns}
+        rows={users}
+        filters={filters}
+        onFilter={onFilter}
+        startRow={page * PAGE_SIZE}
+        loading={loading}
+        rowKey={(u) => String(u.USERID ?? u.USERLOGIN)}
+      />
+      <GridPager total={total} page={page} pageSize={PAGE_SIZE} onPage={(p) => load({ page: p })} />
     </div>
   );
 });

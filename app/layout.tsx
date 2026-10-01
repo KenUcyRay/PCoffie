@@ -88,6 +88,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           table.grid tbody tr:hover td { background: var(--surface-2); }
           table.grid tbody tr:last-child td { border-bottom: 0; }
           table.grid a { font-weight: 600; }
+          table.grid th.dt-right { text-align: right; }
+          table.grid th.dt-filter-cell { padding: 6px 8px; background: #fff; border-bottom: 1px solid var(--border); }
+          table.grid tr.dt-filter-row th { position: static; border-top: 0; }
+          .dt-filter { width: 100%; height: 28px; min-width: 40px; border: 1px solid var(--border-2); border-radius: var(--r-sm); padding: 0 8px; background: var(--surface); color: var(--text); font-family: inherit; font-size: 12px; }
+          .dt-filter::placeholder { color: var(--muted-2); }
+          .dt-filter:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 2px rgba(37,99,235,.16); }
+          select.dt-filter { padding-right: 4px; cursor: pointer; }
+          table.grid tbody tr.dt-active td { background: var(--brand-soft); }
+          .dt-actions { display: inline-flex; align-items: center; gap: 4px; }
           table.grid td.grid-num { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
           .toolbar.bbar { justify-content: flex-end; }
           .toolbar.bbar .count { color: var(--muted); font-size: 12px; }

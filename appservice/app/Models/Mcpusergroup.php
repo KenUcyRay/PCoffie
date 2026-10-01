@@ -13,12 +13,17 @@ use Illuminate\Database\Eloquent\Model;
 // - segmen pertama URL (/{A}/{B}) -> nentuin nama class MODEL backend (M+A)
 class Mcpusergroup extends Model
 {
-    // {method: read_data, limit?, offset?, q?} -> daftar group (paging + pencarian).
+    use ColumnFilter;
+
+    // {method: read_data, limit?, offset?, q?, filters?} -> daftar group (paging + filter kolom).
     public static function read_data($param)
     {
         $limit  = (isset($param['limit']) && $param['limit'] !== '') ? (int) $param['limit'] : 0; // 0 = semua
         $offset = isset($param['offset']) ? max(0, (int) $param['offset']) : 0;
         $q      = trim((string) ($param['q'] ?? ''));
+
+        // Filter per kolom (DataTable) digabung dengan pencarian umum q.
+        [$fWhere, $fArgs] = self::buildColumnFilter($param);
 
         $where = " WHERE A.DEFMODULE = 'GROUP_USERLOGIN'";
         $args  = [];
@@ -27,6 +32,8 @@ class Mcpusergroup extends Model
             $like   = '%' . $q . '%';
             $args   = [$like, $like];
         }
+        $where .= $fWhere;
+        $args   = array_merge($args, $fArgs);
 
         $countRow  = DB::selectOne("SELECT COUNT(*) AS TOTAL FROM CPMATRIX A" . $where, $args);
         $totalRows = $countRow ? (int) $countRow->TOTAL : 0;

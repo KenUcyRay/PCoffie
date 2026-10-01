@@ -7,13 +7,15 @@ import { apiPost } from '@/lib/api';
 
 const SEGMENT = 'home/cpuser/cpuser';
 
-// read_data: grid user (paging + pencarian).
-export async function read_data(opts: { limit?: number; offset?: number; q?: string } = {}) {
+// read_data: isi grid. `filters` = filter per kolom (Object Column -> nilai),
+// dikirim sebagai JSON string; `q` tetap didukung untuk pencarian umum.
+export async function read_data(opts: { limit?: number; offset?: number; q?: string; filters?: Record<string, string> } = {}) {
   return apiPost(SEGMENT, {
     method: 'read_data',
     limit: opts.limit,
     offset: opts.offset,
     q: opts.q,
+    filters: opts.filters ? JSON.stringify(opts.filters) : undefined,
   });
 }
 

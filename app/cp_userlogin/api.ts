@@ -6,12 +6,13 @@ import { apiPost } from '@/lib/api';
 const SEGMENT = 'home/cpuserlogin/cpuserlogin';
 
 // read_data: grid user login (paging + pencarian).
-export async function read_data(opts: { limit?: number; offset?: number; q?: string } = {}) {
+export async function read_data(opts: { limit?: number; offset?: number; q?: string; filters?: Record<string, string> } = {}) {
   return apiPost(SEGMENT, {
     method: 'read_data',
     limit: opts.limit,
     offset: opts.offset,
     q: opts.q,
+    filters: opts.filters ? JSON.stringify(opts.filters) : undefined,
   });
 }
 

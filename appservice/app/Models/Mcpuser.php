@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Mcpuser extends Model
 {
+    use ColumnFilter;
+
     // === Sesuai referensi: endpoint cpuser/cpuser dipakai frontend cp_usersetting ===
     // {method: read_data} -> grid user
     // {method: read_data, limit?, offset?, q?} -> grid user.
@@ -18,6 +20,9 @@ class Mcpuser extends Model
         $offset = isset($param['offset']) ? max(0, (int) $param['offset']) : 0;
         $q      = trim((string) ($param['q'] ?? ''));
 
+        // Filter per kolom (DataTable) digabung dengan pencarian umum q.
+        [$fWhere, $fArgs] = self::buildColumnFilter($param);
+
         $where = '';
         $args  = [];
         if ($q !== '') {
@@ -25,6 +30,8 @@ class Mcpuser extends Model
             $like  = '%' . $q . '%';
             $args  = [$like, $like, $like, $like];
         }
+        $where .= $fWhere;
+        $args   = array_merge($args, $fArgs);
 
         $countRow  = DB::selectOne("SELECT COUNT(*) AS TOTAL FROM CPUSER A" . $where, $args);
         $totalRows = $countRow ? (int) $countRow->TOTAL : 0;

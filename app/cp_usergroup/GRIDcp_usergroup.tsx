@@ -1,12 +1,15 @@
 // GRIDcp_usergroup — padanan GRIDcp_usergroup.js langit_v2 (grid group di panel
-// kiri), sekaligus "store + proxy"-nya: paging, pencarian, dan aksi grid lived
-// di sini. Mainpage tidak menyimpan state apa pun; baris yang diklik diteruskan
-// ke panel hak akses (FRMcp_usergroup) lewat reference `aksesRef` — persis
-// seperti reference: '...' di ExtJS.
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
-import { Btn, EmptyRow, Icon } from '@/components/Icon';
+// kiri) + "store + proxy"-nya. Pakai komponen reusable components/DataTable.tsx.
+//
+// State: filters, page, total, loading  |  Kolom: buildColumns(handlers)
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { toast } from '@/components/toast';
 import { parseBoolean } from '@/lib/api';
+import { Btn } from '@/components/Icon';
+import {
+  DataTable, GridPager, noColumn, actionsColumn,
+  type Column, type Filters,
+} from '@/components/DataTable';
 import * as proxy from './api';
 import type { AksesApi } from './FRMcp_usergroup';
 
@@ -15,7 +18,6 @@ const PAGE_SIZE = 25;
 
 export type GroupRow = { DEFID?: string | number; DEFMODULE?: string; DEFCODE: string; DEFNAME?: string };
 
-// Yang diexpose ke controller (ExtJS: reference ke grid).
 export type GridApi = {
   refresh: () => void;
   create: () => void;
@@ -27,24 +29,44 @@ type Props = {
   aksesRef?: React.RefObject<AksesApi>;
 };
 
+function buildColumns(h: { onSelect: (g: GroupRow) => void; onRemove: (g: GroupRow) => void }): Column<GroupRow>[] {
+  return [
+    noColumn,
+    actionsColumn<GroupRow>((g) => (
+      <Btn
+        className="danger btn-sm" iconOnly icon="del"
+        title={`Hapus group ${g.DEFCODE}`} aria-label={`Hapus group ${g.DEFCODE}`}
+        onClick={() => h.onRemove(g)}
+      />
+    )),
+    {
+      key: 'DEFCODE',
+      label: 'Group',
+      width: 160,
+      render: (g) => (
+        <a href="#" onClick={(e) => { e.preventDefault(); h.onSelect(g); }}>{g.DEFCODE}</a>
+      ),
+    },
+  ];
+}
+
 const GRIDcp_usergroup = forwardRef<GridApi, Props>(function GRIDcp_usergroup(
   { aksesRef }: Props,
   ref,
 ) {
   const [groups, setGroups] = useState<GroupRow[]>([]);
   const [selected, setSelected] = useState<GroupRow | null>(null);
-  const [filter, setFilter] = useState('');
-  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<Filters>({});
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const load = useCallback(async (opts?: { page?: number; q?: string }) => {
+  const load = useCallback(async (opts?: { page?: number; filters?: Filters }) => {
     const p = Math.max(0, opts?.page ?? page);
-    const q = opts?.q ?? search;
+    const f = opts?.filters ?? filters;
     setLoading(true);
     try {
-      const res: any = await proxy.read_data({ limit: PAGE_SIZE, offset: p * PAGE_SIZE, q });
+      const res: any = await proxy.read_data({ limit: PAGE_SIZE, offset: p * PAGE_SIZE, q: '', filters: f });
       if (parseBoolean(res?.success)) {
         setGroups(res.Rows || []);
         setTotal(Number(res.TotalRows) || 0);
@@ -55,25 +77,24 @@ const GRIDcp_usergroup = forwardRef<GridApi, Props>(function GRIDcp_usergroup(
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, filters]);
 
   const clearSelection = useCallback(() => {
     setSelected(null);
     aksesRef?.current?.clear();
   }, [aksesRef]);
 
-  // Dipanggil controller btrefresh_click: reset pilihan + filter lalu reload.
+  // Dipanggil controller btrefresh_click.
   const refresh = useCallback(() => {
-    setFilter('');
-    setSearch('');
+    setFilters({});
     clearSelection();
-    load({ page: 0, q: '' });
-  }, [load, clearSelection, aksesRef]);
+    load({ page: 0, filters: {} });
+  }, [load, clearSelection]);
 
-  const doSearch = useCallback(() => {
-    setSearch(filter);
-    load({ page: 0, q: filter });
-  }, [filter, load]);
+  const onFilter = useCallback((next: Filters) => {
+    setFilters(next);
+    load({ page: 0, filters: next });
+  }, [load]);
 
   // Baris diklik -> teruskan ke panel hak akses (ExtJS: select handler).
   const select = useCallback((g: GroupRow) => {
@@ -97,7 +118,7 @@ const GRIDcp_usergroup = forwardRef<GridApi, Props>(function GRIDcp_usergroup(
     })();
   }, [load, page]);
 
-  const remove = useCallback(async (g: GroupRow) => {
+  const removeUser = useCallback(async (g: GroupRow) => {
     if (!window.confirm(`Hapus User Group: ${g.DEFCODE}?`)) return;
     const res: any = await proxy.delete_akses_group(g);
     if (parseBoolean(res?.success)) {
@@ -107,69 +128,28 @@ const GRIDcp_usergroup = forwardRef<GridApi, Props>(function GRIDcp_usergroup(
     } else toast('Error', res?.message, 'err');
   }, [load, page, selected, clearSelection]);
 
-  useImperativeHandle(ref, () => ({ refresh, create, remove }), [refresh, create, remove]);
+  const columns = useMemo(() => buildColumns({ onSelect: select, onRemove: removeUser }), [select, removeUser]);
+
+  useImperativeHandle(ref, () => ({ refresh, create, remove: removeUser }), [refresh, create, removeUser]);
 
   useEffect(() => {
-    load({ page: 0, q: '' });
+    load({ page: 0, filters: {} });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startRow = page * PAGE_SIZE;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
   return (
     <div className="grid-box">
-      {/* tbar ala ExtJS */}
-      <div className="toolbar">
-        <span className="field-with-icon">
-          <Icon name="search" size={15} />
-          <input
-            className="input"
-            style={{ maxWidth: 200 }}
-            placeholder="Cari group"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') doSearch(); }}
-          />
-        </span>
-        <Btn icon="search" onClick={doSearch}>Cari</Btn>
-        {loading && <span className="loading-hint"><Icon name="loading" size={14} className="spin" /> Memuat…</span>}
-      </div>
-
-      <div className="table-wrap">
-        <table className="grid">
-          <thead><tr><th style={{ width: 40 }}>#</th><th>Group</th><th style={{ width: 70 }} /></tr></thead>
-          <tbody>
-            {groups.map((g, i) => (
-              <tr key={g.DEFCODE} style={selected?.DEFCODE === g.DEFCODE ? { background: '#eff6ff' } : undefined}>
-                <td className="grid-num">{startRow + i + 1}</td>
-                <td><a href="#" onClick={(e) => { e.preventDefault(); select(g); }}>{g.DEFCODE}</a></td>
-                <td>
-                  <Btn
-                    className="danger btn-sm"
-                    iconOnly
-                    icon="del"
-                    title={`Hapus group ${g.DEFCODE}`}
-                    aria-label={`Hapus group ${g.DEFCODE}`}
-                    onClick={() => remove(g)}
-                  />
-                </td>
-              </tr>
-            ))}
-            {!groups.length && <EmptyRow colSpan={3} loading={loading} />}
-          </tbody>
-        </table>
-      </div>
-
-      {/* bbar ala ExtJS */}
-      <div className="toolbar bbar">
-        <span className="count">
-          {total === 0 ? '0 data' : `${startRow + 1}–${Math.min(startRow + PAGE_SIZE, total)} dari ${total}`}
-        </span>
-        <Btn icon="prev" disabled={page <= 0} onClick={() => load({ page: page - 1 })}>Prev</Btn>
-        <span className="pageinfo">{page + 1}/{totalPages}</span>
-        <Btn icon="next" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => load({ page: page + 1 })}>Next</Btn>
-      </div>
+      <DataTable<GroupRow>
+        columns={columns}
+        rows={groups}
+        filters={filters}
+        onFilter={onFilter}
+        startRow={page * PAGE_SIZE}
+        loading={loading}
+        rowKey={(g) => g.DEFCODE}
+        isActive={(g) => selected?.DEFCODE === g.DEFCODE}
+      />
+      <GridPager total={total} page={page} pageSize={PAGE_SIZE} onPage={(p) => load({ page: p })} />
     </div>
   );
 });

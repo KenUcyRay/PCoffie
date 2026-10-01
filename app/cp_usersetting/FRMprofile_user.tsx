@@ -3,17 +3,16 @@ import { useEffect, useState } from 'react';
 import { apiPost, parseBoolean } from '@/lib/api';
 import { useModal } from '@/components/Modal';
 import { toast } from '@/components/toast';
-import type { Dept } from './FRMlist_department';
 import { change_password } from './api';
-import { Btn, EmptyRow } from '@/components/Icon';
+import { Btn } from '@/components/Icon';
 import { Window, FrmRow, FrmSet } from '@/components/Window';
 
-// Padanan FRMprofile_user.js langit_v2: info user read-only + Change Password + Department Access.
+// Padanan FRMprofile_user.js langit_v2: info user read-only + Change Password.
+// (Department Access sudah dihapus — tidak ada konsep department di app-core.)
 export default function FRMprofile_user() {
   const { close } = useModal();
   const [pw, setPw] = useState({ USERLOGIN: '', USERPASSWORD: '', NEWPASSWORD: '', CONFIRMPASSWORD: '' });
   const [info, setInfo] = useState({ USERNAME: '', USEREMAIL: '', USERGROUP: '' });
-  const [depts, setDepts] = useState<Dept[]>([]);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -27,12 +26,6 @@ export default function FRMprofile_user() {
       if (!alive || !login) return;
       setPw((v) => ({ ...v, USERLOGIN: login }));
       setInfo({ USERNAME: prof?.USERNAME || '', USEREMAIL: prof?.USEREMAIL || '', USERGROUP: prof?.USERGROUP || '' });
-
-      const res: any = await apiPost('home/cpuser/cpuser', {
-        method: 'read_akses_department',
-        vdata: JSON.stringify({ USERLOGIN: login }),
-      });
-      if (alive && parseBoolean(res?.success)) setDepts(res.Rows || []);
     })();
     return () => { alive = false; };
   }, []);
@@ -92,18 +85,6 @@ export default function FRMprofile_user() {
         </FrmRow>
         <div>
           <Btn pid="btsave" className="primary" icon="key" disabled={busy} onClick={doChangePassword}>Change Password</Btn>
-        </div>
-      </FrmSet>
-
-      <FrmSet legend="Department Access" icon="dept" columns={1}>
-        <div className="table-wrap">
-          <table className="grid">
-            <thead><tr><th>Kode</th><th>Department</th></tr></thead>
-            <tbody>
-              {depts.map((d) => <tr key={d.DEPTCODE}><td>{d.DEPTCODE}</td><td>{d.DEPTNAME}</td></tr>)}
-              {!depts.length && <EmptyRow colSpan={2} />}
-            </tbody>
-          </table>
         </div>
       </FrmSet>
     </Window>

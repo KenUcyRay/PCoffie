@@ -1,19 +1,16 @@
 'use client';
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth, useLastLoginPrefill } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 import { Btn, Icon } from '@/components/Icon';
 
 function LoginCard({ expired }: { expired: boolean }) {
   const { login } = useAuth();
   const router = useRouter();
-  const prefill = useLastLoginPrefill();
   const [userlogin, setUserlogin] = useState('');
   const [userpassword, setUserpassword] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => { if (prefill) setUserlogin(prefill); }, [prefill]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,10 +42,10 @@ function LoginCard({ expired }: { expired: boolean }) {
         <div className="toast-err alert-inline"><Icon name="alertCircle" size={17} /><span>{err}</span></div>
       )}
       <label>User Login</label>
-      <input className="input" value={userlogin} onChange={(e) => setUserlogin(e.target.value)} required autoFocus />
+      <input className="input" value={userlogin} onChange={(e) => setUserlogin(e.target.value)} required autoFocus autoComplete="username" />
       <div style={{ height: 8 }} />
       <label>Password</label>
-      <input className="input" type="password" value={userpassword} onChange={(e) => setUserpassword(e.target.value)} required />
+      <input className="input" type="password" value={userpassword} onChange={(e) => setUserpassword(e.target.value)} required autoComplete="current-password" />
       <div style={{ height: 12 }} />
       <Btn className="primary" icon="login" style={{ width: '100%' }} type="submit" disabled={busy}>
         {busy ? 'Memproses...' : 'Login'}

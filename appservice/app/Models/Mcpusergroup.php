@@ -46,23 +46,6 @@ class Mcpusergroup extends Model
         ]);
     }
 
-    // Dipanggil popup "Pilih Department" (FRMlist_department).
-    public static function read_department($param)
-    {
-        $result = DB::select("
-            SELECT A.DEFID, A.DEFCODE, A.DEFNAME
-            FROM CPMATRIX A
-            WHERE A.DEFMODULE = 'MDEPARTMENT'
-            ORDER BY A.DEFCODE
-        ");
-
-        return json_encode([
-            'success' => true,
-            'Rows' => $result,
-            'TotalRows' => count($result)
-        ]);
-    }
-
     public static function create_group($param)
     {
         $vdata = json_decode($param['vdata'] ?? '{}', true) ?: [];

@@ -1,10 +1,15 @@
 // API menu cp_usersetting — padanan store/proxy "cpuser/cpuser" langit_v2.
 // Endpoint: api/core/home/cpuser/cpuser (method read_data/process_*).
+//
+// TIDAK ada konsep department di app-core, jadi tidak ada read_akses_department
+// dan tidak ada vdata daftar department lagi.
 import { apiPost } from '@/lib/api';
+
+const SEGMENT = 'home/cpuser/cpuser';
 
 // read_data: grid user (paging + pencarian).
 export async function read_data(opts: { limit?: number; offset?: number; q?: string } = {}) {
-  return apiPost('home/cpuser/cpuser', {
+  return apiPost(SEGMENT, {
     method: 'read_data',
     limit: opts.limit,
     offset: opts.offset,
@@ -12,35 +17,25 @@ export async function read_data(opts: { limit?: number; offset?: number; q?: str
   });
 }
 
-// read_akses_department: Department Access milik 1 user.
-export async function read_akses_department(USERLOGIN: string) {
-  return apiPost('home/cpuser/cpuser', {
-    method: 'read_akses_department',
-    vdata: JSON.stringify({ USERLOGIN }),
-  });
-}
-
-// process_create: create_user_akses (vheader + vdata dept).
-export async function process_create(vheader: unknown, vdata: unknown) {
-  return apiPost('home/cpuser/cpuser', {
+// process_create: create_user_akses.
+export async function process_create(vheader: unknown) {
+  return apiPost(SEGMENT, {
     method: 'create_user_akses',
     vheader: JSON.stringify(vheader),
-    vdata: JSON.stringify(vdata),
   });
 }
 
 // process_update: edit_user_akses.
-export async function process_update(vheader: unknown, vdata: unknown) {
-  return apiPost('home/cpuser/cpuser', {
+export async function process_update(vheader: unknown) {
+  return apiPost(SEGMENT, {
     method: 'edit_user_akses',
     vheader: JSON.stringify(vheader),
-    vdata: JSON.stringify(vdata),
   });
 }
 
 // process_delete: delete_user_akses.
 export async function process_delete(vdata: unknown) {
-  return apiPost('home/cpuser/cpuser', {
+  return apiPost(SEGMENT, {
     method: 'delete_user_akses',
     vdata: JSON.stringify(vdata),
   });
@@ -48,7 +43,7 @@ export async function process_delete(vdata: unknown) {
 
 // change_password: ganti password user sendiri.
 export async function change_password(vheader: unknown) {
-  return apiPost('home/cpuser/cpuser', {
+  return apiPost(SEGMENT, {
     method: 'change_password',
     vheader: JSON.stringify(vheader),
   });

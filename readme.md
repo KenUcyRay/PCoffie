@@ -412,8 +412,12 @@ menjadikan form memanjang ke bawah. `columns` di `FrmSet` mengatur jumlah kolom
 (1/2/3).
 
 Contoh FRM yang jadi acuan: `app/cp_usersetting/FRMcp_usersetting.tsx`
-(2 kolom + tabel) dan `app/cp_usersetting/FRMlist_department.tsx`
-(`width="52%" height="46%"`, isi tabel scroll).
+(2 kolom, `width="44%"`) dan `app/cp_usersetting/FRMprofile_user.tsx`
+(3 fieldset, 1 kolom untuk password).
+
+Catatan: app-core **tidak memakai konsep department**. Kolom `CPUSER.USERDEPT`
+masih ada di tabel tapi tidak diisi lagi oleh `Mcpuser::create_user_akses` /
+`edit_user_akses`, dan tidak ada lagi UI/endpoint department.
 
 ### Pola halaman menu (mainpage)
 

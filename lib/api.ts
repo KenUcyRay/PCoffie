@@ -3,7 +3,6 @@
 export class SessionExpiredError extends Error {}
 
 const TOKEN_KEY = 'appcore::auth::token';
-const LAST_LOGIN_KEY = 'appcore::auth::last_login';
 
 let memoryToken: string | null = null;
 
@@ -31,16 +30,6 @@ export function setToken(token: string | null) {
   try {
     if (token) localStorage.setItem(TOKEN_KEY, token);
     else localStorage.removeItem(TOKEN_KEY);
-  } catch { /* abaikan */ }
-}
-
-export function getLastLogin(): string {
-  try { return localStorage.getItem(LAST_LOGIN_KEY) || ''; } catch { return ''; }
-}
-export function setLastLogin(v: string) {
-  try {
-    if (v) localStorage.setItem(LAST_LOGIN_KEY, v);
-    else localStorage.removeItem(LAST_LOGIN_KEY);
   } catch { /* abaikan */ }
 }
 

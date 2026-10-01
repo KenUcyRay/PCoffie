@@ -1,24 +1,19 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, useLastLoginPrefill } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 import { Btn, Icon } from './Icon';
 import { Window, FrmRow } from './Window';
 
 // Tiruan LoginExpired.js: dialog di atas shell (bukan pindah halaman),
-// dengan prefill user login terakhir dan resume bila user sama.
+// dengan resume bila user yang login kembali sama.
 export default function ExpiredDialog() {
   const { status, login, profile, logout } = useAuth();
   const router = useRouter();
-  const prefill = useLastLoginPrefill();
   const [userlogin, setUserlogin] = useState('');
   const [userpassword, setUserpassword] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (prefill && !userlogin) setUserlogin(prefill);
-  }, [prefill, userlogin]);
 
   if (status !== 'expired') return null;
 
@@ -63,7 +58,7 @@ export default function ExpiredDialog() {
         <div className="toast-err alert-inline"><Icon name="alertCircle" size={16} /><span>Sesi login sudah habis. Silakan login kembali.</span></div>
         {err && <div className="toast-err alert-inline"><Icon name="alertCircle" size={16} /><span>{err}</span></div>}
         <FrmRow label="User Login">
-          <input className="input" value={userlogin || profile?.USERLOGIN || ''} onChange={(e) => setUserlogin(e.target.value)} autoFocus />
+          <input className="input" value={userlogin || profile?.USERLOGIN || ''} onChange={(e) => setUserlogin(e.target.value)} autoFocus autoComplete="username" />
         </FrmRow>
         <FrmRow label="Password">
           <input className="input" type="password" value={userpassword} onChange={(e) => setUserpassword(e.target.value)} />

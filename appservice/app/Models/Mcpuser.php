@@ -52,12 +52,12 @@ class Mcpuser extends Model
         ]);
     }
 
-    // {method: create_user_akses, vheader:{...}, vdata:[{DEPTCODE,...}]}
+    // {method: create_user_akses, vheader:{...}}
+    // Catatan: app-core tidak memakai konsep department, jadi USERDEPT tidak
+    // lagi diisi di sini (kolomnya nullable dan tidak disentuh saat update).
     public static function create_user_akses($param)
     {
         $vheader = json_decode($param['vheader'] ?? '{}', true) ?: [];
-        $vdataDept = json_decode($param['vdata'] ?? '[]', true) ?: [];
-        $userdept = $vdataDept[0]['DEPTCODE'] ?? ($vheader['USERDEPT'] ?? null);
 
         $userlogin = trim($vheader['USERLOGIN'] ?? '');
         $username = trim($vheader['USERNAME'] ?? '');
@@ -76,19 +76,17 @@ class Mcpuser extends Model
         }
 
         DB::insert("
-            INSERT INTO CPUSER (USERLOGIN, USERNAME, USERPASSWORD, USERGROUP, USERACTIVE, USEREMAIL, USERDEPT, SYSCREATEUSER, SYSCREATEDATE)
-            VALUES (?, ?, dbo.app_encrypt(?), ?, ?, ?, ?, ?, GETDATE())
-        ", [$userlogin, $username, $userpassword, $usergroup, $useractive, $useremail, $userdept, $param['VUSERLOGIN'] ?? '']);
+            INSERT INTO CPUSER (USERLOGIN, USERNAME, USERPASSWORD, USERGROUP, USERACTIVE, USEREMAIL, SYSCREATEUSER, SYSCREATEDATE)
+            VALUES (?, ?, dbo.app_encrypt(?), ?, ?, ?, ?, GETDATE())
+        ", [$userlogin, $username, $userpassword, $usergroup, $useractive, $useremail, $param['VUSERLOGIN'] ?? '']);
 
         return json_encode(['success' => 'true', 'message' => 'User berhasil dibuat.']);
     }
 
-    // {method: edit_user_akses, vheader:{...}, vdata:[...]}
+    // {method: edit_user_akses, vheader:{...}}
     public static function edit_user_akses($param)
     {
         $vheader = json_decode($param['vheader'] ?? '{}', true) ?: [];
-        $vdataDept = json_decode($param['vdata'] ?? '[]', true) ?: [];
-        $userdept = $vdataDept[0]['DEPTCODE'] ?? ($vheader['USERDEPT'] ?? null);
 
         $userid = $vheader['USERID'] ?? null;
         $username = trim($vheader['USERNAME'] ?? '');
@@ -103,16 +101,16 @@ class Mcpuser extends Model
 
         if ($userpassword !== '') {
             DB::update("
-                UPDATE CPUSER SET USERNAME=?, USERGROUP=?, USEREMAIL=?, USERACTIVE=?, USERDEPT=?,
+                UPDATE CPUSER SET USERNAME=?, USERGROUP=?, USEREMAIL=?, USERACTIVE=?,
                     USERPASSWORD=dbo.app_encrypt(?), SYSUPDATEUSER=?, SYSUPDATEDATE=GETDATE()
                 WHERE USERID=?
-            ", [$username, $usergroup, $useremail, $useractive, $userdept, $userpassword, $param['VUSERLOGIN'] ?? '', $userid]);
+            ", [$username, $usergroup, $useremail, $useractive, $userpassword, $param['VUSERLOGIN'] ?? '', $userid]);
         } else {
             DB::update("
-                UPDATE CPUSER SET USERNAME=?, USERGROUP=?, USEREMAIL=?, USERACTIVE=?, USERDEPT=?,
+                UPDATE CPUSER SET USERNAME=?, USERGROUP=?, USEREMAIL=?, USERACTIVE=?,
                     SYSUPDATEUSER=?, SYSUPDATEDATE=GETDATE()
                 WHERE USERID=?
-            ", [$username, $usergroup, $useremail, $useractive, $userdept, $param['VUSERLOGIN'] ?? '', $userid]);
+            ", [$username, $usergroup, $useremail, $useractive, $param['VUSERLOGIN'] ?? '', $userid]);
         }
 
         return json_encode(['success' => 'true', 'message' => 'User berhasil diupdate.']);
@@ -137,28 +135,6 @@ class Mcpuser extends Model
         DB::delete("DELETE FROM CPUSER WHERE USERID = ?", [$userid]);
 
         return json_encode(['success' => 'true', 'message' => 'User berhasil dihapus.']);
-    }
-
-    // {method: read_akses_department, vdata:{USERLOGIN,...}}
-    // Dipakai grid "Department Access" di FRM user (create/edit) dan FRM profile.
-    public static function read_akses_department($param)
-    {
-        $vdata = json_decode($param['vdata'] ?? '{}', true) ?: [];
-        $vheader = json_decode($param['vheader'] ?? '{}', true) ?: [];
-        $userlogin = $vdata['USERLOGIN'] ?? ($vheader['USERLOGIN'] ?? '');
-
-        if ($userlogin === '') {
-            return json_encode(['success' => 'true', 'Rows' => [], 'TotalRows' => 0]);
-        }
-
-        $rows = DB::select("
-            SELECT B.DEFCODE AS DEPTCODE, B.DEFNAME AS DEPTNAME
-            FROM CPUSER A
-            LEFT JOIN CPMATRIX B ON A.USERDEPT = B.DEFCODE AND B.DEFMODULE = 'MDEPARTMENT'
-            WHERE A.USERLOGIN = ? AND B.DEFCODE IS NOT NULL
-        ", [$userlogin]);
-
-        return json_encode(['success' => true, 'Rows' => $rows, 'TotalRows' => count($rows)]);
     }
 
     // {method: change_password, vheader:{USERLOGIN,USERPASSWORD,NEWPASSWORD,CONFIRMPASSWORD}}

@@ -3,10 +3,9 @@ import { useEffect, useState } from 'react';
 import { parseBoolean } from '@/lib/api';
 import { useModal } from '@/components/Modal';
 import { toast } from '@/components/toast';
-import FRMlist_department, { type Dept } from './FRMlist_department';
-import { read_akses_department, process_create, process_update } from './api';
+import { process_create, process_update } from './api';
 import { read_data as read_groups } from '../cp_usergroup/api';
-import { Btn, EmptyRow } from '@/components/Icon';
+import { Btn } from '@/components/Icon';
 import { Window, FrmRow, FrmSet } from '@/components/Window';
 
 export type UserForm = {
@@ -21,7 +20,8 @@ export type UserForm = {
 
 type Group = { DEFCODE: string; DEFNAME?: string };
 
-// Padanan FRMcp_usersetting.js langit_v2: User Info + Password + Department Access + Save User.
+// Padanan FRMcp_usersetting.js langit_v2: User Info + Password + Save User.
+// (Department Access sudah dihapus — tidak ada konsep department di app-core.)
 export default function FRMcp_usersetting({
   isNew,
   initial,
@@ -31,12 +31,11 @@ export default function FRMcp_usersetting({
   initial?: UserForm;
   onSaved: () => void;
 }) {
-  const { close, open } = useModal();
+  const { close } = useModal();
   const [form, setForm] = useState<UserForm>(
     initial || { USERLOGIN: '', USERNAME: '', USEREMAIL: '', USERGROUP: '', USERACTIVE: 'YES', USERPASSWORD: '' },
   );
   const [groups, setGroups] = useState<Group[]>([]);
-  const [depts, setDepts] = useState<Dept[]>([]);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -50,18 +49,6 @@ export default function FRMcp_usersetting({
     })();
   }, []);
 
-  useEffect(() => {
-    if (isNew || !form.USERLOGIN) return;
-    (async () => {
-      const res: any = await read_akses_department(form.USERLOGIN);
-      if (parseBoolean(res?.success)) setDepts(res.Rows || []);
-    })();
-  }, [isNew, form.USERLOGIN]);
-
-  const addDept = () => {
-    open(<FRMlist_department onSelect={(picked) => setDepts(picked)} />);
-  };
-
   const save = async () => {
     for (const k of ['USERLOGIN', 'USERNAME', 'USEREMAIL', 'USERGROUP'] as const) {
       if (!String(form[k] || '').trim()) { toast('Error', `${k} wajib diisi.`, 'err'); return; }
@@ -70,7 +57,7 @@ export default function FRMcp_usersetting({
     if (!window.confirm('Simpan User Akses?')) return;
     setBusy(true);
     try {
-      const res: any = isNew ? await process_create(form, depts) : await process_update(form, depts);
+      const res: any = isNew ? await process_create(form) : await process_update(form);
       if (parseBoolean(res?.success)) {
         toast('Success', res.message || 'User tersimpan.', 'ok');
         onSaved();
@@ -87,7 +74,7 @@ export default function FRMcp_usersetting({
     <Window
       title={isNew ? 'Create User' : 'Edit User'}
       icon={isNew ? 'add' : 'edit'}
-      width="52%"
+      width="44%"
       footer={
         <>
           <Btn pid="btsave" className="primary" icon="save" disabled={busy} onClick={save}>Save User</Btn>
@@ -123,32 +110,6 @@ export default function FRMcp_usersetting({
         <FrmRow label="Password">
           <input className="input" type="password" value={form.USERPASSWORD || ''} onChange={(e) => setForm({ ...form, USERPASSWORD: e.target.value })} />
         </FrmRow>
-      </FrmSet>
-
-      <FrmSet legend="Department Access" icon="dept" columns={1}>
-        <div className="modal-toolbar">
-          <Btn icon="add" onClick={addDept}>Tambah Department</Btn>
-          {depts.length > 0 && <Btn className="danger" icon="eraser" onClick={() => setDepts([])}>Clear</Btn>}
-          <span className="spacer" />
-          <span className="loading-hint">{depts.length} department</span>
-        </div>
-        <div className="table-wrap">
-          <table className="grid">
-            <thead><tr><th>Kode</th><th>Department</th><th style={{ width: 44 }} /></tr></thead>
-            <tbody>
-              {depts.map((d) => (
-                <tr key={d.DEPTCODE}>
-                  <td>{d.DEPTCODE}</td>
-                  <td>{d.DEPTNAME}</td>
-                  <td>
-                    <Btn className="danger btn-sm" iconOnly icon="del" title={`Hapus ${d.DEPTNAME}`} aria-label={`Hapus ${d.DEPTNAME}`} onClick={() => setDepts(depts.filter((x) => x.DEPTCODE !== d.DEPTCODE))} />
-                  </td>
-                </tr>
-              ))}
-              {!depts.length && <EmptyRow colSpan={3} />}
-            </tbody>
-          </table>
-        </div>
       </FrmSet>
     </Window>
   );

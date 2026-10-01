@@ -3,7 +3,7 @@
 
 'use client';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { apiPost, getToken, setToken, getLastLogin, setLastLogin, SessionExpiredError } from './api';
+import { apiPost, getToken, setToken, SessionExpiredError } from './api';
 
 export type Profile = {
   USERLOGIN?: string; USERNAME?: string; USERGROUP?: string; USEREMAIL?: string; GROUPMODEL?: string;
@@ -82,7 +82,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const ok = res && (res.success === true || String(res.success).toLowerCase() === 'true');
     if (!ok) throw new Error(res.message || res.msg || 'Username atau password tidak valid.');
     if (res.token) setToken(res.token);
-    setLastLogin(userlogin.trim().toLowerCase());
     const me: any = await apiPost('auth/me', { method: 'me' }, { skipAuthExpiredHandler: true });
     if (!applyMeResult(me)) throw new Error(me.message || 'Sesi login tidak valid.');
     setStatus('authenticated');
@@ -142,11 +141,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth(): AuthState {
   const v = useContext(Ctx);
   if (!v) throw new Error('useAuth di luar AuthProvider');
-  return v;
-}
-
-export function useLastLoginPrefill(): string {
-  const [v, setV] = useState('');
-  useEffect(() => { setV(getLastLogin()); }, []);
   return v;
 }

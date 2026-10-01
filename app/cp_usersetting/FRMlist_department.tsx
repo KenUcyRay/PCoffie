@@ -4,6 +4,7 @@ import { apiPost, parseBoolean } from '@/lib/api';
 import { useModal } from '@/components/Modal';
 import { toast } from '@/components/toast';
 import { Btn, EmptyRow, Icon } from '@/components/Icon';
+import { Window } from '@/components/Window';
 
 export type Dept = { DEPTCODE: string; DEPTNAME: string };
 
@@ -41,16 +42,27 @@ export default function FRMlist_department({ onSelect }: { onSelect: (rows: Dept
   };
 
   return (
-    <>
-      <div className="modal-head"><Icon name="dept" size={17} /> Pilih Department</div>
+    <Window
+      title="Pilih Department"
+      icon="dept"
+      width="52%"
+      height="46%"
+      footer={
+        <>
+          <Btn pid="btsave" className="primary" icon="check" onClick={choose} disabled={!sel.size}>Pilih Department</Btn>
+          <span className="frm-foot-gap" />
+          <Btn icon="close" onClick={close}>Batal</Btn>
+        </>
+      }
+    >
       <div className="modal-toolbar">
-        <span className="field-with-icon">
+        <span className="field-with-icon" style={{ maxWidth: 'none', flex: 1 }}>
           <Icon name="filter" size={15} />
           <input className="input" placeholder="Filter kode / department" value={filter} onChange={(e) => setFilter(e.target.value)} />
         </span>
-        <Btn className="primary" icon="check" onClick={choose} disabled={!sel.size}>Pilih Department</Btn>
+        <span className="loading-hint">{shown.length} / {rows.length}</span>
       </div>
-      <div className="table-wrap">
+      <div className="table-wrap" style={{ flex: 1, minHeight: 0 }}>
         <table className="grid">
           <thead><tr><th style={{ width: 36 }} /><th>Kode</th><th>Department</th></tr></thead>
           <tbody>
@@ -65,6 +77,6 @@ export default function FRMlist_department({ onSelect }: { onSelect: (rows: Dept
           </tbody>
         </table>
       </div>
-    </>
+    </Window>
   );
 }

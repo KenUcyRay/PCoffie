@@ -378,6 +378,43 @@ Ubah di satu tempat untuk mengubah seluruh tampilan.
 | Empty state | `<EmptyRow colSpan loading message>` | semua GRID |
 | Status pill | `.badge.ok` / `.badge.off` | kolom status |
 
+### FRM = window yang ukurannya bisa diatur
+
+Padanan `Ext.window.Window` di langit_v2. Contoh asli `FRMmpph.js`:
+
+```js
+width:  mainpage.getWidth()  * 0.35,
+height: mainpage.getHeight() * 0.44,
+```
+
+Di app-core ukurannya ditulis **di dalam file FRM** lewat `<Window>`:
+
+```tsx
+<Window
+  title="Create User"          // = title di Ext.define
+  icon="add"                   // = ikon header
+  width="46%"                  // angka = px, string = satuan CSS
+  height="46%"                 // opsional; body scroll sendiri
+  footer={<>…tombol dgn pid="btsave" / pid="btdelete"…</>}
+>
+```
+
+Komponen pembantu (semua di `components/Window.tsx`):
+
+| Komponen | Padalan langit_v2 |
+|---|---|
+| `<Window title icon width height footer>` | `Ext.window.Window` + `width`/`height`/`tbar` |
+| `<FrmRow label>` | `fieldDefaults: { labelAlign, labelWidth }` — label **sejajar kiri** |
+| `<FrmSet legend icon columns>` | `xtype: "fieldset"` |
+
+`FrmRow` membuat form jadi **2 kolom, compact** — bukan label di atas input yang
+menjadikan form memanjang ke bawah. `columns` di `FrmSet` mengatur jumlah kolom
+(1/2/3).
+
+Contoh FRM yang jadi acuan: `app/cp_usersetting/FRMcp_usersetting.tsx`
+(2 kolom + tabel) dan `app/cp_usersetting/FRMlist_department.tsx`
+(`width="52%" height="46%"`, isi tabel scroll).
+
 ### Pola halaman menu (mainpage)
 
 ```tsx

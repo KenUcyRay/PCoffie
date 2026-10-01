@@ -5,7 +5,8 @@ import { useModal } from '@/components/Modal';
 import { toast } from '@/components/toast';
 import type { Dept } from './FRMlist_department';
 import { change_password } from './api';
-import { Btn, EmptyRow, Icon } from '@/components/Icon';
+import { Btn, EmptyRow } from '@/components/Icon';
+import { Window, FrmRow, FrmSet } from '@/components/Window';
 
 // Padanan FRMprofile_user.js langit_v2: info user read-only + Change Password + Department Access.
 export default function FRMprofile_user() {
@@ -61,30 +62,40 @@ export default function FRMprofile_user() {
   };
 
   return (
-    <>
-      <div className="modal-head"><Icon name="userCircle" size={17} /> User Profile</div>
-      <fieldset className="fset">
-        <legend><Icon name="user" size={14} /> User Info</legend>
-        <div className="fset-grid">
-          <label>User Login<input className="input" value={pw.USERLOGIN} readOnly /></label>
-          <label>User Name<input className="input" value={info.USERNAME} readOnly /></label>
-          <label>Email<input className="input" value={info.USEREMAIL} readOnly /></label>
-          <label>Group<input className="input" value={info.USERGROUP} readOnly /></label>
-        </div>
-      </fieldset>
+    <Window
+      title="User Profile"
+      icon="userCircle"
+      width="52%"
+      footer={
+        <>
+          <span className="spacer" />
+          <Btn icon="close" onClick={close}>Close</Btn>
+        </>
+      }
+    >
+      <FrmSet legend="User Info" icon="user" columns={2}>
+        <FrmRow label="User Login"><input className="input" value={pw.USERLOGIN} readOnly /></FrmRow>
+        <FrmRow label="User Name"><input className="input" value={info.USERNAME} readOnly /></FrmRow>
+        <FrmRow label="Email"><input className="input" value={info.USEREMAIL} readOnly /></FrmRow>
+        <FrmRow label="Group"><input className="input" value={info.USERGROUP} readOnly /></FrmRow>
+      </FrmSet>
 
-      <fieldset className="fset">
-        <legend><Icon name="key" size={14} /> Change Password</legend>
-        <div className="fset-grid">
-          <label>Old Password<input className="input" type="password" value={pw.USERPASSWORD} onChange={(e) => setPw({ ...pw, USERPASSWORD: e.target.value })} /></label>
-          <label>New Password<input className="input" type="password" value={pw.NEWPASSWORD} onChange={(e) => setPw({ ...pw, NEWPASSWORD: e.target.value })} /></label>
-          <label>Confirm Password<input className="input" type="password" value={pw.CONFIRMPASSWORD} onChange={(e) => setPw({ ...pw, CONFIRMPASSWORD: e.target.value })} /></label>
-          <div><Btn className="primary" icon="key" disabled={busy} onClick={doChangePassword}>Change Password</Btn></div>
+      <FrmSet legend="Change Password" icon="key" columns={1}>
+        <FrmRow label="Old Password">
+          <input className="input" type="password" value={pw.USERPASSWORD} onChange={(e) => setPw({ ...pw, USERPASSWORD: e.target.value })} />
+        </FrmRow>
+        <FrmRow label="New Password">
+          <input className="input" type="password" value={pw.NEWPASSWORD} onChange={(e) => setPw({ ...pw, NEWPASSWORD: e.target.value })} />
+        </FrmRow>
+        <FrmRow label="Confirm Password">
+          <input className="input" type="password" value={pw.CONFIRMPASSWORD} onChange={(e) => setPw({ ...pw, CONFIRMPASSWORD: e.target.value })} />
+        </FrmRow>
+        <div>
+          <Btn pid="btsave" className="primary" icon="key" disabled={busy} onClick={doChangePassword}>Change Password</Btn>
         </div>
-      </fieldset>
+      </FrmSet>
 
-      <fieldset className="fset">
-        <legend><Icon name="dept" size={14} /> Department Access</legend>
+      <FrmSet legend="Department Access" icon="dept" columns={1}>
         <div className="table-wrap">
           <table className="grid">
             <thead><tr><th>Kode</th><th>Department</th></tr></thead>
@@ -94,11 +105,7 @@ export default function FRMprofile_user() {
             </tbody>
           </table>
         </div>
-      </fieldset>
-
-      <div className="modal-foot">
-        <Btn icon="close" onClick={close}>Close</Btn>
-      </div>
-    </>
+      </FrmSet>
+    </Window>
   );
 }

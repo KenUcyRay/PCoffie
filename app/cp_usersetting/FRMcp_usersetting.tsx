@@ -6,7 +6,8 @@ import { toast } from '@/components/toast';
 import FRMlist_department, { type Dept } from './FRMlist_department';
 import { read_akses_department, process_create, process_update } from './api';
 import { read_data as read_groups } from '../cp_usergroup/api';
-import { Btn, EmptyRow, Icon } from '@/components/Icon';
+import { Btn, EmptyRow } from '@/components/Icon';
+import { Window, FrmRow, FrmSet } from '@/components/Window';
 
 export type UserForm = {
   USERID?: number;
@@ -83,66 +84,72 @@ export default function FRMcp_usersetting({
   };
 
   return (
-    <>
-      <div className="modal-head">
-        <Icon name={isNew ? 'add' : 'edit'} size={17} />
-        {isNew ? 'Create User' : 'Edit User'}
-      </div>
+    <Window
+      title={isNew ? 'Create User' : 'Edit User'}
+      icon={isNew ? 'add' : 'edit'}
+      width="52%"
+      footer={
+        <>
+          <Btn pid="btsave" className="primary" icon="save" disabled={busy} onClick={save}>Save User</Btn>
+          <span className="frm-foot-gap" />
+          <Btn icon="close" onClick={close}>Batal</Btn>
+        </>
+      }
+    >
+      <FrmSet legend="User Info" icon="user" columns={2}>
+        <FrmRow label="User Login">
+          <input className="input" value={form.USERLOGIN} readOnly={!isNew} onChange={(e) => setForm({ ...form, USERLOGIN: e.target.value })} />
+        </FrmRow>
+        <FrmRow label="User Name">
+          <input className="input" value={form.USERNAME} onChange={(e) => setForm({ ...form, USERNAME: e.target.value })} />
+        </FrmRow>
+        <FrmRow label="Email">
+          <input className="input" value={form.USEREMAIL} onChange={(e) => setForm({ ...form, USEREMAIL: e.target.value })} />
+        </FrmRow>
+        <FrmRow label="Status Aktif">
+          <select value={form.USERACTIVE} onChange={(e) => setForm({ ...form, USERACTIVE: e.target.value })}>
+            <option value="YES">YES</option>
+            <option value="NO">NO</option>
+          </select>
+        </FrmRow>
+        <FrmRow label="Group">
+          <select value={form.USERGROUP} onChange={(e) => setForm({ ...form, USERGROUP: e.target.value })}>
+            {groups.map((g) => <option key={g.DEFCODE} value={g.DEFCODE}>{g.DEFNAME || g.DEFCODE}</option>)}
+          </select>
+        </FrmRow>
+      </FrmSet>
 
-      <fieldset className="fset">
-        <legend><Icon name="user" size={14} /> User Info</legend>
-        <div className="fset-grid">
-          <label>User Login<input className="input" value={form.USERLOGIN} readOnly={!isNew} onChange={(e) => setForm({ ...form, USERLOGIN: e.target.value })} /></label>
-          <label>User Name<input className="input" value={form.USERNAME} onChange={(e) => setForm({ ...form, USERNAME: e.target.value })} /></label>
-          <label>Email<input className="input" value={form.USEREMAIL} onChange={(e) => setForm({ ...form, USEREMAIL: e.target.value })} /></label>
-          <label>Status Aktif
-            <select value={form.USERACTIVE} onChange={(e) => setForm({ ...form, USERACTIVE: e.target.value })}>
-              <option value="YES">YES</option>
-              <option value="NO">NO</option>
-            </select>
-          </label>
-          <label>Group
-            <select value={form.USERGROUP} onChange={(e) => setForm({ ...form, USERGROUP: e.target.value })}>
-              {groups.map((g) => <option key={g.DEFCODE} value={g.DEFCODE}>{g.DEFNAME || g.DEFCODE}</option>)}
-            </select>
-          </label>
-        </div>
-      </fieldset>
+      <FrmSet legend="Password" icon="lock" columns={2}>
+        <FrmRow label="Password">
+          <input className="input" type="password" value={form.USERPASSWORD || ''} onChange={(e) => setForm({ ...form, USERPASSWORD: e.target.value })} />
+        </FrmRow>
+      </FrmSet>
 
-      <fieldset className="fset">
-        <legend><Icon name="lock" size={14} /> Password</legend>
-        <div className="fset-grid">
-          <label>Password<input className="input" type="password" value={form.USERPASSWORD || ''} onChange={(e) => setForm({ ...form, USERPASSWORD: e.target.value })} /></label>
-        </div>
-      </fieldset>
-
-      <fieldset className="fset">
-        <legend><Icon name="dept" size={14} /> Department Access</legend>
+      <FrmSet legend="Department Access" icon="dept" columns={1}>
         <div className="modal-toolbar">
           <Btn icon="add" onClick={addDept}>Tambah Department</Btn>
           {depts.length > 0 && <Btn className="danger" icon="eraser" onClick={() => setDepts([])}>Clear</Btn>}
+          <span className="spacer" />
+          <span className="loading-hint">{depts.length} department</span>
         </div>
         <div className="table-wrap">
           <table className="grid">
-            <thead><tr><th>Kode</th><th>Department</th><th style={{ width: 90 }} /></tr></thead>
+            <thead><tr><th>Kode</th><th>Department</th><th style={{ width: 44 }} /></tr></thead>
             <tbody>
               {depts.map((d) => (
                 <tr key={d.DEPTCODE}>
                   <td>{d.DEPTCODE}</td>
                   <td>{d.DEPTNAME}</td>
-                  <td><Btn className="danger btn-sm" iconOnly icon="del" title={`Hapus ${d.DEPTNAME}`} aria-label={`Hapus ${d.DEPTNAME}`} onClick={() => setDepts(depts.filter((x) => x.DEPTCODE !== d.DEPTCODE))} /></td>
+                  <td>
+                    <Btn className="danger btn-sm" iconOnly icon="del" title={`Hapus ${d.DEPTNAME}`} aria-label={`Hapus ${d.DEPTNAME}`} onClick={() => setDepts(depts.filter((x) => x.DEPTCODE !== d.DEPTCODE))} />
+                  </td>
                 </tr>
               ))}
               {!depts.length && <EmptyRow colSpan={3} />}
             </tbody>
           </table>
         </div>
-      </fieldset>
-
-      <div className="modal-foot">
-        <Btn className="primary" icon="save" disabled={busy} onClick={save}>Save User</Btn>
-        <Btn icon="close" onClick={close}>Batal</Btn>
-      </div>
-    </>
+      </FrmSet>
+    </Window>
   );
 }

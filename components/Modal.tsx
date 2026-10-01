@@ -10,7 +10,11 @@ type ModalCtx = {
 const Ctx = createContext<ModalCtx | null>(null);
 
 // Pengganti Ext.window.Window modal: backdrop, tutup via klik area luar atau ESC.
-// Bertumpuk (stack) supaya popup di atas modal utama tidak menghapus isinya.
+// Stack supaya popup di atas window utama tidak menghapus isinya.
+//
+// Node di-render apa adanya — pemanggil memakai <Window> (components/Window.tsx)
+// yang sudah membawa ukuran + markup window-nya sendiri, seperti FRM di
+// langit_v2 yang mendefinisikan width/height di dalam file FRM-nya.
 export function ModalProvider({ children }: { children: React.ReactNode }) {
   const [stack, setStack] = useState<React.ReactNode[]>([]);
 
@@ -28,13 +32,8 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     <Ctx.Provider value={{ open, close, depth: stack.length }}>
       {children}
       {stack.map((node, i) => (
-        <div
-          key={i}
-          className="modal-wrap"
-          style={{ zIndex: 50 + i }}
-          onClick={i === stack.length - 1 ? close : undefined}
-        >
-          <div className="modal" onClick={(e) => e.stopPropagation()}>{node}</div>
+        <div key={i} className="modal-layer" style={{ zIndex: 50 + i }} onClick={close}>
+          {node}
         </div>
       ))}
     </Ctx.Provider>

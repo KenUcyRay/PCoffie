@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useLastLoginPrefill } from '@/lib/auth';
 import { Btn, Icon } from './Icon';
+import { Window, FrmRow } from './Window';
 
 // Tiruan LoginExpired.js: dialog di atas shell (bukan pindah halaman),
 // dengan prefill user login terakhir dan resume bila user sama.
@@ -45,20 +46,29 @@ export default function ExpiredDialog() {
   };
 
   return (
-    <div className="modal-wrap">
-      <form onSubmit={submit} className="modal">
-        <div className="modal-head"><Icon name="lock" size={17} /> Login Kembali</div>
-        <div className="toast-err alert-inline"><Icon name="alertCircle" size={17} /><span>Sesi login sudah habis. Silakan login kembali.</span></div>
-        {err && <div className="toast-err alert-inline"><Icon name="alertCircle" size={17} /><span>{err}</span></div>}
-        <label>User Login</label>
-        <input className="input" value={userlogin || profile?.USERLOGIN || ''} onChange={(e) => setUserlogin(e.target.value)} autoFocus />
-        <label>Password</label>
-        <input className="input" type="password" value={userpassword} onChange={(e) => setUserpassword(e.target.value)} />
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Btn className="primary" type="submit" icon="login" disabled={busy}>{busy ? 'Memproses...' : 'Login'}</Btn>
+    <Window
+      title="Login Kembali"
+      icon="lock"
+      width="420px"
+      footer={
+        <>
+          <Btn className="primary" type="submit" form="expired-login-form" icon="login" disabled={busy}>
+            {busy ? 'Memproses...' : 'Login'}
+          </Btn>
           <Btn icon="logout" onClick={submitLogout}>Logout</Btn>
-        </div>
+        </>
+      }
+    >
+      <form id="expired-login-form" onSubmit={submit} className="frm">
+        <div className="toast-err alert-inline"><Icon name="alertCircle" size={16} /><span>Sesi login sudah habis. Silakan login kembali.</span></div>
+        {err && <div className="toast-err alert-inline"><Icon name="alertCircle" size={16} /><span>{err}</span></div>}
+        <FrmRow label="User Login">
+          <input className="input" value={userlogin || profile?.USERLOGIN || ''} onChange={(e) => setUserlogin(e.target.value)} autoFocus />
+        </FrmRow>
+        <FrmRow label="Password">
+          <input className="input" type="password" value={userpassword} onChange={(e) => setUserpassword(e.target.value)} />
+        </FrmRow>
       </form>
-    </div>
+    </Window>
   );
 }

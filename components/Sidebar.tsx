@@ -327,9 +327,8 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'App 
           </button>
         </div>
 
-        {/* NAV */}
+        {/* NAV — Home dulu, baru label grup "Menu", lalu modul-grupnya */}
         <nav className="sb-nav">
-          <div className="sb-group-label">Menu</div>
           <ul className="sb-list">
             <li className="sb-node">
               <button
@@ -344,6 +343,7 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'App 
               </button>
             </li>
           </ul>
+          <div className="sb-group-label">Menu</div>
           {renderLevel(nodes, 0)}
           {!nodes.length && (
             <p className="sb-empty"><Icon name="navStack" size={16} /> Belum ada menu.</p>
@@ -386,7 +386,7 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'App 
             aria-label={`Menu user ${displayName}`}
             onClick={() => setPopOpen((v) => !v)}
           >
-            <span className="sb-avatar">{initials}</span>
+            <span className="sb-avcol"><span className="sb-avatar">{initials}</span></span>
             <span className="sb-pinfo">
               <b>{displayName}</b>
               <small>{loginLabel}</small>

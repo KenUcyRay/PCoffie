@@ -62,7 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .sb-collapsed .sb-appname { opacity: 0; }
           .sb-nav { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 4px 12px 12px; }
           .sb-group-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #64748b; padding: 12px 0 6px; white-space: nowrap; opacity: 1; transition: opacity 180ms ease; }
-          .sb-collapsed .sb-group-label { opacity: 0; }
+          .sb-collapsed .sb-group-label { display: none; }
           .sb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
           .sb-sub-inner .sb-list { padding-left: 20px; margin-left: 20px; border-left: 1px solid rgba(255,255,255,.09); }
           .sb-node { display: block; }
@@ -75,15 +75,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .sb-label { flex: 1; min-width: 0; padding-right: 10px; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 1; transition: opacity 180ms ease; }
           .sb-chev { width: 22px; flex: none; margin-right: 8px; display: inline-flex; align-items: center; justify-content: center; color: #64748b; opacity: 1; transition: transform 220ms cubic-bezier(.4,0,.2,1), opacity 180ms ease; }
           .sb-item.open .sb-chev { transform: rotate(180deg); color: #94a3b8; }
-          .sb-collapsed .sb-label, .sb-collapsed .sb-chev, .sb-collapsed .sb-pinfo, .sb-collapsed .sb-pchev { opacity: 0; }
+          .sb-collapsed .sb-label, .sb-collapsed .sb-chev { opacity: 0; }
+          .sb-collapsed .sb-pinfo, .sb-collapsed .sb-pchev { display: none; }
           .sb-sub { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 220ms cubic-bezier(.4,0,.2,1); }
           .sb-sub.open { grid-template-rows: 1fr; }
           .sb-sub-inner { overflow: hidden; }
           .sb-collapsed .sb-sub { display: none; }
           .sb-empty { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; padding: 0 10px; font-size: 12px; color: #64748b; white-space: nowrap; }
           .sb-foot { position: relative; flex: none; border-top: 1px solid rgba(255,255,255,.07); padding: 10px 12px; }
-          .sb-profile { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px; border: 0; border-radius: 10px; background: transparent; color: inherit; text-align: left; cursor: pointer; overflow: hidden; }
+          .sb-profile { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 0; border: 0; border-radius: 10px; background: transparent; color: inherit; text-align: left; cursor: pointer; overflow: hidden; }
           .sb-profile:hover { background: rgba(255,255,255,.06); }
+          .sb-avcol { width: 40px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
           .sb-avatar { width: 36px; height: 36px; flex: none; border-radius: 50%; background: linear-gradient(135deg,#3b82f6,#8b5cf6); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; letter-spacing: .02em; }
           .sb-pinfo { flex: 1; min-width: 0; display: grid; gap: 2px; opacity: 1; transition: opacity 180ms ease; }
           .sb-pinfo b { font-size: 13px; font-weight: 700; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

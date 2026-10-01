@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import Shell from './Shell';
+import { Icon } from './Icon';
+import { PageHead } from './Page';
 
 // Resolusi menu ala langit_v2 (resolveStandardLeafClass):
 // MCONTROL -> folder app/<mcontrol>/<mcontrol>.tsx (default export = mainpage).
@@ -51,20 +53,38 @@ export default function MenuHost({ mcontrol }: { mcontrol: string }) {
   if (state === 'missing') {
     return (
       <Shell title={title}>
+        <PageHead
+          icon="alertCircle"
+          title="Halaman belum dibuat"
+          subtitle={`menu Control: ${mcontrol} tidak ditemukan`}
+        />
         <div className="card">
-          <h2 style={{ marginTop: 0 }}>menu Control: {mcontrol} tidak ditemukan</h2>
-          <p style={{ color: '#475569' }}>
-            Menu ini sudah punya hak akses (CPMENUACCESS), tetapi halaman-nya belum dibuat.
-            Buat folder <code>app/{mcontrol}/</code> berisi <code>{mcontrol}.tsx</code> (mainpage),
-            <code> C{mcontrol}.ts</code> (controller), dan <code>GRID{mcontrol}.tsx</code> / <code>FRM{mcontrol}.tsx</code>.
-          </p>
+          <div className="card-body">
+            <p className="empty-hint">
+              <Icon name="info" size={16} />
+              Menu ini sudah punya hak akses (CPMENUACCESS), tetapi halaman-nya belum dibuat di repo.
+            </p>
+            <p>
+              Buat folder <code>app/{mcontrol}/</code> berisi <code>{mcontrol}.tsx</code> (mainpage, default export),
+              <code> C{mcontrol}.ts</code> (controller), <code>GRID{mcontrol}.tsx</code> / <code>FRM{mcontrol}.tsx</code>,
+              lalu salin <code>templates/menu/</code> sebagai titik awal.
+            </p>
+          </div>
         </div>
       </Shell>
     );
   }
 
   if (state === 'loading' || !Comp) {
-    return <Shell title={title}><div className="card">Memuat…</div></Shell>;
+    return (
+      <Shell title={title}>
+        <div className="card">
+          <div className="card-body">
+            <span className="loading-hint"><Icon name="loading" size={16} className="spin" /> Memuat…</span>
+          </div>
+        </div>
+      </Shell>
+    );
   }
 
   return (

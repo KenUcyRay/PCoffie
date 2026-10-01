@@ -50,19 +50,21 @@ export default function FRMlist_department({ onSelect }: { onSelect: (rows: Dept
         </span>
         <Btn className="primary" icon="check" onClick={choose} disabled={!sel.size}>Pilih Department</Btn>
       </div>
-      <table className="grid">
-        <thead><tr><th style={{ width: 36 }} /><th>Kode</th><th>Department</th></tr></thead>
-        <tbody>
-          {shown.map((r) => (
-            <tr key={r.DEPTCODE}>
-              <td><input type="checkbox" checked={sel.has(r.DEPTCODE)} onChange={(e) => toggle(r.DEPTCODE, e.target.checked)} /></td>
-              <td>{r.DEPTCODE}</td>
-              <td>{r.DEPTNAME}</td>
-            </tr>
-          ))}
-          {!shown.length && <EmptyRow colSpan={3} />}
-        </tbody>
-      </table>
+      <div className="table-wrap">
+        <table className="grid">
+          <thead><tr><th style={{ width: 36 }} /><th>Kode</th><th>Department</th></tr></thead>
+          <tbody>
+            {shown.map((r) => (
+              <tr key={r.DEPTCODE}>
+                <td><input type="checkbox" checked={sel.has(r.DEPTCODE)} onChange={(e) => toggle(r.DEPTCODE, e.target.checked)} /></td>
+                <td>{r.DEPTCODE}</td>
+                <td>{r.DEPTNAME}</td>
+              </tr>
+            ))}
+            {!shown.length && <EmptyRow colSpan={3} />}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

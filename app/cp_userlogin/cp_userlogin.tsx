@@ -6,6 +6,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import { Btn } from '@/components/Icon';
+import { PageHead } from '@/components/Page';
 import { init as controller_init, btrefresh_click, btnew_click } from './Ccp_userlogin';
 import GRIDcp_userlogin, { type GridApi } from './GRIDcp_userlogin';
 
@@ -16,15 +17,23 @@ export default function cp_userlogin() {
   useEffect(() => { controller_init(); }, []);
 
   return (
-    <div className="card">
-      {/* dockedItems: toolbar atas */}
-      <div className="toolbar">
-        <Btn pid="btrefresh" icon="refresh" title="Refresh Data" onClick={() => btrefresh_click(grid.current)}>Refresh</Btn>
-        <Btn pid="btnew" className="primary" icon="add" onClick={() => btnew_click(grid.current)}>Create User</Btn>
-      </div>
+    <>
+      <PageHead
+        icon="user"
+        title="User Login"
+        subtitle="Kelola akun user login beserta group dan status aktifnya."
+      />
 
-      {/* items: grid (isi data, paging, dan action column) */}
-      <GRIDcp_userlogin ref={grid} />
-    </div>
+      <div className="card">
+        {/* dockedItems: toolbar atas */}
+        <div className="toolbar">
+          <Btn pid="btrefresh" icon="refresh" title="Refresh Data" onClick={() => btrefresh_click(grid.current)}>Refresh</Btn>
+          <Btn pid="btnew" className="primary" icon="add" onClick={() => btnew_click(grid.current)}>Create User</Btn>
+        </div>
+
+        {/* items: grid (isi data, paging, dan action column) */}
+        <GRIDcp_userlogin ref={grid} />
+      </div>
+    </>
   );
 }

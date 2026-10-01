@@ -85,13 +85,15 @@ export default function FRMprofile_user() {
 
       <fieldset className="fset">
         <legend><Icon name="dept" size={14} /> Department Access</legend>
-        <table className="grid">
-          <thead><tr><th>Kode</th><th>Department</th></tr></thead>
-          <tbody>
-            {depts.map((d) => <tr key={d.DEPTCODE}><td>{d.DEPTCODE}</td><td>{d.DEPTNAME}</td></tr>)}
-            {!depts.length && <EmptyRow colSpan={2} />}
-          </tbody>
-        </table>
+        <div className="table-wrap">
+          <table className="grid">
+            <thead><tr><th>Kode</th><th>Department</th></tr></thead>
+            <tbody>
+              {depts.map((d) => <tr key={d.DEPTCODE}><td>{d.DEPTCODE}</td><td>{d.DEPTNAME}</td></tr>)}
+              {!depts.length && <EmptyRow colSpan={2} />}
+            </tbody>
+          </table>
+        </div>
       </fieldset>
 
       <div className="modal-foot">

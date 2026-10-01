@@ -120,7 +120,7 @@ const GRIDcp_usergroup = forwardRef<GridApi, Props>(function GRIDcp_usergroup(
   return (
     <div className="grid-box">
       {/* tbar ala ExtJS */}
-      <div className="toolbar" style={{ marginTop: 10 }}>
+      <div className="toolbar">
         <span className="field-with-icon">
           <Icon name="search" size={15} />
           <input
@@ -136,36 +136,38 @@ const GRIDcp_usergroup = forwardRef<GridApi, Props>(function GRIDcp_usergroup(
         {loading && <span className="loading-hint"><Icon name="loading" size={14} className="spin" /> Memuat…</span>}
       </div>
 
-      <table className="grid" style={{ marginTop: 10, minWidth: 0 }}>
-        <thead><tr><th style={{ width: 40 }}>#</th><th>Group</th><th style={{ width: 70 }} /></tr></thead>
-        <tbody>
-          {groups.map((g, i) => (
-            <tr key={g.DEFCODE} style={selected?.DEFCODE === g.DEFCODE ? { background: '#eff6ff' } : undefined}>
-              <td style={{ textAlign: 'right', color: '#64748b' }}>{startRow + i + 1}</td>
-              <td><a href="#" onClick={(e) => { e.preventDefault(); select(g); }}>{g.DEFCODE}</a></td>
-              <td>
-                <Btn
-                  className="danger btn-sm"
-                  iconOnly
-                  icon="del"
-                  title={`Hapus group ${g.DEFCODE}`}
-                  aria-label={`Hapus group ${g.DEFCODE}`}
-                  onClick={() => remove(g)}
-                />
-              </td>
-            </tr>
-          ))}
-          {!groups.length && <EmptyRow colSpan={3} loading={loading} />}
-        </tbody>
-      </table>
+      <div className="table-wrap">
+        <table className="grid">
+          <thead><tr><th style={{ width: 40 }}>#</th><th>Group</th><th style={{ width: 70 }} /></tr></thead>
+          <tbody>
+            {groups.map((g, i) => (
+              <tr key={g.DEFCODE} style={selected?.DEFCODE === g.DEFCODE ? { background: '#eff6ff' } : undefined}>
+                <td className="grid-num">{startRow + i + 1}</td>
+                <td><a href="#" onClick={(e) => { e.preventDefault(); select(g); }}>{g.DEFCODE}</a></td>
+                <td>
+                  <Btn
+                    className="danger btn-sm"
+                    iconOnly
+                    icon="del"
+                    title={`Hapus group ${g.DEFCODE}`}
+                    aria-label={`Hapus group ${g.DEFCODE}`}
+                    onClick={() => remove(g)}
+                  />
+                </td>
+              </tr>
+            ))}
+            {!groups.length && <EmptyRow colSpan={3} loading={loading} />}
+          </tbody>
+        </table>
+      </div>
 
       {/* bbar ala ExtJS */}
-      <div className="toolbar" style={{ marginTop: 10, justifyContent: 'flex-end' }}>
-        <span style={{ color: '#64748b', fontSize: 13 }}>
+      <div className="toolbar bbar">
+        <span className="count">
           {total === 0 ? '0 data' : `${startRow + 1}–${Math.min(startRow + PAGE_SIZE, total)} dari ${total}`}
         </span>
         <Btn icon="prev" disabled={page <= 0} onClick={() => load({ page: page - 1 })}>Prev</Btn>
-        <span style={{ fontSize: 13 }}>{page + 1}/{totalPages}</span>
+        <span className="pageinfo">{page + 1}/{totalPages}</span>
         <Btn icon="next" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => load({ page: page + 1 })}>Next</Btn>
       </div>
     </div>

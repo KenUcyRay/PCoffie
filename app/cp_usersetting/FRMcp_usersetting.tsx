@@ -122,19 +122,21 @@ export default function FRMcp_usersetting({
           <Btn icon="add" onClick={addDept}>Tambah Department</Btn>
           {depts.length > 0 && <Btn className="danger" icon="eraser" onClick={() => setDepts([])}>Clear</Btn>}
         </div>
-        <table className="grid">
-          <thead><tr><th>Kode</th><th>Department</th><th style={{ width: 90 }} /></tr></thead>
-          <tbody>
-            {depts.map((d) => (
-              <tr key={d.DEPTCODE}>
-                <td>{d.DEPTCODE}</td>
-                <td>{d.DEPTNAME}</td>
-                <td><Btn className="danger btn-sm" iconOnly icon="del" title={`Hapus ${d.DEPTNAME}`} aria-label={`Hapus ${d.DEPTNAME}`} onClick={() => setDepts(depts.filter((x) => x.DEPTCODE !== d.DEPTCODE))} /></td>
-              </tr>
-            ))}
-            {!depts.length && <EmptyRow colSpan={3} />}
-          </tbody>
-        </table>
+        <div className="table-wrap">
+          <table className="grid">
+            <thead><tr><th>Kode</th><th>Department</th><th style={{ width: 90 }} /></tr></thead>
+            <tbody>
+              {depts.map((d) => (
+                <tr key={d.DEPTCODE}>
+                  <td>{d.DEPTCODE}</td>
+                  <td>{d.DEPTNAME}</td>
+                  <td><Btn className="danger btn-sm" iconOnly icon="del" title={`Hapus ${d.DEPTNAME}`} aria-label={`Hapus ${d.DEPTNAME}`} onClick={() => setDepts(depts.filter((x) => x.DEPTCODE !== d.DEPTCODE))} /></td>
+                </tr>
+              ))}
+              {!depts.length && <EmptyRow colSpan={3} />}
+            </tbody>
+          </table>
+        </div>
       </fieldset>
 
       <div className="modal-foot">

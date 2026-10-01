@@ -354,7 +354,52 @@ Tambahan: di mobile tombol burger hanya ada di top bar halaman
 supaya tidak ada dua tombol toggle. `DesktopShell` (mode_desktop) masih memakai
 `MenuTree` +Start menu seperti sebelumnya.
 
-## 8. Catatan teknis
+## 8. Area kerja (tampilan)
+
+Semua komponen area kerja punya design token + class bersama di
+`app/layout.tsx` (inline `<style>`). Menu baru **tidak** perlu CSS sendiri —
+pakai pola yang sama dengan `templates/menu/`.
+
+### Token
+
+Semua warna/jari radii/shadow ada di blok `:root` (`--bg`, `--surface`,
+`--border`, `--text`, `--muted`, `--brand`, `--r-lg`, `--sh`, `--h-ctl`, …).
+Ubah di satu tempat untuk mengubah seluruh tampilan.
+
+### Komponen bersama
+
+| Komponen | Class | Dipakai di |
+|---|---|---|
+| Judul halaman | `<PageHead title subtitle icon actions>` (`components/Page.tsx`) | semua mainpage + Home |
+| Judul/aksi dalam card | `<CardHead icon>` | panel sekunder |
+| Card | `.card` + `.card-body` | konten non-tabel |
+| Grid | `.grid-box` (toolbar + `.table-wrap` + `table.grid` + `.toolbar.bbar`) | semua GRID |
+| Tombol | `<Btn icon iconOnly className>` | semua tombol |
+| Empty state | `<EmptyRow colSpan loading message>` | semua GRID |
+| Status pill | `.badge.ok` / `.badge.off` | kolom status |
+
+### Pola halaman menu (mainpage)
+
+```tsx
+<PageHead icon="user" title="User Login" subtitle="Kelola akun user login." />
+<div className="card">
+  <div className="toolbar">
+    <Btn pid="btrefresh" icon="refresh" onClick={() => btrefresh_click(grid.current)}>Refresh</Btn>
+    <Btn pid="btnew" className="primary" icon="add" onClick={() => btnew_click(grid.current)}>Create</Btn>
+  </div>
+  <GRID<mcontrol> ref={grid} />
+</div>
+```
+
+`.card { padding: 0 }`, jadi **isi card bukan tabel wajib dibungkus
+`.card-body`** (atau `.grid-box`). Toolbar pertama di dalam card/grid-box
+automatis dapat padding + garis bawah; toolbar terakhir (`bbar`) dapat padding
++ garis atas — jadi **hapus `style={{ marginTop: 10 }}`** dari toolbar.
+
+Tabel wajib dibungkus `<div className="table-wrap">` supaya bisa scroll
+horizontal sendiri tanpa bikin halaman ikut melebar.
+
+## 9. Catatan teknis
 
 - **Jangan `next build` saat `next dev` sedang berjalan.** Keduanya berbagi
   folder `.next`; build akan menimpanya dan dev server jadi error
@@ -366,6 +411,8 @@ supaya tidak ada dua tombol toggle. `DesktopShell` (mode_desktop) masih memakai
   dijauhi: child selector (`.a .b`), `content: ""`, dan `content: ''`.
   Untuk garis indikator item aktif, pakai `box-shadow: inset 3px 0 0 #3b82f6`
   sebagai pengganti `content: ""` + `::before`.
+  CSS di file `.css` eksternal boleh; aturan 5 karakter itu hanya untuk
+  `<style>` inline.
 - Semua icon memakai **Tabler Icons** lewat registry tunggal
   `components/Icon.tsx` (`<Icon name="..."/>` dan `<Btn icon="...">`).
   Tidak ada lagi ikon unicode/emoji/teks.

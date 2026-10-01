@@ -108,7 +108,7 @@ const GRIDcp_userlogin = forwardRef<GridApi>(function GRIDcp_userlogin(_props, r
   return (
     <div className="grid-box">
       {/* tbar ala ExtJS */}
-      <div className="toolbar" style={{ marginTop: 10 }}>
+      <div className="toolbar">
         <span className="field-with-icon">
           <Icon name="search" size={15} />
           <input
@@ -124,43 +124,47 @@ const GRIDcp_userlogin = forwardRef<GridApi>(function GRIDcp_userlogin(_props, r
         {loading && <span className="loading-hint"><Icon name="loading" size={14} className="spin" /> Memuat…</span>}
       </div>
 
-      <table className="grid" style={{ marginTop: 10 }}>
-        <thead>
-          <tr>
-            <th style={{ width: 44 }}>#</th>
-            <th style={{ width: 44 }} />
-            <th style={{ width: 44 }} />
-            <th>User Login</th>
-            <th>User Name</th>
-            <th>Group</th>
-            <th>Email</th>
-            <th>Aktif</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u, i) => (
-            <tr key={u.USERID ?? u.USERLOGIN}>
-              <td style={{ textAlign: 'right', color: '#64748b' }}>{startRow + i + 1}</td>
-              <td><Btn className="danger btn-sm" iconOnly icon="del" title={`Delete ${u.USERLOGIN}`} aria-label={`Delete ${u.USERLOGIN}`} onClick={() => remove(u)} /></td>
-              <td><Btn className="btn-sm" iconOnly icon="edit" title={`Edit ${u.USERLOGIN}`} aria-label={`Edit ${u.USERLOGIN}`} onClick={() => edit(u)} /></td>
-              <td>{u.USERLOGIN}</td>
-              <td>{u.USERNAME}</td>
-              <td>{u.USERGROUP}</td>
-              <td>{u.USEREMAIL}</td>
-              <td>{u.USERACTIVE}</td>
+      <div className="table-wrap">
+        <table className="grid">
+          <thead>
+            <tr>
+              <th style={{ width: 44 }}>#</th>
+              <th style={{ width: 44 }} />
+              <th style={{ width: 44 }} />
+              <th>User Login</th>
+              <th>User Name</th>
+              <th>Group</th>
+              <th>Email</th>
+              <th>Aktif</th>
             </tr>
-          ))}
-          {!users.length && <EmptyRow colSpan={8} loading={loading} />}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((u, i) => (
+              <tr key={u.USERID ?? u.USERLOGIN}>
+                <td className="grid-num">{startRow + i + 1}</td>
+                <td><Btn className="danger btn-sm" iconOnly icon="del" title={`Delete ${u.USERLOGIN}`} aria-label={`Delete ${u.USERLOGIN}`} onClick={() => remove(u)} /></td>
+                <td><Btn className="btn-sm" iconOnly icon="edit" title={`Edit ${u.USERLOGIN}`} aria-label={`Edit ${u.USERLOGIN}`} onClick={() => edit(u)} /></td>
+                <td>{u.USERLOGIN}</td>
+                <td>{u.USERNAME}</td>
+                <td>{u.USERGROUP}</td>
+                <td>{u.USEREMAIL}</td>
+                <td>
+                  <span className={u.USERACTIVE === 'YES' ? 'badge ok' : 'badge off'}>{u.USERACTIVE}</span>
+                </td>
+              </tr>
+            ))}
+            {!users.length && <EmptyRow colSpan={8} loading={loading} />}
+          </tbody>
+        </table>
+      </div>
 
       {/* bbar ala ExtJS: paging toolbar */}
-      <div className="toolbar" style={{ marginTop: 10, justifyContent: 'flex-end' }}>
-        <span style={{ color: '#64748b', fontSize: 13 }}>
+      <div className="toolbar bbar">
+        <span className="count">
           {total === 0 ? '0 data' : `${startRow + 1}–${Math.min(startRow + PAGE_SIZE, total)} dari ${total}`}
         </span>
         <Btn icon="prev" disabled={page <= 0} onClick={() => load({ page: page - 1 })}>Prev</Btn>
-        <span style={{ fontSize: 13 }}>{page + 1}/{totalPages}</span>
+        <span className="pageinfo">{page + 1}/{totalPages}</span>
         <Btn icon="next" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => load({ page: page + 1 })}>Next</Btn>
       </div>
     </div>

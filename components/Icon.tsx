@@ -12,7 +12,7 @@ import {
   IconSearch, IconDownload, IconX, IconMenu2, IconHome, IconUser,
   IconUsers, IconLogout, IconLayoutGrid, IconChevronDown, IconChevronRight,
   IconFilter, IconLock, IconKey, IconBuilding, IconTable,
-  IconChevronLeft, IconCheck, IconBox, IconSettings,
+  IconChevronLeft, IconCheck, IconBox, IconSettings, IconAlertTriangle,
   // tambahan: semantik per-fungsi (bukan satu ikon untuk semua kebutuhan)
   IconMinus, IconEraser, IconUserCircle,
   IconArrowRight, IconArrowLeft, IconCircleCheck, IconAlertCircle,
@@ -21,7 +21,7 @@ import {
   IconLogin, IconAddressBook, IconForms, IconWorld, IconChartBar,
   // sidebar & navigasi
   IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand,
-  IconApps, IconSelect, IconFolderOpen, IconStack, IconSitemap,
+  IconApps, IconSelect, IconFolderOpen, IconStack, IconSitemap, IconInfoCircle,
   type Icon as TablerIcon,
 } from '@tabler/icons-react';
 
@@ -34,7 +34,8 @@ export type IconName =
   | 'alertCircle' | 'dashboard' | 'empty' | 'report' | 'history'
   | 'calendar' | 'view' | 'mail' | 'upload' | 'loading' | 'sortAsc'
   | 'login' | 'contacts' | 'form' | 'world' | 'chart'
-  | 'panel' | 'panelOpen' | 'apps' | 'select' | 'folderOpen' | 'navStack' | 'sitemap';
+  | 'panel' | 'panelOpen' | 'apps' | 'select' | 'folderOpen' | 'navStack' | 'sitemap'
+  | 'info' | 'alert';
 
 // Satu tempat untuk ganti/tambah icon — mirip daftar iconCls di langit_v2.
 const ICONS: Record<IconName, TablerIcon> = {
@@ -97,6 +98,8 @@ const ICONS: Record<IconName, TablerIcon> = {
   folderOpen: IconFolderOpen,
   navStack: IconStack,
   sitemap: IconSitemap,
+  info: IconInfoCircle,
+  alert: IconAlertTriangle,
 };
 
 export function iconForModule(code: string): IconName {

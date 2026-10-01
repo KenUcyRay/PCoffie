@@ -104,7 +104,7 @@ const GRIDmod = forwardRef<GridApi>(function GRIDmod(_props, ref) {
   return (
     <div className="grid-box">
       {/* tbar ala ExtJS */}
-      <div className="toolbar" style={{ marginTop: 10 }}>
+      <div className="toolbar">
         <span className="field-with-icon">
           <Icon name="search" size={15} />
           <input
@@ -120,37 +120,39 @@ const GRIDmod = forwardRef<GridApi>(function GRIDmod(_props, ref) {
         {loading && <span className="loading-hint"><Icon name="loading" size={14} className="spin" /> Memuat…</span>}
       </div>
 
-      <table className="grid" style={{ marginTop: 10 }}>
-        <thead>
-          <tr>
-            <th style={{ width: 44 }}>#</th>
-            <th style={{ width: 44 }} />
-            <th style={{ width: 44 }} />
-            <th>Kode</th>
-            <th>Nama</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={r.KODE}>
-              <td style={{ textAlign: 'right', color: '#64748b' }}>{startRow + i + 1}</td>
-              <td><Btn className="danger btn-sm" iconOnly icon="del" title={`Delete ${r.KODE}`} aria-label={`Delete ${r.KODE}`} onClick={() => remove(r)} /></td>
-              <td><Btn className="btn-sm" iconOnly icon="edit" title={`Edit ${r.KODE}`} aria-label={`Edit ${r.KODE}`} onClick={() => edit(r)} /></td>
-              <td>{r.KODE}</td>
-              <td>{r.NAMA}</td>
+      <div className="table-wrap">
+        <table className="grid">
+          <thead>
+            <tr>
+              <th style={{ width: 44 }}>#</th>
+              <th style={{ width: 44 }} />
+              <th style={{ width: 44 }} />
+              <th>Kode</th>
+              <th>Nama</th>
             </tr>
-          ))}
-          {!rows.length && <EmptyRow colSpan={5} loading={loading} />}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={r.KODE}>
+                <td className="grid-num">{startRow + i + 1}</td>
+                <td><Btn className="danger btn-sm" iconOnly icon="del" title={`Delete ${r.KODE}`} aria-label={`Delete ${r.KODE}`} onClick={() => remove(r)} /></td>
+                <td><Btn className="btn-sm" iconOnly icon="edit" title={`Edit ${r.KODE}`} aria-label={`Edit ${r.KODE}`} onClick={() => edit(r)} /></td>
+                <td>{r.KODE}</td>
+                <td>{r.NAMA}</td>
+              </tr>
+            ))}
+            {!rows.length && <EmptyRow colSpan={5} loading={loading} />}
+          </tbody>
+        </table>
+      </div>
 
       {/* bbar ala ExtJS: paging toolbar */}
-      <div className="toolbar" style={{ marginTop: 10, justifyContent: 'flex-end' }}>
-        <span style={{ color: '#64748b', fontSize: 13 }}>
+      <div className="toolbar bbar">
+        <span className="count">
           {total === 0 ? '0 data' : `${startRow + 1}–${Math.min(startRow + PAGE_SIZE, total)} dari ${total}`}
         </span>
         <Btn icon="prev" disabled={page <= 0} onClick={() => load({ page: page - 1 })}>Prev</Btn>
-        <span style={{ fontSize: 13 }}>{page + 1}/{totalPages}</span>
+        <span className="pageinfo">{page + 1}/{totalPages}</span>
         <Btn icon="next" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => load({ page: page + 1 })}>Next</Btn>
       </div>
     </div>

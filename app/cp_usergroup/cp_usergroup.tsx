@@ -10,6 +10,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import { Btn } from '@/components/Icon';
+import { PageHead } from '@/components/Page';
 import { init as controller_init, btrefresh_click, btnew_click } from './Ccp_usergroup';
 import GRIDcp_usergroup, { type GridApi } from './GRIDcp_usergroup';
 import FRMcp_usergroup, { type AksesApi } from './FRMcp_usergroup';
@@ -22,18 +23,26 @@ export default function cp_usergroup() {
   useEffect(() => { controller_init(); }, []);
 
   return (
-    <div className="two-col">
-      <div className="card">
-        <div className="toolbar">
-          <Btn pid="btrefresh" icon="refresh" title="Refresh Data" onClick={() => btrefresh_click(grid.current)}>Refresh</Btn>
-          <Btn pid="btnew" className="primary" icon="add" onClick={() => btnew_click(grid.current)}>Add Group</Btn>
-        </div>
-        <GRIDcp_usergroup ref={grid} aksesRef={akses} />
-      </div>
+    <>
+      <PageHead
+        icon="lock"
+        title="User Group"
+        subtitle="Kelola group user beserta hak akses menu per group."
+      />
 
-      <div className="card">
-        <FRMcp_usergroup ref={akses} />
+      <div className="two-col">
+        <div className="card">
+          <div className="toolbar">
+            <Btn pid="btrefresh" icon="refresh" title="Refresh Data" onClick={() => btrefresh_click(grid.current)}>Refresh</Btn>
+            <Btn pid="btnew" className="primary" icon="add" onClick={() => btnew_click(grid.current)}>Add Group</Btn>
+          </div>
+          <GRIDcp_usergroup ref={grid} aksesRef={akses} />
+        </div>
+
+        <div className="card">
+          <FRMcp_usergroup ref={akses} />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

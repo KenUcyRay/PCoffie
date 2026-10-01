@@ -175,37 +175,40 @@ const FRMcp_usergroup = forwardRef<AksesApi>(function FRMcp_usergroup(_props, re
   return (
     <div className="grid-box">
       {/* toolbar panel ini sendiri; handler-nya di controller */}
-      <div className="toolbar" style={{ marginBottom: 8 }}>
-        <b><Icon name="users" size={15} /> Group Setting: {group?.DEFCODE || '-'}</b>
+      <div className="toolbar">
+        <b className="panel-title"><Icon name="users" size={15} /> Group Setting: {group?.DEFCODE || '-'}</b>
+        <span className="spacer" />
         <Btn pid="btsave" className="primary" icon="save" disabled={!group} onClick={() => btsave_click(api)}>
           Save Group Setting
         </Btn>
       </div>
 
-      <label style={{ display: 'grid', gap: 4, fontSize: 13, color: '#475569', maxWidth: 320, marginBottom: 10 }}>
-        Group Name
-        <input className="input" value={group?.DEFCODE || ''} readOnly />
-      </label>
+      <div className="card-body">
+        <label className="form-field" style={{ maxWidth: 320 }}>
+          Group Name
+          <input className="input" value={group?.DEFCODE || ''} readOnly />
+        </label>
 
-      {menus.length > 0 && (
-        <span className="field-with-icon" style={{ maxWidth: 320, marginBottom: 8, display: 'inline-flex' }}>
-          <Icon name="filter" size={15} />
-          <input
-            className="input"
-            placeholder="Filter menu (nama/kode)"
-            value={treeFilter}
-            onChange={(e) => setTreeFilter(e.target.value)}
-          />
-        </span>
-      )}
+        {menus.length > 0 && (
+          <span className="field-with-icon" style={{ maxWidth: 320 }}>
+            <Icon name="filter" size={15} />
+            <input
+              className="input"
+              placeholder="Filter menu (nama/kode)"
+              value={treeFilter}
+              onChange={(e) => setTreeFilter(e.target.value)}
+            />
+          </span>
+        )}
 
-      {menus.length === 0 && (
-        <p className="empty-hint"><Icon name="users" size={16} /> Pilih group di sebelah kiri untuk melihat daftar menu.</p>
-      )}
-      {menus.length > 0 && visibleCodes && visibleCodes.size === 0 && (
-        <p className="empty-hint"><Icon name="filter" size={16} /> Tidak ada menu yang cocok dengan filter.</p>
-      )}
-      {menus.length > 0 && (isNarrow ? renderAccordion() : renderNodes(0))}
+        {menus.length === 0 && (
+          <p className="empty-hint"><Icon name="users" size={16} /> Pilih group di sebelah kiri untuk melihat daftar menu.</p>
+        )}
+        {menus.length > 0 && visibleCodes && visibleCodes.size === 0 && (
+          <p className="empty-hint"><Icon name="filter" size={16} /> Tidak ada menu yang cocok dengan filter.</p>
+        )}
+        {menus.length > 0 && (isNarrow ? renderAccordion() : renderNodes(0))}
+      </div>
     </div>
   );
 });

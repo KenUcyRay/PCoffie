@@ -67,8 +67,6 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-brand">
         <h1><Icon name="layout" size={34} /> App Core</h1>
-        <p>Login, User Group &amp; User Setting.</p>
-        <p style={{ color: '#93c5fd', fontSize: 13 }}>Mode Standard &amp; Mobile.</p>
       </div>
       <div className="login-form-wrap">
         <Suspense fallback={<div>Memuat…</div>}>

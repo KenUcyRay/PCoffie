@@ -98,7 +98,11 @@ class Mlogin extends Model
 
         $result = DB::select($SQL_CALLSP, $data);
 
+        $typed = trim((string) ($params['userlogin'] ?? ''));
+
         if (!empty($result) && $result[0]->success === 'true') {
+            LoginTrail::record('SUCCESS', $typed);
+
             $cpUserJWT = new userJWT($data[0], $data[1]);
             $token = JWTAuth::fromUser($cpUserJWT);
 
@@ -112,6 +116,25 @@ class Mlogin extends Model
                 'profile' => self::unwrapProfile($result[0]->profile),
             ];
         } else {
+            // Alasan rinci HANYA untuk log (tidak dikirim ke pengguna).
+            // Urutan cek: user tidak ada -> nonaktif; mekanisme blokir akun/IP
+            // belum ada (dikerjakan di Blocked Access) — titik panggilnya di bawah.
+            $reason = 'WRONG_PASSWORD';
+            if ($typed === '') {
+                $reason = 'USER_NOT_FOUND';
+            } else {
+                $urow = DB::selectOne("SELECT USERACTIVE FROM CPUSER WHERE USERLOGIN = ?", [$typed]);
+                if (!$urow) {
+                    $reason = 'USER_NOT_FOUND';
+                } elseif (strtoupper(trim((string) ($urow->USERACTIVE ?? ''))) !== 'YES') {
+                    $reason = 'INACTIVE';
+                }
+            }
+            // TODO(blocked-access): bila akun/IP ini diblokir, catat BLOCKED/BLOCKED
+            // di sini (dan tolak login) tanpa mengubah pesan umum di bawah:
+            //   LoginTrail::record('BLOCKED', $typed, 'BLOCKED');
+            LoginTrail::record('FAILED', $typed, $reason);
+
             $hasil = [
                 'success' => 'false',
                 'message' => $result[0]->message ?? 'User atau Password salah..',

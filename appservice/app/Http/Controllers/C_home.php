@@ -58,11 +58,21 @@ class C_home extends Controller
 
     public function logout(Request $request)
     {
+        // Ambil user dari token SEBELUM invalidate (sesudahnya token mati).
+        // Catatan: hanya menambah pencatatan; respons dan perilaku tidak berubah.
+        $typed = '';
+        try {
+            $payload = JWTAuth::parseToken()->getPayload()->toArray();
+            $typed = (string) ($payload['sub'] ?? '');
+        } catch (\Exception $e) {
+            // token sudah invalid/expired: tetap catat (user kosong) di bawah
+        }
         try {
             JWTAuth::parseToken()->invalidate();
         } catch (\Exception $e) {
             // token sudah invalid/expired, anggap saja logout tetap sukses
         }
+        \App\Models\LoginTrail::record('LOGOUT', $typed);
 
         return response()->json([
             'success' => 'true',

@@ -25,10 +25,15 @@ export type Column<T = any> = {
   filter?: ColumnFilterType;
   /** opsi dropdown bila filter = 'select' */
   options?: readonly { value: string; label: string }[];
+  /** true = header bisa diklik untuk sorting server (perlu onSort) */
+  sortable?: boolean;
   render?: (row: T, index: number) => React.ReactNode;
 };
 
 export type Filters = Record<string, string>;
+
+/** Status sorting server. null = tanpa sorting (urutan default backend). */
+export type SortDir = { key: string; dir: 'ASC' | 'DESC' } | null;
 
 /** Nilai dropdown "tidak ada filter". */
 export const FILTER_ALL = '__ALL__';
@@ -77,6 +82,8 @@ export function DataTable<T>({
   rows,
   filters,
   onFilter,
+  sort,
+  onSort,
   startRow = 0,
   loading = false,
   emptyMessage,
@@ -88,6 +95,9 @@ export function DataTable<T>({
   filters: Filters;
   /** Dipanggil otomatis 300ms setelah user berhenti mengetik. */
   onFilter: (next: Filters) => void;
+  sort?: SortDir;
+  /** Dipanggil saat header sortable diklik. Tanpa ini kolom sortable tampil polos. */
+  onSort?: (next: SortDir) => void;
   startRow?: number;
   loading?: boolean;
   emptyMessage?: string;
@@ -113,20 +123,42 @@ export function DataTable<T>({
     timers.current[key] = setTimeout(() => onFilter(next), DEBOUNCE_MS);
   };
 
+  // Klik header: mati -> ASC -> DESC -> mati. Tanpa onSort, header tampil polos.
+  const cycleSort = (key: string) => {
+    if (!onSort) return;
+    if (!sort || sort.key !== key) onSort({ key, dir: 'ASC' });
+    else if (sort.dir === 'ASC') onSort({ key, dir: 'DESC' });
+    else onSort(null);
+  };
+
   return (
     <div className="table-wrap">
       <table className="grid">
         <thead>
           <tr>
-            {columns.map((c) => (
-              <th
-                key={c.key}
-                style={c.width ? { width: c.width } : undefined}
-                className={c.align === 'right' ? 'dt-right' : undefined}
-              >
-                {c.label}
-              </th>
-            ))}
+            {columns.map((c) => {
+              const active = !!sort && sort.key === c.key;
+              const canSort = !!c.sortable && !!onSort;
+              return (
+                <th
+                  key={c.key}
+                  style={c.width ? { width: c.width } : undefined}
+                  className={c.align === 'right' ? 'dt-right' : undefined}
+                  aria-sort={canSort ? (active ? (sort.dir === 'ASC' ? 'ascending' : 'descending') : 'none') : undefined}
+                >
+                  {canSort ? (
+                    <button type="button" className="dt-sortbtn" onClick={() => cycleSort(c.key)} title={`Urutkan ${c.label}`}>
+                      {c.label}
+                      <span className={`dt-sort${active ? ' on' : ''}`}>
+                        <Icon name="sortAsc" size={12} style={active && sort.dir === 'DESC' ? { transform: 'scaleY(-1)' } : undefined} />
+                      </span>
+                    </button>
+                  ) : (
+                    c.label
+                  )}
+                </th>
+              );
+            })}
           </tr>
           {/* baris filter per kolom data (langsung di bawah header) */}
           <tr className="dt-filter-row">

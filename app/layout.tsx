@@ -97,6 +97,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           select.dt-filter { padding-right: 4px; cursor: pointer; }
           table.grid tbody tr.dt-active td { background: var(--brand-soft); }
           .dt-actions { display: inline-flex; align-items: center; gap: 4px; }
+          .dt-sortbtn { background: transparent; border: 0; padding: 0; font: inherit; color: inherit; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+          .dt-sort { display: inline-flex; opacity: .35; }
+          .dt-sort.on { opacity: 1; color: var(--brand); }
+          .field-err { display: block; margin-top: 4px; font-size: 11.5px; color: var(--danger); font-weight: 600; }
           table.grid td.grid-num { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
           .toolbar.bbar { justify-content: flex-end; }
           .toolbar.bbar .count { color: var(--muted); font-size: 12px; }

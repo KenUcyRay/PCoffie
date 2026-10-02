@@ -282,6 +282,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .tree-caret { width: 14px; flex: none; color: #94a3b8; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; }
           .tree-caret.leaf { color: transparent; }
           .tree-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .akses-mods { display: grid; gap: 8px; }
+          .akses-mod { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; background: var(--surface); }
+          .akses-mod-head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+          .akses-mod-title { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 4px 2px; font-size: 13px; font-weight: 700; color: var(--text); cursor: pointer; text-align: left; }
+          .akses-mod-title svg { flex: none; color: var(--brand); }
+          .akses-count { margin-left: auto; flex: none; font-size: 11px; font-weight: 700; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
+          .akses-chev { flex: none; display: inline-flex; color: var(--muted); }
+          .akses-chev.closed svg { transform: rotate(-90deg); }
+          .akses-mod-body { padding: 6px 10px 10px; }
+          .akses-tree { list-style: none; margin: 0; padding-left: 20px; }
+          .akses-tree.root { padding-left: 0; }
+          .akses-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: var(--r-sm); font-size: 12.5px; color: var(--text); cursor: pointer; }
+          .akses-row:hover { background: var(--surface-2); }
+          .akses-row svg { flex: none; color: var(--muted); }
           .layout.desktop { min-height: 100vh; display: flex; flex-direction: column; background: linear-gradient(135deg,#0f172a,#1e293b 60%,#0b1220); }
           .desktop-area { flex: 1; position: relative; padding: 18px; overflow: hidden; }
           .desktop-window { position: absolute; inset: 18px 18px 18px 18px; display: flex; flex-direction: column; background: var(--bg); border: 1px solid #0f172a; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.45); }

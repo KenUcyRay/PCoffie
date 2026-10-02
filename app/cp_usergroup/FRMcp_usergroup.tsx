@@ -7,11 +7,11 @@
 // controller cuma meneruskan lewat btsave_click untuk tombol Save.
 'use client';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useState } from 'react';
-import { Btn, Icon } from '@/components/Icon';
+import { Btn, Icon, iconForLeaf, iconForModule } from '@/components/Icon';
 import { toast } from '@/components/toast'
 import { confirmDialog } from '@/components/Confirm';
 import { parseBoolean } from '@/lib/api';
-import { useIsNarrow } from '@/lib/useIsNarrow';
+import { buildModuleTree, type MenuNode, type ModuleNode } from '@/lib/menu';
 import * as proxy from './api';
 import type { GroupRow } from './GRIDcp_usergroup';
 import { btsave_click } from './Ccp_usergroup';
@@ -26,12 +26,16 @@ export type AksesApi = {
 };
 
 const FRMcp_usergroup = forwardRef<AksesApi>(function FRMcp_usergroup(_props, ref) {
-  const isNarrow = useIsNarrow(760);
   const [group, setGroup] = useState<GroupRow | null>(null);
   const [menus, setMenus] = useState<MenuRow[]>([]);
   const [checked, setChecked] = useState<Set<string>>(new Set());
-  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const [openIds, setOpenIds] = useState<Set<string>>(() => new Set());
   const [treeFilter, setTreeFilter] = useState('');
+
+  // Kelompokkan flat rows per module (MMODULE_SHORT), sama seperti sidebar.
+  const modules = useMemo(() => buildModuleTree(menus as any), [menus]);
+
+  const modKey = (code: string) => `mod:${code}`;
 
   const load = useCallback(async (g: GroupRow) => {
     setGroup(g);
@@ -40,7 +44,8 @@ const FRMcp_usergroup = forwardRef<AksesApi>(function FRMcp_usergroup(_props, re
     const rows: MenuRow[] = res.Rows || [];
     setMenus(rows);
     setChecked(new Set(rows.filter((r) => String(r.CHECKED || '').toUpperCase() === 'TRUE').map((r) => String(r.MCODE))));
-    setOpenIds(new Set());
+    // Semua module terbuka di awal; filter memaksa tampil walau tertutup.
+    setOpenIds(new Set(buildModuleTree(rows as any).map((m) => `mod:${m.code}`)));
     setTreeFilter('');
   }, []);
 
@@ -72,6 +77,26 @@ const FRMcp_usergroup = forwardRef<AksesApi>(function FRMcp_usergroup(_props, re
     setChecked(next);
   }, [menus, checked]);
 
+  // Centang/hapus semua menu dalam 1 module sekaligus.
+  const toggleModule = useCallback((modCode: string, on: boolean) => {
+    const mod = modules.find((m) => m.code === modCode);
+    if (!mod) return;
+    const codes: string[] = [];
+    const walk = (nodes: MenuNode[]) => nodes.forEach((n) => { codes.push(n.mcode); walk(n.children); });
+    walk(mod.children);
+    const next = new Set(checked);
+    codes.forEach((c) => (on ? next.add(c) : next.delete(c)));
+    setChecked(next);
+  }, [modules, checked]);
+
+  const toggleOpen = useCallback((key: string) => {
+    setOpenIds((prev) => {
+      const n = new Set(prev);
+      if (n.has(key)) n.delete(key); else n.add(key);
+      return n;
+    });
+  }, []);
+
   const save = useCallback(async () => {
     if (!group) return;
     if (!await confirmDialog({ message: 'Simpan pengaturan User Group?' })) return;
@@ -85,7 +110,8 @@ const FRMcp_usergroup = forwardRef<AksesApi>(function FRMcp_usergroup(_props, re
   const api = useMemo<AksesApi>(() => ({ load, save, clear }), [load, save, clear]);
   useImperativeHandle(ref, () => api, [api]);
 
-  // Filter tree: node cocok + turunan + leluhur (mirror filterfield langit_v2).
+  // Filter tree: node cocok + turunan + leluhur (mirror filterfield langit_v2),
+  // ditambah: kalau nama module cocok, seluruh isi module ikut tampil.
   const visibleCodes: Set<string> | null = (() => {
     const f = treeFilter.trim().toLowerCase();
     if (!f) return null;
@@ -100,75 +126,74 @@ const FRMcp_usergroup = forwardRef<AksesApi>(function FRMcp_usergroup(_props, re
       let p = parentOf(code);
       while (p && p !== '0') { set.add(p); p = parentOf(p); }
     }
+    for (const mod of modules) {
+      if (!(mod.name.toLowerCase().includes(f) || mod.code.toLowerCase().includes(f))) continue;
+      const addAll = (nodes: MenuNode[]) => nodes.forEach((n) => { set.add(n.mcode); addAll(n.children); });
+      addAll(mod.children);
+    }
     return set;
   })();
 
-  const renderNodes = (parent: string | number): React.ReactNode => {
-    const kids = menus
-      .filter((m) => String(m.MPARRENT) === String(parent))
-      .filter((m) => !visibleCodes || visibleCodes.has(String(m.MCODE)))
-      .sort((a, b) => (Number(a.MSHORT) || 0) - (Number(b.MSHORT) || 0));
-    if (!kids.length) return null;
+  const modCodes = (mod: ModuleNode): string[] => {
+    const codes: string[] = [];
+    const walk = (nodes: MenuNode[]) => nodes.forEach((n) => { codes.push(n.mcode); walk(n.children); });
+    walk(mod.children);
+    return codes;
+  };
+
+  const renderNode = (node: MenuNode): React.ReactNode => {
+    if (visibleCodes && !visibleCodes.has(node.mcode)) return null;
+    const isGroup = node.children.length > 0;
     return (
-      <ul className="tree" style={{ listStyle: 'none', margin: 0, paddingLeft: 16 }}>
-        {kids.map((k) => (
-          <li key={k.MCODE}>
-            <label style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '4px 0' }}>
-              <input type="checkbox" checked={checked.has(String(k.MCODE))} onChange={(e) => toggle(String(k.MCODE), e.target.checked)} /> {k.MNAME}
-            </label>
-            {renderNodes(k.MCODE)}
-          </li>
-        ))}
-      </ul>
+      <li key={node.menuKey}>
+        <label className="akses-row">
+          <input type="checkbox" checked={checked.has(node.mcode)} onChange={(e) => toggle(node.mcode, e.target.checked)} />
+          <Icon name={isGroup ? 'folderOpen' : iconForLeaf(node.mcontrol)} size={15} />
+          <span className="tree-label">{node.name}</span>
+        </label>
+        {isGroup && (
+          <ul className="akses-tree">
+            {node.children.map((c) => renderNode(c))}
+          </ul>
+        )}
+      </li>
     );
   };
 
-  const renderAccordion = () => {
-    const childOf = (code: string): MenuRow[] =>
-      menus
-        .filter((m) => String(m.MPARRENT) === code)
-        .filter((m) => !visibleCodes || visibleCodes.has(String(m.MCODE)))
-        .sort((a, b) => (Number(a.MSHORT) || 0) - (Number(b.MSHORT) || 0));
-    const roots = childOf('0');
+  const renderModule = (mod: ModuleNode): React.ReactNode => {
+    const key = modKey(mod.code);
+    const codes = modCodes(mod);
+    // Sembunyikan module yang tidak punya node cocok saat filter aktif.
+    if (visibleCodes && !codes.some((c) => visibleCodes.has(c))) return null;
+    const filtering = treeFilter.trim().length > 0;
+    const open = filtering || openIds.has(key);
+    const done = codes.filter((c) => checked.has(c)).length;
+    const all = codes.length > 0 && done === codes.length;
+    const some = done > 0 && !all;
     return (
-      <div style={{ display: 'grid', gap: 8 }}>
-        {roots.map((r) => {
-          const kids = childOf(String(r.MCODE));
-          const open = openIds.has(String(r.MCODE));
-          return (
-            <div key={r.MCODE} style={{ border: '1px solid #e5e7eb', borderRadius: 8 }}>
-              <label style={{ display: 'flex', gap: 8, padding: 10, alignItems: 'center' }}>
-                <input type="checkbox" checked={checked.has(String(r.MCODE))} onChange={(e) => toggle(String(r.MCODE), e.target.checked)} />
-                <b>{r.MNAME}</b>
-                {kids.length > 0 && (
-                  <Btn
-                    className="btn-sm"
-                    iconOnly
-                    iconSize={14}
-                    style={{ marginLeft: 'auto' }}
-                    aria-label={open ? `Tutup ${r.MNAME}` : `Buka ${r.MNAME}`}
-                    icon={open ? 'minus' : 'add'}
-                    onClick={() => {
-                      const n = new Set(openIds);
-                      if (n.has(String(r.MCODE))) n.delete(String(r.MCODE)); else n.add(String(r.MCODE));
-                      setOpenIds(n);
-                    }}
-                  />
-                )}
-              </label>
-              {open && (
-                <div style={{ padding: '0 10px 10px 28px', display: 'grid', gap: 6 }}>
-                  {kids.map((k) => (
-                    <label key={k.MCODE} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <input type="checkbox" checked={checked.has(String(k.MCODE))} onChange={(e) => toggle(String(k.MCODE), e.target.checked)} />
-                      {k.MNAME}
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+      <div key={key} className="akses-mod">
+        <div className="akses-mod-head">
+          <input
+            type="checkbox"
+            ref={(el) => { if (el) el.indeterminate = some; }}
+            checked={all}
+            onChange={(e) => toggleModule(mod.code, e.target.checked)}
+            aria-label={`Pilih semua menu ${mod.name}`}
+          />
+          <button type="button" className="akses-mod-title" onClick={() => toggleOpen(key)} aria-expanded={open}>
+            <Icon name={iconForModule(mod.code)} size={17} />
+            <span className="tree-label">{mod.name}</span>
+            <span className="akses-count">{done}/{codes.length}</span>
+            <span className={`akses-chev${open ? '' : ' closed'}`}><Icon name="chevD" size={14} /></span>
+          </button>
+        </div>
+        {open && (
+          <div className="akses-mod-body">
+            <ul className="akses-tree root">
+              {mod.children.map((n) => renderNode(n))}
+            </ul>
+          </div>
+        )}
       </div>
     );
   };
@@ -208,7 +233,11 @@ const FRMcp_usergroup = forwardRef<AksesApi>(function FRMcp_usergroup(_props, re
         {menus.length > 0 && visibleCodes && visibleCodes.size === 0 && (
           <p className="empty-hint"><Icon name="filter" size={16} /> Tidak ada menu yang cocok dengan filter.</p>
         )}
-        {menus.length > 0 && (isNarrow ? renderAccordion() : renderNodes(0))}
+        {modules.length > 0 && (
+          <div className="akses-mods">
+            {modules.map((m) => renderModule(m))}
+          </div>
+        )}
       </div>
     </div>
   );

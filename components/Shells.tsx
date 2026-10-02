@@ -9,6 +9,7 @@ import UserProfileModal from '@/app/cp_usersetting/FRMprofile_user';
 import { useIsNarrow } from '@/lib/useIsNarrow';
 import { toast } from './toast';
 import { Icon, Btn, iconForModule, iconForLeaf } from './Icon';
+import { APP_NAME } from '@/lib/app-config';
 import Sidebar, { type SidebarApi } from './Sidebar';
 
 // Icon per module & per menu leaf dipetakan dari kode MMODULE/MCONTROL
@@ -282,7 +283,7 @@ export function DesktopShell({ title, children }: { title: string; children: Rea
         {startOpen && (
           <div className="desktop-start" onClick={(e) => e.stopPropagation()}>
             <div className="desktop-start-head">
-              <b>Tiket APP</b>
+              <b>{APP_NAME}</b>
               <span className="start-user">{profile?.USERNAME || profile?.USERLOGIN}</span>
             </div>
             <div className="desktop-start-menu">

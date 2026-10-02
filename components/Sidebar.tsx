@@ -27,10 +27,11 @@ import { useCurrentPath, useRoute } from '@/lib/route';
 import { useModal } from './Modal';
 import { useIsNarrow } from '@/lib/useIsNarrow';
 import { toast } from './toast';
+import { APP_NAME, STORE } from '@/lib/app-config';
 import { Icon, iconForModule, iconForLeaf, type IconName } from './Icon';
 import UserProfileModal from '@/app/cp_usersetting/FRMprofile_user';
 
-const STORE_KEY = 'appcore::sidebar::collapsed';
+const STORE_KEY = STORE('sidebar::collapsed');
 // Batas yang sama antara JS (matchMedia) dan CSS media query di app/layout.tsx.
 const MOBILE_MAX = 768;
 
@@ -77,7 +78,7 @@ type Props = {
   appName?: string;
 };
 
-const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'Tiket APP' }, ref) {
+const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = APP_NAME }, ref) {
   const { profile, menus, logout, checkMenuAccess } = useAuth();
   const { navigate } = useRoute();
   const pathname = useCurrentPath();

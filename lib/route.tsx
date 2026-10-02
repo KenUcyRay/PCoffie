@@ -1,5 +1,6 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { STORE } from './app-config';
 
 // Rute "internal" ala langit_v2: index.html punya <body> kosong dan URL tidak
 // pernah berubah. Pindah halaman = ganti komponen di dalam viewport, bukan
@@ -9,7 +10,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 // Bentuk nilainya sengaja dibuat sama dengan pathname lama ("/", "/login",
 // "/cp_usergroup") supaya logika sidebar/tab tidak perlu disentuh.
 
-const STORE_KEY = 'appcore::route';
+const STORE_KEY = STORE('route');
 
 export const HOME = '/';
 export const LOGIN = '/login';

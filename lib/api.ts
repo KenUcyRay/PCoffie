@@ -1,13 +1,15 @@
 // Pengganti COMP.run.getservice/gethide + COMP.parse.parseBoolean + bearer memory.
 // Cara pakai mirip referensi: apiPost('home/cpuser/cpuser', { method:'read_data', vdata: JSON.stringify({...}) })
+import { STORE, apiBase } from './app-config';
+
 export class SessionExpiredError extends Error {}
 
-const TOKEN_KEY = 'appcore::auth::token';
+const TOKEN_KEY = STORE('auth::token');
 
 let memoryToken: string | null = null;
 
 export function getApiBase(): string {
-  return process.env.NEXT_PUBLIC_API_BASE || '/tiket-app/appservice/public/api/core';
+  return apiBase();
 }
 
 export function parseBoolean(v: unknown): boolean {

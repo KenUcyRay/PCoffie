@@ -1,9 +1,9 @@
 import type { Viewport } from 'next';
-
-export const metadata = { title: 'Tiket APP', description: 'Core universal — login + usergroup + usersetting' };
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, maximumScale: 1 };
-
+import { APP_NAME } from '@/lib/app-config';
 import Providers from './providers';
+
+export const metadata = { title: APP_NAME, description: 'Core universal — login + usergroup + usersetting' };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, maximumScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

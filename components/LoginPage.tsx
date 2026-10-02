@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useRoute } from '@/lib/route';
 import { Btn, Icon } from './Icon';
+import { APP_NAME } from '@/lib/app-config';
 
 // Halaman login sekarang jadi komponen biasa, bukan route /login terpisah
 // (URL harus selalu /tiket-app). Di-mount dari app/page.tsx saat status 'guest'.
@@ -35,7 +36,7 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-brand">
-        <h1><Icon name="layout" size={34} /> Tiket APP</h1>
+        <h1><Icon name="layout" size={34} /> {APP_NAME}</h1>
       </div>
       <div className="login-form-wrap">
         <form onSubmit={submit} className="login-form">

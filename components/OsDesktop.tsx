@@ -15,8 +15,7 @@ import { useModal } from './Modal';
 import UserProfileModal from '@/app/cp_usersetting/FRMprofile_user';
 import { toast } from './toast';
 import { Icon, iconForLeaf, iconForModule } from './Icon';
-import { APP_NAME } from '@/lib/app-config';
-import { MenuTree, Clock, ModeLayoutMenu } from './Shells';
+import { MenuTree, Clock } from './Shells';
 import { openContextMenu, ContextMenuHost } from './ContextMenu';
 import { NotifBridge, useNotifs } from './Notifs';
 
@@ -66,28 +65,81 @@ function WinContent({ mcontrol }: { mcontrol: string }) {
   return <Comp />;
 }
 
-// Isi jendela module (dobel-klik ikon desktop): daftar menu sebagai tombol besar.
+// Isi jendela module: browser 2 tingkat. Tingkat 1 = daftar induk (folder,
+// klik masuk) + menu langsung (klik buka). Tingkat 2 = isi induk + tombol kembali.
 function ModuleWin({ mod, onOpen }: { mod: ModuleNode; onOpen: (mcontrol: string) => void }) {
-  const leaves: MenuNode[] = [];
-  const walk = (list: MenuNode[]) => list.forEach((n) => {
-    if (n.children.length) walk(n.children);
-    else if (n.mcontrol && n.mcontrol !== '-') leaves.push(n);
-  });
-  walk(mod.children);
-  if (!leaves.length) {
+  const [at, setAt] = useState<string | null>(null);
+  const parents = mod.children.filter((n) => n.children.length > 0);
+  const direct = mod.children.filter((n) => !n.children.length && n.mcontrol && n.mcontrol !== '-');
+  const cur = at ? parents.find((p) => p.menuKey === at) : null;
+
+  if (!parents.length && !direct.length) {
     return <p className="empty-hint"><Icon name="grid" size={16} /> Belum ada menu di module ini.</p>;
   }
-  return (
-    <div className="mod-cards">
-      {leaves.map((l) => (
-        <button key={l.menuKey} type="button" className="mod-card" onClick={() => onOpen(l.mcontrol)}>
-          <div className="mod-top">
-            <span className="mod-ico tint-4"><Icon name={iconForLeaf(l.mcontrol)} size={20} /></span>
-            <span className="mod-meta"><b>{l.name}</b><span>{mod.name}</span></span>
-            <Icon name="chevR" size={15} />
-          </div>
+
+  if (cur) {
+    const leaves = cur.children.filter((n) => !n.children.length && n.mcontrol && n.mcontrol !== '-');
+    return (
+      <div className="mod-nav">
+        <button type="button" className="mod-back" onClick={() => setAt(null)}>
+          <Icon name="chevR" size={14} style={{ transform: 'scaleX(-1)' }} />
+          <span>{cur.name}</span>
         </button>
-      ))}
+        <div className="mod-cards">
+          {leaves.map((l) => (
+            <button key={l.menuKey} type="button" className="mod-card" onClick={() => onOpen(l.mcontrol)}>
+              <div className="mod-top">
+                <span className="mod-ico tint-4"><Icon name={iconForLeaf(l.mcontrol)} size={20} /></span>
+                <span className="mod-meta"><b>{l.name}</b><span>{mod.name}</span></span>
+                <Icon name="chevR" size={15} />
+              </div>
+            </button>
+          ))}
+          {leaves.length === 0 && (
+            <p className="empty-hint"><Icon name="folderOpen" size={16} /> Tidak ada halaman di grup ini.</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mod-nav">
+      {parents.length > 0 && (
+        <>
+          <p className="mod-sect">Menu induk</p>
+          <div className="mod-cards">
+            {parents.map((p, i) => {
+              const count = p.children.filter((n) => !n.children.length).length;
+              return (
+                <button key={p.menuKey} type="button" className="mod-card" onClick={() => setAt(p.menuKey)}>
+                  <div className="mod-top">
+                    <span className={`mod-ico tint-${i % 7}`}><Icon name="folderOpen" size={20} /></span>
+                    <span className="mod-meta"><b>{p.name}</b><span>{count} menu</span></span>
+                    <Icon name="chevR" size={15} />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+      {direct.length > 0 && (
+        <>
+          <p className="mod-sect">Menu langsung</p>
+          <div className="mod-cards">
+            {direct.map((l) => (
+              <button key={l.menuKey} type="button" className="mod-card" onClick={() => onOpen(l.mcontrol)}>
+                <div className="mod-top">
+                  <span className="mod-ico tint-1"><Icon name={iconForLeaf(l.mcontrol)} size={20} /></span>
+                  <span className="mod-meta"><b>{l.name}</b><span>{mod.name}</span></span>
+                  <Icon name="chevR" size={15} />
+                </div>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -105,6 +157,8 @@ export default function OsDesktop() {
   const [startQ, setStartQ] = useState('');
   const [trayOpen, setTrayOpen] = useState<'notif' | 'user' | null>(null);
   const [selIcon, setSelIcon] = useState<string | null>(null);
+  // Menu terakhir dibuka sesi ini (untuk Recommended di Start). In-memory saja.
+  const [recent, setRecent] = useState<string[]>([]);
   const idSeq = useRef(1);
   const zTop = useRef(10);
   const areaRef = useRef<HTMLDivElement>(null);
@@ -137,6 +191,7 @@ export default function OsDesktop() {
       openTab(path);
       navigate(path);
     }
+    setRecent((prev) => [mc, ...prev.filter((x) => x !== mc)].slice(0, 6));
     setWins((prev) => {
       const ex = prev.find((w) => w.kind === 'menu' && w.mcontrol === mc);
       zTop.current += 1;
@@ -256,6 +311,26 @@ export default function OsDesktop() {
   const initials = String(displayName).trim().slice(0, 2).toUpperCase() || 'GU';
   const topWin = [...wins].filter((w) => !w.min).sort((a, b) => b.z - a.z)[0] || null;
 
+  const closeStart = useCallback(() => { setStartOpen(false); setStartQ(''); }, []);
+
+  const doLogout = useCallback(async () => {
+    setStartOpen(false);
+    setTrayOpen(null);
+    await logout();
+    navigate('/login');
+  }, [logout, navigate]);
+
+  const openProfile = useCallback(() => {
+    setStartOpen(false);
+    setTrayOpen(null);
+    open(<UserProfileModal />);
+  }, [open ]);
+
+  const recentItems = useMemo(() => recent
+    .map((mc) => ({ mc, name: titleOf(mc) }))
+    .filter((r) => r.name && r.name !== r.mc)
+    .slice(0, 6), [recent, titleOf]);
+
   return (
     <div className="layout desktop">
       <div
@@ -315,22 +390,70 @@ export default function OsDesktop() {
           </div>
         ))}
 
-        {/* Start menu */}
+        {/* Start menu ala Windows 11 */}
         {startOpen && (
           <div className="os-start" onClick={(e) => e.stopPropagation()} onContextMenu={(e) => e.stopPropagation()}>
-            <div className="os-start-head">
-              <b>{APP_NAME}</b>
-              <span className="start-user">{profile?.USERNAME || profile?.USERLOGIN}</span>
+            <div className="os-start-search big">
+              <Icon name="search" size={16} />
+              <input
+                value={startQ}
+                onChange={(e) => setStartQ(e.target.value)}
+                placeholder="Cari menu, aplikasi, atau pengaturan..."
+                aria-label="Cari menu, aplikasi, atau pengaturan"
+              />
             </div>
-            <div className="os-start-search">
-              <Icon name="search" size={15} />
-              <input value={startQ} onChange={(e) => setStartQ(e.target.value)} placeholder="Cari menu…" aria-label="Cari menu" />
-            </div>
-            <div className="os-start-menu">
-              <MenuTree filter={startQ} onNavigate={() => { setStartOpen(false); setStartQ(''); }} />
-            </div>
-            <div className="os-start-foot">
-              <ModeLayoutMenu />
+            {startQ.trim() ? (
+              <div className="os-start-menu">
+                <MenuTree filter={startQ} onNavigate={closeStart} />
+              </div>
+            ) : (
+              <>
+                <p className="os-sect">Pinned</p>
+                <div className="os-pins">
+                  {modules.map((m, i) => (
+                    <button
+                      key={m.code}
+                      type="button"
+                      className="os-pin"
+                      title={m.name}
+                      onClick={() => { closeStart(); openModule(m.code); }}
+                    >
+                      <span className={`os-ico tint-${i % 7}`}><Icon name={iconForModule(m.code)} size={22} /></span>
+                      <span>{m.name}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="os-sect">Recommended</p>
+                <div className="os-recs">
+                  {recentItems.length === 0 && (
+                    <p className="empty-hint"><Icon name="history" size={16} /> Belum ada aktivitas sesi ini.</p>
+                  )}
+                  {recentItems.map((r) => (
+                    <button
+                      key={r.mc}
+                      type="button"
+                      className="os-rec"
+                      onClick={() => { closeStart(); openMenu(r.mc); }}
+                    >
+                      <Icon name={iconForLeaf(r.mc)} size={16} />
+                      <span>{r.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            <div className="os-powerbar">
+              <button type="button" className="os-powbtn" title={displayName} onClick={openProfile}>
+                <span className="os-avatar">{initials}</span>
+                <span>{displayName}</span>
+              </button>
+              <span className="spacer" />
+              <button type="button" className="os-icobtn" title="Settings" aria-label="Settings" onClick={openProfile}>
+                <Icon name="gear" size={17} />
+              </button>
+              <button type="button" className="os-icobtn danger" title="Power" aria-label="Power" onClick={doLogout}>
+                <Icon name="power" size={17} />
+              </button>
             </div>
           </div>
         )}

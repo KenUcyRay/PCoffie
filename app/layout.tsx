@@ -370,16 +370,34 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .os-traybtn:hover { background: rgba(255,255,255,.1); color: #fff; }
           .os-badge { position: absolute; top: 1px; right: 1px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 9.5px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
           .os-clock { font-size: 11px; line-height: 1.35; text-align: right; color: #cbd5e1; padding: 0 8px; white-space: nowrap; }
-          .os-start { position: absolute; left: 12px; bottom: 12px; width: 340px; max-width: calc(100% - 24px); max-height: calc(100% - 24px); display: flex; flex-direction: column; background: rgba(15,23,42,.88); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,.5); z-index: 60; color: #e2e8f0; overflow: hidden; }
-          .os-start-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px 8px; border-bottom: 1px solid rgba(255,255,255,.08); }
-          .os-start-head .start-user { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; color: #94a3b8; }
-          .os-start-search { display: flex; align-items: center; gap: 8px; margin: 8px 10px 0; padding: 0 10px; height: 32px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; color: #94a3b8; }
-          .os-start-search input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #e2e8f0; font-family: inherit; font-size: 12.5px; }
-          .os-start-menu { overflow-y: auto; padding: 6px 10px 10px; }
-          .os-start-menu .tree-row { color: #e2e8f0; }
-          .os-start-menu .tree-row:hover { background: rgba(255,255,255,.08); }
-          .os-start-menu .module-row .tree-label { color: #fff; font-weight: 700; }
-          .os-start-foot { border-top: 1px solid rgba(255,255,255,.08); padding: 8px 10px; }
+          .os-start { position: absolute; left: 12px; bottom: 12px; width: 640px; max-width: calc(100% - 24px); max-height: calc(100% - 24px); display: flex; flex-direction: column; background: rgba(15,23,42,.88); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,.5); z-index: 60; color: #e2e8f0; overflow: hidden; animation: os-pop .16s ease; }
+          @keyframes os-pop { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+          .os-start-search.big { display: flex; align-items: center; gap: 10px; margin: 14px 20px 4px; padding: 0 14px; height: 40px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 20px; color: #94a3b8; }
+          .os-start-search.big input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #e2e8f0; font-family: inherit; font-size: 13px; }
+          .os-sect { margin: 12px 20px 8px; font-size: 11.5px; font-weight: 700; color: #e2e8f0; }
+          .os-pins { display: grid; grid-template-columns: repeat(auto-fill,minmax(88px,1fr)); gap: 4px; padding: 0 20px; overflow-y: auto; max-height: 220px; }
+          .os-pin { display: grid; justify-items: center; gap: 7px; padding: 10px 4px; background: transparent; border: 1px solid transparent; border-radius: 12px; color: #e2e8f0; cursor: pointer; font-family: inherit; }
+          .os-pin:hover { background: rgba(255,255,255,.08); }
+          .os-pin .os-ico { width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; }
+          .os-pin span:last-child { font-size: 11px; line-height: 1.3; text-align: center; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+          .os-recs { display: grid; gap: 2px; padding: 0 20px; overflow-y: auto; max-height: 190px; }
+          .os-rec { display: flex; align-items: center; gap: 10px; padding: 7px 10px; background: transparent; border: 0; border-radius: 8px; color: #e2e8f0; cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 600; text-align: left; }
+          .os-rec:hover { background: rgba(255,255,255,.08); }
+          .os-rec svg { flex: none; color: #94a3b8; }
+          .os-rec span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .os-powerbar { display: flex; align-items: center; gap: 6px; margin-top: 12px; padding: 10px 20px; border-top: 1px solid rgba(255,255,255,.08); background: rgba(2,6,23,.35); }
+          .os-powbtn { display: inline-flex; align-items: center; gap: 9px; background: transparent; border: 0; border-radius: 8px; padding: 5px 8px; color: #e2e8f0; cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 700; max-width: 220px; }
+          .os-powbtn:hover { background: rgba(255,255,255,.08); }
+          .os-powbtn span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .os-avatar { width: 30px; height: 30px; flex: none; border-radius: 50%; background: rgba(59,130,246,.25); border: 1px solid rgba(147,197,253,.4); color: #bfdbfe; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
+          .os-icobtn { width: 34px; height: 34px; flex: none; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: 0; border-radius: 8px; color: #cbd5e1; cursor: pointer; }
+          .os-icobtn:hover { background: rgba(255,255,255,.1); color: #fff; }
+          .os-icobtn.danger:hover { background: var(--danger); color: #fff; }
+          .os-powerbar .spacer { flex: 1; }
+          .mod-nav { display: grid; gap: 10px; }
+          .mod-sect { margin: 2px 0 0; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+          .mod-back { display: inline-flex; align-items: center; gap: 8px; justify-self: start; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--text); }
+          .mod-back:hover { border-color: var(--border-2); }
           .os-panel { position: absolute; right: 0; bottom: 44px; width: 300px; max-width: calc(100vw - 24px); background: rgba(15,23,42,.92); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,.5); z-index: 60; color: #e2e8f0; padding: 6px; overflow: hidden; }
           .os-panel .drop-head { border-bottom-color: rgba(255,255,255,.08); color: #fff; }
           .os-panel .dropdown-item { color: #cbd5e1; }
@@ -387,6 +405,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .os-panel .drop-note small { color: #94a3b8; }
           .os-panel .empty-hint { color: #94a3b8; }
           .drop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+          .drop-head .start-user { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; color: var(--muted); }
           .drop-link { background: transparent; border: 0; padding: 0; color: var(--brand); font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; }
           .drop-note { display: flex; gap: 9px; padding: 8px 11px; align-items: flex-start; }
           .drop-note svg { flex: none; margin-top: 1px; }

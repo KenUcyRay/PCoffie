@@ -2,19 +2,16 @@
 -- Module Merchandise, Module Marketing, Module Finance, Module Account
 -- Idempotent: Cek dulu apakah sudah ada, baru INSERT
 -- Module System (MODSYSTEM) sudah ada, tidak diubah
+-- ROOT MENU TIDAK perlu dibuat di CPMENU (sudah ada di CPMATRIX sebagai DEFCODE)
+-- Parent menu langsung MPARRENT = 0
 
 -- =====================================================
--- MODULE DISCOVERY (MODDISC, DEFSHORT: 20)
+-- MODULE DISCOVERY (MODDISC)
 -- =====================================================
 
--- Root menu untuk Module Discovery
+-- Module Discovery > Event Catalog (induk, MPARRENT=0)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 20000000, 0, 'MODDISC', '-', 'Module Discovery', 'TRUE', 'TRUE', 'FALSE', 1
-WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 20000000);
-
--- Module Discovery > Event Catalog (induk) - MCONTROL = '-'
-INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 20010001, 20000000, 'MODDISC', '-', 'Event Catalog', 'TRUE', 'FALSE', 'FALSE', 1
+SELECT 20010001, 0, 'MODDISC', '-', 'Event Catalog', 'TRUE', 'FALSE', 'FALSE', 1
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 20010001);
 
 -- Module Discovery > Event Catalog > Event List
@@ -32,9 +29,9 @@ INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAN
 SELECT 20010004, 20010001, 'MODDISC', 'moddisceventcity', 'Event by City', 'FALSE', 'FALSE', 'TRUE', 3
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 20010004);
 
--- Module Discovery > Info Center (induk) - MCONTROL = '-'
+-- Module Discovery > Info Center (induk, MPARRENT=0)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 20020001, 20000000, 'MODDISC', '-', 'Info Center', 'TRUE', 'FALSE', 'FALSE', 2
+SELECT 20020001, 0, 'MODDISC', '-', 'Info Center', 'TRUE', 'FALSE', 'FALSE', 2
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 20020001);
 
 -- Module Discovery > Info Center > News List
@@ -48,17 +45,12 @@ SELECT 20020003, 20020001, 'MODDISC', 'moddiscpromolist', 'Promo List', 'FALSE',
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 20020003);
 
 -- =====================================================
--- MODULE EVENT (MODEVENT, DEFSHORT: 30)
+-- MODULE EVENT (MODEVENT)
 -- =====================================================
 
--- Root menu untuk Module Event
+-- Module Event > Event Management (induk, MPARRENT=0)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 30000000, 0, 'MODEVENT', '-', 'Module Event', 'TRUE', 'TRUE', 'FALSE', 1
-WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 30000000);
-
--- Module Event > Event Management (induk) - MCONTROL = '-'
-INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 30010001, 30000000, 'MODEVENT', '-', 'Event Management', 'TRUE', 'FALSE', 'FALSE', 1
+SELECT 30010001, 0, 'MODEVENT', '-', 'Event Management', 'TRUE', 'FALSE', 'FALSE', 1
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 30010001);
 
 -- Module Event > Event Management > Event Data
@@ -77,17 +69,12 @@ SELECT 30010004, 30010001, 'MODEVENT', 'modeventattendee', 'Attendee List', 'FAL
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 30010004);
 
 -- =====================================================
--- MODULE TICKETING (MODTICKET, DEFSHORT: 40)
+-- MODULE TICKETING (MODTICKET)
 -- =====================================================
 
--- Root menu untuk Module Ticketing
+-- Module Ticketing > Ticket Order (induk, MPARRENT=0)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 40000000, 0, 'MODTICKET', '-', 'Module Ticketing', 'TRUE', 'TRUE', 'FALSE', 1
-WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 40000000);
-
--- Module Ticketing > Ticket Order (induk) - MCONTROL = '-'
-INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 40010001, 40000000, 'MODTICKET', '-', 'Ticket Order', 'TRUE', 'FALSE', 'FALSE', 1
+SELECT 40010001, 0, 'MODTICKET', '-', 'Ticket Order', 'TRUE', 'FALSE', 'FALSE', 1
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 40010001);
 
 -- Module Ticketing > Ticket Order > My Ticket
@@ -100,9 +87,9 @@ INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAN
 SELECT 40010003, 40010001, 'MODTICKET', 'modticketrefund', 'Ticket Refund', 'FALSE', 'FALSE', 'TRUE', 2
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 40010003);
 
--- Module Ticketing > Ticket Check-in (induk) - MCONTROL = '-'
+-- Module Ticketing > Ticket Check-in (induk, MPARRENT=0)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 40020001, 40000000, 'MODTICKET', '-', 'Ticket Check-in', 'TRUE', 'FALSE', 'FALSE', 2
+SELECT 40020001, 0, 'MODTICKET', '-', 'Ticket Check-in', 'TRUE', 'FALSE', 'FALSE', 2
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 40020001);
 
 -- Module Ticketing > Ticket Check-in > Scan Ticket
@@ -116,17 +103,12 @@ SELECT 40020003, 40020001, 'MODTICKET', 'modticketcheckhistory', 'Scan History',
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 40020003);
 
 -- =====================================================
--- MODULE MERCHANDISE (MODMERCH, DEFSHORT: 50)
+-- MODULE MERCHANDISE (MODMERCH)
 -- =====================================================
 
--- Root menu untuk Module Merchandise
+-- Module Merchandise > Merchandise Shop (induk, MPARRENT=0)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 50000000, 0, 'MODMERCH', '-', 'Module Merchandise', 'TRUE', 'TRUE', 'FALSE', 1
-WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 50000000);
-
--- Module Merchandise > Merchandise Shop (induk) - MCONTROL = '-'
-INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 50010001, 50000000, 'MODMERCH', '-', 'Merchandise Shop', 'TRUE', 'FALSE', 'FALSE', 1
+SELECT 50010001, 0, 'MODMERCH', '-', 'Merchandise Shop', 'TRUE', 'FALSE', 'FALSE', 1
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 50010001);
 
 -- Module Merchandise > Merchandise Shop > Product List
@@ -139,9 +121,9 @@ INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAN
 SELECT 50010003, 50010001, 'MODMERCH', 'modmerchpurchase', 'My Purchase', 'FALSE', 'FALSE', 'TRUE', 2
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 50010003);
 
--- Module Merchandise > Seller Center (induk) - MCONTROL = '-'
+-- Module Merchandise > Seller Center (induk, MPARRENT=0)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 50020001, 50000000, 'MODMERCH', '-', 'Seller Center', 'TRUE', 'FALSE', 'FALSE', 2
+SELECT 50020001, 0, 'MODMERCH', '-', 'Seller Center', 'TRUE', 'FALSE', 'FALSE', 2
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 50020001);
 
 -- Module Merchandise > Seller Center > Product Data
@@ -155,17 +137,12 @@ SELECT 50020003, 50020001, 'MODMERCH', 'modmerchsellerorder', 'Seller Order', 'F
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 50020003);
 
 -- =====================================================
--- MODULE MARKETING (MODMARKETING, DEFSHORT: 60)
+-- MODULE MARKETING (MODMARKETING)
 -- =====================================================
 
--- Root menu untuk Module Marketing
+-- Module Marketing > Marketing Tools (induk, MPARRENT=0)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 60000000, 0, 'MODMARKETING', '-', 'Module Marketing', 'TRUE', 'TRUE', 'FALSE', 1
-WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 60000000);
-
--- Module Marketing > Marketing Tools (induk) - MCONTROL = '-'
-INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 60010001, 60000000, 'MODMARKETING', '-', 'Marketing Tools', 'TRUE', 'FALSE', 'FALSE', 1
+SELECT 60010001, 0, 'MODMARKETING', '-', 'Marketing Tools', 'TRUE', 'FALSE', 'FALSE', 1
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 60010001);
 
 -- Module Marketing > Marketing Tools > Promo Code
@@ -178,9 +155,9 @@ INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAN
 SELECT 60010003, 60010001, 'MODMARKETING', 'modmarketingcampaign', 'Ad Campaign', 'FALSE', 'FALSE', 'TRUE', 2
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 60010003);
 
--- Module Marketing > Content Management (induk) - MCONTROL = '-'
+-- Module Marketing > Content Management (induk, MPARRENT=0)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 60020001, 60000000, 'MODMARKETING', '-', 'Content Management', 'TRUE', 'FALSE', 'FALSE', 2
+SELECT 60020001, 0, 'MODMARKETING', '-', 'Content Management', 'TRUE', 'FALSE', 'FALSE', 2
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 60020001);
 
 -- Module Marketing > Content Management > News Data
@@ -194,17 +171,12 @@ SELECT 60020003, 60020001, 'MODMARKETING', 'modmarketingnewscategory', 'News Cat
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 60020003);
 
 -- =====================================================
--- MODULE FINANCE (MODFINANCE, DEFSHORT: 70)
+-- MODULE FINANCE (MODFINANCE)
 -- =====================================================
 
--- Root menu untuk Module Finance
+-- Module Finance > Transaction (induk, MPARRENT=0)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 70000000, 0, 'MODFINANCE', '-', 'Module Finance', 'TRUE', 'TRUE', 'FALSE', 1
-WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 70000000);
-
--- Module Finance > Transaction (induk) - MCONTROL = '-'
-INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 70010001, 70000000, 'MODFINANCE', '-', 'Transaction', 'TRUE', 'FALSE', 'FALSE', 1
+SELECT 70010001, 0, 'MODFINANCE', '-', 'Transaction', 'TRUE', 'FALSE', 'FALSE', 1
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 70010001);
 
 -- Module Finance > Transaction > Payment History
@@ -217,9 +189,9 @@ INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAN
 SELECT 70010003, 70010001, 'MODFINANCE', 'modfinanceinvoice', 'Invoice List', 'FALSE', 'FALSE', 'TRUE', 2
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 70010003);
 
--- Module Finance > Organizer Finance (induk) - MCONTROL = '-'
+-- Module Finance > Organizer Finance (induk, MPARRENT=0)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 70020001, 70000000, 'MODFINANCE', '-', 'Organizer Finance', 'TRUE', 'FALSE', 'FALSE', 2
+SELECT 70020001, 0, 'MODFINANCE', '-', 'Organizer Finance', 'TRUE', 'FALSE', 'FALSE', 2
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 70020001);
 
 -- Module Finance > Organizer Finance > Sales Report
@@ -232,9 +204,9 @@ INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAN
 SELECT 70020003, 70020001, 'MODFINANCE', 'modfinancepayout', 'Payout Request', 'FALSE', 'FALSE', 'TRUE', 2
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 70020003);
 
--- Module Finance > Seller Finance (induk) - MCONTROL = '-'
+-- Module Finance > Seller Finance (induk, MPARRENT=0)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 70030001, 70000000, 'MODFINANCE', '-', 'Seller Finance', 'TRUE', 'FALSE', 'FALSE', 3
+SELECT 70030001, 0, 'MODFINANCE', '-', 'Seller Finance', 'TRUE', 'FALSE', 'FALSE', 3
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 70030001);
 
 -- Module Finance > Seller Finance > Seller Balance
@@ -253,22 +225,17 @@ SELECT 70040001, 0, 'MODFINANCE', 'modfinancebank', 'Bank Account', 'FALSE', 'FA
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 70040001);
 
 -- =====================================================
--- MODULE ACCOUNT (MODACCOUNT, DEFSHORT: 80)
+-- MODULE ACCOUNT (MODACCOUNT)
 -- =====================================================
-
--- Root menu untuk Module Account
-INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 80000000, 0, 'MODACCOUNT', '-', 'Module Account', 'TRUE', 'TRUE', 'FALSE', 1
-WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 80000000);
 
 -- Module Account > Notification (leaf, no child)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 80010001, 80000000, 'MODACCOUNT', 'modaccountnotification', 'Notification', 'FALSE', 'FALSE', 'TRUE', 1
+SELECT 80010001, 0, 'MODACCOUNT', 'modaccountnotification', 'Notification', 'FALSE', 'FALSE', 'TRUE', 1
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 80010001);
 
--- Module Account > Account Setting (induk) - MCONTROL = '-'
+-- Module Account > Account Setting (induk, MPARRENT=0)
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 80020001, 80000000, 'MODACCOUNT', '-', 'Account Setting', 'TRUE', 'FALSE', 'FALSE', 2
+SELECT 80020001, 0, 'MODACCOUNT', '-', 'Account Setting', 'TRUE', 'FALSE', 'FALSE', 2
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 80020001);
 
 -- Module Account > Account Setting > Profile Data

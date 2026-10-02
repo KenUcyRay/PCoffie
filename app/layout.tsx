@@ -227,6 +227,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .modal-head svg { color: var(--brand); }
           .modal-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; }
           .modal-foot { display: flex; gap: 6px; align-items: center; flex: none; padding: 9px 14px; border-top: 1px solid var(--border); background: var(--surface-2); }
+          .modal-foot .spacer { flex: 1; }
+          .confirm-msg { display: flex; gap: 10px; align-items: flex-start; margin: 2px 0; font-size: 13px; color: var(--text); }
+          .confirm-msg svg { flex: none; margin-top: 1px; }
+          .confirm-msg.info svg { color: var(--brand); }
+          .confirm-msg.danger svg { color: var(--danger); }
           .modal-toolbar { display: flex; gap: 6px; align-items: center; flex: none; }
           .modal-toolbar .input { width: auto; flex: 1; }
           .modal-toolbar .field-with-icon { flex: 1; max-width: none; }

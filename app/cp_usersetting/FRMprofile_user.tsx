@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { apiPost, parseBoolean } from '@/lib/api';
 import { useModal } from '@/components/Modal';
-import { toast } from '@/components/toast';
+import { toast } from '@/components/toast'
+import { confirmDialog } from '@/components/Confirm';
 import { change_password } from './api';
 import { Btn } from '@/components/Icon';
 import { Window, FrmRow, FrmSet } from '@/components/Window';
@@ -38,7 +39,7 @@ export default function FRMprofile_user() {
       toast('Error', 'Password baru tidak sesuai dengan Confirm Password', 'err');
       return;
     }
-    if (!window.confirm('Konfirmasi perubahan password')) return;
+    if (!await confirmDialog({ message: 'Konfirmasi perubahan password?' })) return;
     setBusy(true);
     try {
       const res: any = await change_password(pw);

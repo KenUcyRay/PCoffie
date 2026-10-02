@@ -4,7 +4,8 @@
 import { useEffect, useState } from 'react';
 import { parseBoolean } from '@/lib/api';
 import { useModal } from '@/components/Modal';
-import { toast } from '@/components/toast';
+import { toast } from '@/components/toast'
+import { confirmDialog } from '@/components/Confirm';
 import { Btn } from '@/components/Icon';
 import { Window, FrmRow, FrmSet } from '@/components/Window';
 import { read_group_combo, process_create, process_update } from './api';
@@ -53,7 +54,7 @@ export default function FRMcp_userlogin({
       if (!String(form[k] || '').trim()) { toast('Error', `${k} wajib diisi.`, 'err'); return; }
     }
     if (isNew && !form.USERPASSWORD) { toast('Error', 'USERPASSWORD wajib diisi.', 'err'); return; }
-    if (!window.confirm('Simpan User Login?')) return;
+    if (!await confirmDialog({ message: 'Simpan User Login?' })) return;
     setBusy(true);
     try {
       const res: any = isNew ? await process_create(form) : await process_update(form);

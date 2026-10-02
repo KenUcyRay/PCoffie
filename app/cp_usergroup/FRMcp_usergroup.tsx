@@ -8,7 +8,8 @@
 'use client';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useState } from 'react';
 import { Btn, Icon } from '@/components/Icon';
-import { toast } from '@/components/toast';
+import { toast } from '@/components/toast'
+import { confirmDialog } from '@/components/Confirm';
 import { parseBoolean } from '@/lib/api';
 import { useIsNarrow } from '@/lib/useIsNarrow';
 import * as proxy from './api';
@@ -73,7 +74,7 @@ const FRMcp_usergroup = forwardRef<AksesApi>(function FRMcp_usergroup(_props, re
 
   const save = useCallback(async () => {
     if (!group) return;
-    if (!window.confirm('Simpan pengaturan User Group?')) return;
+    if (!await confirmDialog({ message: 'Simpan pengaturan User Group?' })) return;
     const dataTree = menus.filter((m) => checked.has(String(m.MCODE))).map((m) => ({ MCODE: m.MCODE, MPARRENT: m.MPARRENT }));
     const res: any = await proxy.update_akses_group(group, dataTree);
     if (parseBoolean(res?.success)) toast('Success', res.message, 'ok');

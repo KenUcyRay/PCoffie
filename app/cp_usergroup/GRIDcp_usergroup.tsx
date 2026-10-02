@@ -3,7 +3,8 @@
 //
 // State: filters, page, total, loading  |  Kolom: buildColumns(handlers)
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
-import { toast } from '@/components/toast';
+import { toast } from '@/components/toast'
+import { confirmDialog } from '@/components/Confirm';
 import { parseBoolean } from '@/lib/api';
 import { Btn } from '@/components/Icon';
 import {
@@ -119,7 +120,7 @@ const GRIDcp_usergroup = forwardRef<GridApi, Props>(function GRIDcp_usergroup(
   }, [load, page]);
 
   const removeUser = useCallback(async (g: GroupRow) => {
-    if (!window.confirm(`Hapus User Group: ${g.DEFCODE}?`)) return;
+    if (!await confirmDialog({ message: `Hapus User Group: ${g.DEFCODE}?`, okText: 'Ya, Hapus', danger: true })) return;
     const res: any = await proxy.delete_akses_group(g);
     if (parseBoolean(res?.success)) {
       toast('Success', res.message, 'ok');

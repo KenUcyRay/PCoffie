@@ -4,7 +4,8 @@
 // State: filters, page, total, loading  |  Kolom: buildColumns(handlers)
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { useModal } from '@/components/Modal';
-import { toast } from '@/components/toast';
+import { toast } from '@/components/toast'
+import { confirmDialog } from '@/components/Confirm';
 import { parseBoolean } from '@/lib/api';
 import { Btn } from '@/components/Icon';
 import {
@@ -109,7 +110,7 @@ const GRIDcp_userlogin = forwardRef<GridApi>(function GRIDcp_userlogin(_props, r
   }, [load, open, page]);
 
   const removeUser = useCallback(async (u: UserLoginRow) => {
-    if (!window.confirm(`Hapus User Login: ${u.USERLOGIN}?`)) return;
+    if (!await confirmDialog({ message: `Hapus User Login: ${u.USERLOGIN}?`, okText: 'Ya, Hapus', danger: true })) return;
     const res: any = await proxy.process_delete(u);
     if (parseBoolean(res?.success)) { toast('Success', res.message, 'ok'); load({ page }); }
     else toast('Error', res?.message, 'err');

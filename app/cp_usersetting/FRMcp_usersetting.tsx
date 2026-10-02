@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { parseBoolean } from '@/lib/api';
 import { useModal } from '@/components/Modal';
-import { toast } from '@/components/toast';
+import { toast } from '@/components/toast'
+import { confirmDialog } from '@/components/Confirm';
 import { process_create, process_update } from './api';
 import { read_data as read_groups } from '../cp_usergroup/api';
 import { Btn } from '@/components/Icon';
@@ -53,7 +54,7 @@ export default function FRMcp_usersetting({
       if (!String(form[k] || '').trim()) { toast('Error', `${k} wajib diisi.`, 'err'); return; }
     }
     if (isNew && !form.USERPASSWORD) { toast('Error', 'USERPASSWORD wajib diisi.', 'err'); return; }
-    if (!window.confirm('Simpan User Akses?')) return;
+    if (!await confirmDialog({ message: 'Simpan User Akses?' })) return;
     setBusy(true);
     try {
       const res: any = isNew ? await process_create(form) : await process_update(form);

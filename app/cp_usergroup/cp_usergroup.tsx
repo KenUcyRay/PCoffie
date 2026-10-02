@@ -31,7 +31,7 @@ export default function cp_usergroup() {
       />
 
       <div className="two-col">
-        <div className="card">
+        <div className="card card-grid">
           <div className="toolbar">
             <Btn
               pid="btrefresh"

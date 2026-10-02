@@ -29,7 +29,7 @@ export default function cp_usersetting() {
         subtitle="Kelola user login, group, dan password dari satu tempat."
       />
 
-      <div className="card">
+      <div className="card card-grid">
         {/* dockedItems: toolbar atas */}
         <div className="toolbar">
           <Btn

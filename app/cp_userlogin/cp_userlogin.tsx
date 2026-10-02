@@ -24,7 +24,7 @@ export default function cp_userlogin() {
         subtitle="Kelola akun user login beserta group dan status aktifnya."
       />
 
-      <div className="card">
+      <div className="card card-grid">
         {/* dockedItems: toolbar atas */}
         <div className="toolbar">
           <Btn

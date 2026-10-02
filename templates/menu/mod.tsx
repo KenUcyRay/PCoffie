@@ -38,7 +38,7 @@ export default function mod() {
         subtitle="Ganti judul dan deskripsi ini sesuai menu Anda."
       />
 
-      <div className="card">
+      <div className="card card-grid">
         {/* dockedItems: toolbar atas (handler-nya di controller) */}
         <div className="toolbar">
           <Btn

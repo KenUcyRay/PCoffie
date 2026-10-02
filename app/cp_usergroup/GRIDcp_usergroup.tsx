@@ -6,6 +6,8 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useSt
 import { toast } from '@/components/toast'
 import { confirmDialog } from '@/components/Confirm';
 import { parseBoolean } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { openContextMenu } from '@/components/ContextMenu';
 import { Btn } from '@/components/Icon';
 import {
   DataTable, GridPager, noColumn, actionsColumn,
@@ -61,6 +63,7 @@ const GRIDcp_usergroup = forwardRef<GridApi, Props>(function GRIDcp_usergroup(
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const { layoutMode } = useAuth();
 
   const load = useCallback(async (opts?: { page?: number; filters?: Filters }) => {
     const p = Math.max(0, opts?.page ?? page);
@@ -129,6 +132,18 @@ const GRIDcp_usergroup = forwardRef<GridApi, Props>(function GRIDcp_usergroup(
     } else toast('Error', res?.message, 'err');
   }, [load, page, selected, clearSelection]);
 
+  // Klik-kanan baris (hanya mode desktop; standard tidak berubah).
+  const rowMenu = useCallback((g: GroupRow, e: React.MouseEvent) => {
+    e.preventDefault();
+    openContextMenu({
+      x: e.clientX, y: e.clientY,
+      items: [
+        { label: `Buka akses ${g.DEFCODE}`, icon: 'chevR', onClick: () => select(g) },
+        { label: `Hapus ${g.DEFCODE}`, icon: 'del', danger: true, onClick: () => removeUser(g) },
+      ],
+    });
+  }, [select, removeUser]);
+
   const columns = useMemo(() => buildColumns({ onSelect: select, onRemove: removeUser }), [select, removeUser]);
 
   useImperativeHandle(ref, () => ({ refresh, create, remove: removeUser }), [refresh, create, removeUser]);
@@ -149,6 +164,7 @@ const GRIDcp_usergroup = forwardRef<GridApi, Props>(function GRIDcp_usergroup(
         loading={loading}
         rowKey={(g) => g.DEFCODE}
         isActive={(g) => selected?.DEFCODE === g.DEFCODE}
+        onRowContextMenu={layoutMode === 'mode_desktop' ? rowMenu : undefined}
       />
       <GridPager total={total} page={page} pageSize={PAGE_SIZE} onPage={(p) => load({ page: p })} />
     </div>

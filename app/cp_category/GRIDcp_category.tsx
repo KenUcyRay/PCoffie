@@ -7,6 +7,8 @@ import { useModal } from '@/components/Modal';
 import { toast } from '@/components/toast'
 import { confirmDialog } from '@/components/Confirm';
 import { parseBoolean } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { openContextMenu } from '@/components/ContextMenu';
 import { Btn, Icon } from '@/components/Icon';
 import {
   DataTable, GridPager, noColumn, actionsColumn, selectColumn,
@@ -74,6 +76,7 @@ function buildColumns(h: { onEdit: (r: CategoryRow) => void; onRemove: (r: Categ
 
 const GRIDcp_category = forwardRef<GridApi>(function GRIDcp_category(_props, ref) {
   const { open } = useModal();
+  const { layoutMode } = useAuth();
   const [rows, setRows] = useState<CategoryRow[]>([]);
   const [filters, setFilters] = useState<Filters>({});
   const [sort, setSort] = useState<SortState>(null);
@@ -140,6 +143,19 @@ const GRIDcp_category = forwardRef<GridApi>(function GRIDcp_category(_props, ref
     open(<FRMcp_category isNew onSaved={() => load({ page: 0 })} />);
   }, [load, open]);
 
+  // Klik-kanan baris (hanya mode desktop; standard tidak berubah).
+  const rowMenu = useCallback((r: CategoryRow, e: React.MouseEvent) => {
+    e.preventDefault();
+    openContextMenu({
+      x: e.clientX, y: e.clientY,
+      items: [
+        { label: `Ubah ${r.CATCODE}`, icon: 'edit', onClick: () => openCategory(r) },
+        { label: `${r.CATACTIVE === 'YES' ? 'Nonaktifkan' : 'Aktifkan'} ${r.CATCODE}`, icon: 'check', onClick: () => toggleStatus(r) },
+        { label: `Hapus ${r.CATCODE}`, icon: 'del', danger: true, onClick: () => removeCategory(r) },
+      ],
+    });
+  }, [openCategory, toggleStatus, removeCategory]);
+
   const columns = useMemo(() => buildColumns({ onEdit: openCategory, onRemove: removeCategory, onToggle: toggleStatus }), [openCategory, removeCategory, toggleStatus]);
 
   useImperativeHandle(
@@ -174,6 +190,7 @@ const GRIDcp_category = forwardRef<GridApi>(function GRIDcp_category(_props, ref
         startRow={page * PAGE_SIZE}
         loading={loading}
         rowKey={(r) => String(r.CATID ?? r.CATCODE)}
+        onRowContextMenu={layoutMode === 'mode_desktop' ? rowMenu : undefined}
       />
       <GridPager total={total} page={page} pageSize={PAGE_SIZE} onPage={(p) => load({ page: p })} />
     </div>

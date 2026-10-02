@@ -1,21 +1,17 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth, type LayoutMode } from '@/lib/auth';
-import { buildModuleTree, type MenuNode } from '@/lib/menu';
 import { useTabs } from '@/lib/tabs';
-import { useCurrentPath, useRoute } from '@/lib/route';
-import { useModal } from './Modal';
-import UserProfileModal from '@/app/cp_usersetting/FRMprofile_user';
+import { useCurrentPath } from '@/lib/route';
 import { useIsNarrow } from '@/lib/useIsNarrow';
 import { toast } from './toast';
-import { Icon, Btn, iconForModule, iconForLeaf } from './Icon';
-import { APP_NAME } from '@/lib/app-config';
+import { Icon, Btn } from './Icon';
 import Sidebar, { type SidebarApi } from './Sidebar';
-
-// Icon per module & per menu leaf dipetakan dari kode MMODULE/MCONTROL
-// (src: components/Icon.tsx). Shell cukup memakai hasilnya.
-const moduleIcon = iconForModule;
-const leafIcon = iconForLeaf;
+import TabStrip from './TabStrip';
+import TopBar from './TopBar';
+import { CommandPalette, PALETTE_EVENT } from './CommandPalette';
+import { ContextMenuHost } from './ContextMenu';
+import { NotifBridge } from './Notifs';
 
 function Clock() {
   const [now, setNow] = useState<Date | null>(null);
@@ -93,127 +89,14 @@ function ModeLayoutMenu({ compact, drop = 'up' }: { compact?: boolean; drop?: 'u
   );
 }
 
-// Tree menu 2 tingkat: Module > Menu. Parent toggle buka/tutup, leaf buka tab.
-function MenuTree({ onNavigate }: { onNavigate?: () => void }) {
-  const { menus, checkMenuAccess } = useAuth();
-  const { navigate } = useRoute();
-  const { openTab } = useTabs();
-  const [openModules, setOpenModules] = useState<Set<string>>(new Set());
-  const [openMenus, setOpenMenus] = useState<Set<string>>(new Set());
-  const [ready, setReady] = useState(false);
-  const pathname = useCurrentPath();
-
-  const modules = buildModuleTree(menus);
-
-  useEffect(() => {
-    if (!modules.length || ready) return;
-    const m = new Set(modules.map((x) => x.code));
-    const n = new Set<string>();
-    const walk = (list: MenuNode[]) => list.forEach((c) => {
-      if (c.expanded) n.add(c.menuKey);
-      if (c.children.length) walk(c.children);
-    });
-    modules.forEach((mod) => walk(mod.children));
-    setOpenModules(m);
-    setOpenMenus(n);
-    setReady(true);
-  }, [modules, ready]);
-
-  const toggleMenu = (node: MenuNode) => {
-    setOpenMenus((prev) => {
-      const next = new Set(prev);
-      if (next.has(node.menuKey)) next.delete(node.menuKey); else next.add(node.menuKey);
-      return next;
-    });
-  };
-
-  const clickNode = async (node: MenuNode) => {
-    if (node.children.length) { toggleMenu(node); return; }
-    if (!node.mcontrol) { toast('Error', `menu Control: ${node.name} tidak ditemukan`, 'err'); return; }
-    if (node.mcode) {
-      const ok = await checkMenuAccess(node.mcode);
-      if (!ok) { toast('Error', 'Anda tidak memiliki hak akses untuk membuka menu ini.', 'err'); return; }
-    }
-    const path = '/' + node.mcontrol;
-    openTab(path);
-    navigate(path);
-    onNavigate?.();
-  };
-
-  const renderMenu = (list: MenuNode[]) => (
-    <ul className="tree">
-      {list.map((n) => (
-        <li key={n.menuKey}>
-          <button className="tree-row" onClick={() => clickNode(n)}>
-            <span className="tree-caret">
-              {n.children.length ? (
-                <Icon name={openMenus.has(n.menuKey) ? 'chevD' : 'chevR'} size={12} />
-              ) : (
-                <Icon name={leafIcon(n.mcontrol)} size={14} />
-              )}
-            </span>
-            <span className="tree-label">{n.name}</span>
-          </button>
-          {n.children.length > 0 && openMenus.has(n.menuKey) && renderMenu(n.children)}
-        </li>
-      ))}
-    </ul>
-  );
-
-  return (
-    <div className="menutree">
-      <button
-        className={`tree-row home${pathname === '/' ? ' active' : ''}`}
-        onClick={() => { openTab('/'); navigate('/'); onNavigate?.(); }}
-      >
-        <span className="tree-caret"><Icon name="home" size={14} /></span>
-        <span className="tree-label">Home</span>
-      </button>
-      {modules.map((mod) => (
-        <div key={mod.code} className="module">
-          <button className="tree-row module-row" onClick={() => setOpenModules((prev) => {
-            const n = new Set(prev);
-            if (n.has(mod.code)) n.delete(mod.code); else n.add(mod.code);
-            return n;
-          })}>
-            <span className="tree-caret">
-              <Icon name={openModules.has(mod.code) ? 'chevD' : 'chevR'} size={12} />
-            </span>
-            <Icon name={moduleIcon(mod.code)} size={15} />
-            <span className="tree-label">{mod.name}</span>
-          </button>
-          {openModules.has(mod.code) && mod.children.length > 0 && renderMenu(mod.children)}
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export function StandardShell({ title, children }: { title: string; children: React.ReactNode }) {
-  const { profile, logout } = useAuth();
-  const { navigate } = useRoute();
   const pathname = useCurrentPath();
-  const { tabs, openTab, closeTab } = useTabs();
-  const { open } = useModal();
+  const { openTab } = useTabs();
   const sidebar = useRef<SidebarApi>(null);
   // Batas mobile sidebar = 768px (sama dengan CSS .sb-drawer).
   const isNarrow = useIsNarrow(768);
 
   useEffect(() => { if (pathname && pathname !== '/login') openTab(pathname); }, [pathname]);
-
-  const go = (path: string) => {
-    openTab(path);
-    navigate(path);
-  };
-
-  const close = (path: string) => {
-    const idx = tabs.findIndex((t) => t.path === path);
-    closeTab(path);
-    if (pathname === path) {
-      const fallback = tabs[Math.max(0, idx - 1)]?.path || '/';
-      navigate(fallback);
-    }
-  };
 
   return (
     <div className="layout std">
@@ -233,16 +116,7 @@ export function StandardShell({ title, children }: { title: string; children: Re
             ><Icon name="menu" size={19} /></button>
           )}
           {isNarrow && <span className="topbar-title">{title}</span>}
-          {tabs.map((t) => (
-            <span key={t.key} className={`tab${t.path === pathname ? ' active' : ''}`}>
-              <button className="tab-label" onClick={() => go(t.path)}>{t.title}</button>
-              {t.closable && (
-                <button className="tab-x" aria-label={`Tutup ${t.title}`} onClick={() => close(t.path)}>
-                  <Icon name="close" size={14} />
-                </button>
-              )}
-            </span>
-          ))}
+          <TabStrip />
         </div>
 
         <div className="content">{children}</div>
@@ -259,51 +133,47 @@ export function StandardShell({ title, children }: { title: string; children: Re
 
 // (Mode mobile tidak ada — langit_v2 hanya punya mode_desktop & mode_standard.)
 
-// Desktop shell (ala mode_desktop langit_v2): wallpaper + jendela halaman aktif
-// + taskbar bawah dengan Start menu (memakai tree menu yang sama) & clock.
+// Desktop shell baru (Linear/Stripe-style): sidebar fixed + top bar tipis
+// (logo, search pemicu palette, notifikasi, profil) + strip tab + konten lega.
+// StandardShell di atas tidak tersentuh.
 export function DesktopShell({ title, children }: { title: string; children: React.ReactNode }) {
-  const { profile, logout } = useAuth();
-  const { navigate } = useRoute();
-  const { open } = useModal();
-  const [startOpen, setStartOpen] = useState(false);
+  const sidebar = useRef<SidebarApi>(null);
+  const isNarrow = useIsNarrow(768);
+  const [palOpen, setPalOpen] = useState(false);
+
+  useEffect(() => {
+    const onPal = () => setPalOpen((v) => !v);
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setPalOpen((v) => !v);
+      }
+    };
+    window.addEventListener(PALETTE_EVENT, onPal);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener(PALETTE_EVENT, onPal);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, []);
 
   return (
     <div className="layout desktop">
-      <div className="desktop-area" onClick={() => setStartOpen(false)}>
-        <div className="desktop-window" onClick={(e) => e.stopPropagation()}>
-          <div className="desktop-window-title">
-            <Icon name="layout" size={15} />
-            <b>{title}</b>
-            <span className="spacer" />
-            <Btn icon="userCircle" onClick={() => open(<UserProfileModal />)}>Profile</Btn>
-          </div>
-          <div className="desktop-window-body">{children}</div>
+      <Sidebar ref={sidebar} variant="desktop" />
+
+      <div className="dmain">
+        <TopBar onBurger={() => sidebar.current?.toggleDrawer()} />
+        <div className="tabbar dtabs">
+          {isNarrow && <span className="topbar-title">{title}</span>}
+          <TabStrip />
         </div>
 
-        {startOpen && (
-          <div className="desktop-start" onClick={(e) => e.stopPropagation()}>
-            <div className="desktop-start-head">
-              <b>{APP_NAME}</b>
-              <span className="start-user">{profile?.USERNAME || profile?.USERLOGIN}</span>
-            </div>
-            <div className="desktop-start-menu">
-              <MenuTree onNavigate={() => setStartOpen(false)} />
-            </div>
-            <div className="desktop-start-foot">
-              <ModeLayoutMenu />
-            </div>
-          </div>
-        )}
+        <div className="dcontent">{children}</div>
       </div>
 
-      <div className="desktop-taskbar">
-        <Btn className="taskbar-start" icon="start" onClick={() => setStartOpen((v) => !v)}>Start</Btn>
-        <span className="spacer" />
-        <ModeLayoutMenu compact />
-        <Btn icon="userCircle" onClick={() => open(<UserProfileModal />)}>Profile</Btn>
-        <Btn icon="logout" onClick={async () => { await logout(); navigate('/login'); }}>Logout</Btn>
-        <Clock />
-      </div>
+      <CommandPalette open={palOpen} onClose={() => setPalOpen(false)} />
+      <ContextMenuHost />
+      <NotifBridge />
     </div>
   );
 }

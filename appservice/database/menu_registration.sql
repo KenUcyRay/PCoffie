@@ -2,7 +2,7 @@
 -- Module Merchandise, Module Marketing, Module Finance, Module Account
 -- Idempotent: Cek dulu apakah sudah ada, baru INSERT
 -- Module System (MODSYSTEM) sudah ada, tidak diubah
--- Total: 22 menu induk (19 punya child, 3 tanpa child) + 45 child = 67 data
+-- Total: 48 menu baru (22 root + 26 child)
 
 -- =====================================================
 -- MODULE DISCOVERY (MODDISC, DEFSHORT: 20)

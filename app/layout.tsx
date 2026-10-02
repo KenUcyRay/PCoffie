@@ -124,8 +124,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg,#ffffff,#fbfcfe); }
           .card-head b { font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 7px; }
           .card-head svg { color: var(--brand); }
-          .two-col { display: grid; grid-template-columns: 320px 1fr; gap: 12px; align-items: stretch; }
-          .two-col .card { display: flex; flex-direction: column; min-height: 0; }
+          .two-col { display: grid; grid-template-columns: 320px 1fr; gap: 12px; align-items: stretch; height: calc(100vh - 170px); min-height: 400px; }
+          .two-col .card { display: flex; flex-direction: column; min-height: 0; height: 100%; }
           .two-col .grid-box { display: flex; flex-direction: column; flex: 1; min-height: 0; }
           .two-col .card-body { flex: 1; min-height: 0; overflow-y: auto; }
           .grid-box { display: block; }
@@ -337,7 +337,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           /* ============ 14. RESPONSIF ============ */
           @media (max-width: 1100px) { .two-col { grid-template-columns: 300px 1fr; } }
           @media (max-width: 900px) {
-            .two-col { grid-template-columns: 1fr; }
+            .two-col { grid-template-columns: 1fr; height: auto; }
             .two-col .card-body { max-height: 70vh; }
             .stat-grid { grid-template-columns: 1fr; }
             .content { padding: 16px; }

@@ -118,11 +118,73 @@ export function iconForModule(code: string): IconName {
   if (c.includes('group') || c.includes('akses')) return 'users';
   if (c.includes('menu') || c.includes('modul')) return 'grid';
   if (c.includes('home') || c.includes('dash')) return 'home';
+  if (c.includes('moddisc')) return 'planet';
+  if (c.includes('modevent')) return 'calendarEvent';
+  if (c.includes('modticket')) return 'ticket';
+  if (c.includes('modmerch')) return 'box';
+  if (c.includes('modmarketing')) return 'chart';
+  if (c.includes('modfinance')) return 'cash';
+  if (c.includes('modaccount')) return 'userCircle';
+  if (c.includes('modsystem')) return 'gear';
   return 'box';
 }
 
+// Ikon leaf per MCONTROL (CPMENU tidak punya kolom ikon, jadi dipetakan di sini
+// seperti menu lama). Parent ber-child selalu 'folderOpen' (di Sidebar).
+const LEAF_ICONS: Record<string, IconName> = {
+  moddischome: 'home',
+  moddisceventlist: 'calendarEvent',
+  moddisceventcategory: 'grid',
+  moddisceventcity: 'dept',
+  moddiscnewslist: 'report',
+  moddiscpromolist: 'ticket',
+  modeventdata: 'form',
+  modeventtickettype: 'ticket',
+  modeventattendee: 'users',
+  modticketmy: 'ticket',
+  modticketrefund: 'refresh',
+  modticketcheckscan: 'search',
+  modticketcheckhistory: 'history',
+  modmerchproduct: 'box',
+  modmerchpurchase: 'download',
+  modmerchproductdata: 'form',
+  modmerchsellerorder: 'report',
+  modmarketingpromo: 'ticket',
+  modmarketingcampaign: 'chart',
+  modmarketingnewsdata: 'form',
+  modmarketingnewscategory: 'grid',
+  modfinancepayment: 'cash',
+  modfinanceinvoice: 'report',
+  modfinancesales: 'chart',
+  modfinancepayout: 'cash',
+  modfinancesellerbalance: 'cash',
+  modfinancesellerwithdraw: 'download',
+  modfinancebank: 'dept',
+  modaccountnotification: 'mail',
+  modaccountprofile: 'user',
+  modaccountchangepassword: 'key',
+  cp_matrix: 'grid',
+  cp_menu: 'menu',
+  cp_category: 'grid',
+  cp_city: 'dept',
+  cp_bank: 'dept',
+  cp_paymentmethod: 'cash',
+  cp_fee: 'cash',
+  cp_security: 'lock',
+  cp_session: 'history',
+  cp_blocked: 'alertCircle',
+  cp_auditlog: 'history',
+  cp_syslog: 'history',
+  cp_loginlog: 'history',
+  cp_message_send: 'mail',
+  cp_message_history: 'history',
+  cp_setting: 'gear',
+  cp_notification_template: 'mail',
+};
+
 export function iconForLeaf(mcontrol: string): IconName {
   const c = String(mcontrol || '').toLowerCase();
+  if (LEAF_ICONS[c]) return LEAF_ICONS[c];
   if (c === '' || c === 'home') return 'home';
   if (c.includes('group')) return 'users';
   if (c.includes('setting') || c.includes('login') || c.includes('user')) return 'user';

@@ -116,7 +116,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           /* ============ 5. AREA KERJA ============ */
           .layout.std { display: flex; min-height: 100vh; }
           .main { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100vh; background: var(--bg); }
-          .content { flex: 1; overflow: auto; padding: 16px 18px 22px; display: grid; gap: 12px; align-content: start; }
+          .content { flex: 1; overflow: hidden; padding: 16px 18px 22px; display: grid; gap: 12px; align-content: start; }
           .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 0 2px; }
           .page-head-info { min-width: 0; display: grid; gap: 2px; }
           .page-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--text); }
@@ -373,6 +373,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           @media (max-width: 768px) {
             .input, select, textarea { font-size: 16px; }
             .page-title { font-size: 18px; }
+          }
+          /* Layar pendek: kunci scroll dilepas agar konten tetap terjangkau. */
+          @media (max-height: 700px) {
+            .content { overflow: auto; }
           }
           @media (max-width: 760px) {
             .login-page { grid-template-columns: 1fr; }

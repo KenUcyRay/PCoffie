@@ -27,7 +27,6 @@ import { useCurrentPath, useRoute } from '@/lib/route';
 import { useModal } from './Modal';
 import { useIsNarrow } from '@/lib/useIsNarrow';
 import { toast } from './toast';
-import { openContextMenu } from './ContextMenu';
 import { APP_NAME, STORE } from '@/lib/app-config';
 import { Icon, iconForModule, iconForLeaf, type IconName } from './Icon';
 import UserProfileModal from '@/app/cp_usersetting/FRMprofile_user';
@@ -77,11 +76,9 @@ export type SidebarApi = {
 type Props = {
   /** Nama aplikasi di header. */
   appName?: string;
-  /** Varian desktop: class tambahan + klik-kanan menu. Standard tidak berubah. */
-  variant?: 'standard' | 'desktop';
 };
 
-const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = APP_NAME, variant = 'standard' }, ref) {
+const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = APP_NAME }, ref) {
   const { profile, menus, logout, checkMenuAccess } = useAuth();
   const { navigate } = useRoute();
   const pathname = useCurrentPath();
@@ -143,7 +140,7 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = APP_N
   const toggleDrawer = useCallback(() => setDrawerOpen((v) => !v), []);
   useImperativeHandle(ref, () => ({ toggleDrawer, closeDrawer: () => setDrawerOpen(false) }), [toggleDrawer]);
 
-  // Ctrl+B / Cmd+B + event toggle dari command palette (desktop).
+  // Ctrl+B / Cmd+B
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
@@ -152,16 +149,8 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = APP_N
       if (isNarrow) setDrawerOpen((v) => !v);
       else toggleCollapsed();
     };
-    const onToggle = () => {
-      if (isNarrow) setDrawerOpen((v) => !v);
-      else toggleCollapsed();
-    };
     window.addEventListener('keydown', onKey);
-    window.addEventListener('appcore:sidebar-toggle', onToggle);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      window.removeEventListener('appcore:sidebar-toggle', onToggle);
-    };
+    return () => window.removeEventListener('keydown', onKey);
   }, [isNarrow, toggleCollapsed]);
 
   // Esc menutup drawer / popup / tooltip.
@@ -238,27 +227,6 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = APP_N
     setTip({ text, top: r.top + r.height / 2 });
   };
 
-  // Klik-kanan: hanya varian desktop (standard tidak berubah).
-  const leafMenu = (n: MenuNode) => (e: React.MouseEvent) => {
-    if (variant !== 'desktop') return;
-    e.preventDefault();
-    e.stopPropagation();
-    openContextMenu({
-      x: e.clientX, y: e.clientY,
-      items: [{ label: `Buka ${n.name}`, icon: 'chevR', onClick: () => clickLeaf(n) }],
-    });
-  };
-
-  const groupMenu = (n: MenuNode, isOpen: boolean) => (e: React.MouseEvent) => {
-    if (variant !== 'desktop') return;
-    e.preventDefault();
-    e.stopPropagation();
-    openContextMenu({
-      x: e.clientX, y: e.clientY,
-      items: [{ label: isOpen ? `Tutup ${n.name}` : `Buka ${n.name}`, icon: 'folderOpen', onClick: () => toggleGroup(n) }],
-    });
-  };
-
   const renderLevel = (list: MenuNode[], depth: number): React.ReactNode => (
     <ul className="sb-list">
       {list.map((n) => {
@@ -283,7 +251,6 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = APP_N
                 aria-expanded={open}
                 title={collapsed || isNarrow ? undefined : n.name}
                 onClick={() => toggleGroup(n)}
-                onContextMenu={groupMenu(n, open)}
                 {...tipProps}
               >
                 <span className="sb-ico"><Icon name={icon} size={18} /></span>
@@ -303,10 +270,9 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = APP_N
               type="button"
               className={`sb-item sb-leaf${active ? ' active' : ''}`}
               aria-current={active ? 'page' : undefined}
-                title={collapsed || isNarrow ? undefined : n.name}
-                onClick={() => clickLeaf(n)}
-                onContextMenu={leafMenu(n)}
-                {...tipProps}
+              title={collapsed || isNarrow ? undefined : n.name}
+              onClick={() => clickLeaf(n)}
+              {...tipProps}
             >
               <span className="sb-ico"><Icon name={icon} size={17} /></span>
               <span className="sb-label">{n.name}</span>
@@ -331,7 +297,6 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = APP_N
     isNarrow ? 'sb-drawer' : 'sb-fixed',
     !isNarrow && collapsed ? 'sb-collapsed' : '',
     isNarrow && drawerOpen ? 'sb-open' : '',
-    variant === 'desktop' ? 'sb-desk' : '',
   ].filter(Boolean).join(' ');
 
   return (

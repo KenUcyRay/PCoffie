@@ -89,7 +89,6 @@ export function DataTable<T>({
   emptyMessage,
   rowKey,
   isActive,
-  onRowContextMenu,
 }: {
   columns: Column<T>[];
   rows: T[];
@@ -99,8 +98,6 @@ export function DataTable<T>({
   sort?: SortDir;
   /** Dipanggil saat header sortable diklik. Tanpa ini kolom sortable tampil polos. */
   onSort?: (next: SortDir) => void;
-  /** Klik-kanan baris. Tanpa ini tidak ada menu konteks (grid lama tak berubah). */
-  onRowContextMenu?: (row: T, e: React.MouseEvent) => void;
   startRow?: number;
   loading?: boolean;
   emptyMessage?: string;
@@ -197,7 +194,6 @@ export function DataTable<T>({
             <tr
               key={rowKey ? rowKey(row, i) : String((row as any)?.[columns[0]?.key] ?? i)}
               className={isActive?.(row) ? 'dt-active' : undefined}
-              onContextMenu={onRowContextMenu ? (e) => onRowContextMenu(row, e) : undefined}
             >
               {columns.map((c) => (
                 <td key={c.key} className={c.align === 'right' ? 'grid-num' : undefined}>

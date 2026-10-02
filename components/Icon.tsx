@@ -22,7 +22,6 @@ import {
   // sidebar & navigasi
   IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand,
   IconApps, IconSelect, IconFolderOpen, IconStack, IconSitemap, IconInfoCircle,
-  IconBell, IconCommand,
   // module icons
   IconCalendarEvent, IconTicket, IconPackage, IconSpeakerphone, IconCash, IconPlanet,
   type Icon as TablerIcon,
@@ -39,7 +38,7 @@ export type IconName =
   | 'login' | 'contacts' | 'form' | 'world' | 'chart' | 'ticket' | 'package'
   | 'megaphone' | 'cash' | 'planet' | 'settings'
   | 'panel' | 'panelOpen' | 'apps' | 'select' | 'folderOpen' | 'navStack' | 'sitemap'
-  | 'info' | 'alert' | 'bell' | 'command';
+  | 'info' | 'alert';
 
 // Satu tempat untuk ganti/tambah icon — mirip daftar iconCls di langit_v2.
 const ICONS: Record<IconName, TablerIcon> = {
@@ -110,8 +109,6 @@ const ICONS: Record<IconName, TablerIcon> = {
   navStack: IconStack,
   sitemap: IconSitemap,
   info: IconInfoCircle,
-  bell: IconBell,
-  command: IconCommand,
   alert: IconAlertTriangle,
 };
 

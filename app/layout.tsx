@@ -116,7 +116,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           /* ============ 5. AREA KERJA ============ */
           .layout.std { display: flex; min-height: 100vh; }
           .main { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100vh; background: var(--bg); }
-          .content { flex: 1; overflow: hidden; padding: 16px 18px 22px; display: grid; gap: 12px; align-content: start; }
+          .content { flex: 1; overflow: hidden; padding: 16px 18px 22px; display: flex; flex-direction: column; gap: 12px; }
+          .page-head, .hero, .stat-grid { flex: none; }
+          .card-grid, .two-col, .card-flex { flex: 1; min-height: 0; }
           .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 0 2px; }
           .page-head-info { min-width: 0; display: grid; gap: 2px; }
           .page-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--text); }
@@ -128,12 +130,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg,#ffffff,#fbfcfe); }
           .card-head b { font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 7px; }
           .card-head svg { color: var(--brand); }
-          .two-col { display: grid; grid-template-columns: 320px 1fr; gap: 12px; align-items: stretch; height: calc(100vh - 170px); min-height: 400px; }
+          .two-col { display: grid; grid-template-columns: 320px 1fr; gap: 12px; align-items: stretch; }
           .two-col .card { display: flex; flex-direction: column; min-height: 0; height: 100%; }
           .two-col .grid-box { display: flex; flex-direction: column; flex: 1; min-height: 0; }
           .two-col .card-body { flex: 1; min-height: 0; overflow-y: auto; }
           .grid-box { display: block; }
-          .card-grid { display: flex; flex-direction: column; height: calc(100vh - 170px); min-height: 400px; }
+          .card-grid { display: flex; flex-direction: column; }
           .card-grid .grid-box { flex: 1; min-height: 0; display: flex; flex-direction: column; }
           .card-grid .table-wrap { flex: 1; min-height: 0; overflow: auto; }
           .toolbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
@@ -264,7 +266,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .alert-inline { display: flex; align-items: flex-start; gap: 9px; }
 
           /* ============ 10. HOME / STAT ============ */
-          .hero { position: relative; overflow: hidden; border-radius: var(--r-lg); background: linear-gradient(135deg,#1e3a8a,#1d4ed8 55%,#0ea5e9); color: #fff; padding: 20px 22px; display: flex; align-items: center; gap: 16px; box-shadow: var(--sh-lg); }
+          .hero { position: relative; overflow: hidden; border-radius: var(--r-lg); background: linear-gradient(135deg,#1e3a8a,#1d4ed8 55%,#0ea5e9); color: #fff; padding: 18px 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--sh-lg); }
           .hero-info { flex: 1; min-width: 0; display: grid; gap: 4px; }
           .hero-hi { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
           .hero-sub { margin: 0; font-size: 12.5px; color: rgba(255,255,255,.85); }
@@ -276,7 +278,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .stat-info { display: grid; gap: 1px; min-width: 0; }
           .stat-info b { font-size: 16px; font-weight: 700; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
           .stat-info span { font-size: 11px; color: var(--muted); font-weight: 600; }
-          .mod-cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill,minmax(250px,1fr)); overflow-y: auto; max-height: calc(100vh - 420px); min-height: 220px; padding: 2px 6px 2px 2px; }
+          .card-flex { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+          .card-flex .card-body { flex: 1; min-height: 0; overflow-y: auto; }
+          .mod-cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill,minmax(250px,1fr)); padding: 2px 6px 2px 2px; }
           .mod-card { text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh); padding: 14px; display: grid; gap: 10px; align-content: start; cursor: pointer; font-family: inherit; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
           .mod-card:hover { transform: translateY(-2px); box-shadow: var(--sh-lg); border-color: var(--border-2); }
           .mod-card:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
@@ -373,10 +377,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           @media (max-width: 768px) {
             .input, select, textarea { font-size: 16px; }
             .page-title { font-size: 18px; }
-          }
-          /* Layar pendek: kunci scroll dilepas agar konten tetap terjangkau. */
-          @media (max-height: 700px) {
-            .content { overflow: auto; }
           }
           @media (max-width: 760px) {
             .login-page { grid-template-columns: 1fr; }

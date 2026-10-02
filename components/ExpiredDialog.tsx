@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { useRoute } from '@/lib/route';
 import { Btn, Icon } from './Icon';
 import { Window, FrmRow } from './Window';
 
@@ -9,7 +9,7 @@ import { Window, FrmRow } from './Window';
 // dengan resume bila user yang login kembali sama.
 export default function ExpiredDialog() {
   const { status, login, profile, logout } = useAuth();
-  const router = useRouter();
+  const { navigate } = useRoute();
   const [userlogin, setUserlogin] = useState('');
   const [userpassword, setUserpassword] = useState('');
   const [err, setErr] = useState('');
@@ -37,7 +37,7 @@ export default function ExpiredDialog() {
 
   const submitLogout = async () => {
     await logout();
-    router.replace('/login');
+    navigate('/login');
   };
 
   return (

@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import Shell from './Shell';
 import { Icon } from './Icon';
@@ -12,9 +11,12 @@ import { PageHead } from './Page';
 // tidak ikut ter-bundle ke client. Kalau folder belum ada, menu tetap
 // muncul di sidebar (driven dtmenu); saat diklik tampil pesan
 // "menu Control: <mcontrol> tidak ditemukan" (persis langit_v2).
+//
+// mcontrol sekarang datang dari state internal (app/page.tsx), bukan dari
+// useParams(). Status 'guest' sudah ditangani app/page.tsx sebelum komponen
+// ini dirender, jadi tidak ada lagi redirect ke /login di sini.
 export default function MenuHost({ mcontrol }: { mcontrol: string }) {
   const { status, menus } = useAuth();
-  const router = useRouter();
   const [Comp, setComp] = useState<React.ComponentType | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'missing'>('loading');
 
@@ -22,10 +24,6 @@ export default function MenuHost({ mcontrol }: { mcontrol: string }) {
     (m: any) => String(m.MCONTROL || '').toLowerCase() === mcontrol.toLowerCase(),
   );
   const title = String(menuRow?.MNAME || mcontrol || 'Application');
-
-  useEffect(() => {
-    if (status === 'guest') router.replace('/login');
-  }, [status, router]);
 
   useEffect(() => {
     let alive = true;

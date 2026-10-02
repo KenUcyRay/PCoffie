@@ -15,16 +15,8 @@ const Ctx = createContext<TabState | null>(null);
 
 const HOME: Tab = { key: 'home', path: '/', title: 'Home', closable: false };
 
-export const APP_BASE_PATH = '/app-core';
-
-// Ubah pathname dari router (mengandung basePath + trailing slash) jadi rute app.
-// contoh: "/app-core/cp_usersetting/" -> "/cp_usersetting"
-export function routeFromPathname(pathname: string | null): string {
-  let p = String(pathname || '/');
-  if (p.startsWith(APP_BASE_PATH)) p = p.slice(APP_BASE_PATH.length);
-  p = p.replace(/\/+$/, '');
-  return p || '/';
-}
+// Tab.path sekarang adalah key logis dari state internal (lib/route), bukan
+// URL.Nilainya tetap "/", "/<mcontrol>" supaya judul tab & logika tetap sama.
 
 // Judul tab default dari mcontrol kalau MNAME tidak ada di dtmenu.
 function titleCase(key: string) {
@@ -75,17 +67,8 @@ export function TabProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menus]);
 
-  // sinkronkan dengan navigasi router (mis. tombol back browser)
-  useEffect(() => {
-    const onPop = () => {
-      const p = routeFromPathname(window.location.pathname);
-      if (p) openTab(p);
-    };
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  // Sinkronkan tab dengan halaman aktif dilakukan di StandardShell, karena
+  // hanya di situ nilai `pathname` dari state internal tersedia.
   return <Ctx.Provider value={{ tabs, activePath, openTab, closeTab }}>{children}</Ctx.Provider>;
 }
 

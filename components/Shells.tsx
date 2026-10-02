@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
 import { useAuth, type LayoutMode } from '@/lib/auth';
 import { buildModuleTree, type MenuNode } from '@/lib/menu';
-import { useTabs, routeFromPathname } from '@/lib/tabs';
+import { useTabs } from '@/lib/tabs';
+import { useCurrentPath, useRoute } from '@/lib/route';
 import { useModal } from './Modal';
 import UserProfileModal from '@/app/cp_usersetting/FRMprofile_user';
 import { useIsNarrow } from '@/lib/useIsNarrow';
@@ -95,12 +95,12 @@ function ModeLayoutMenu({ compact, drop = 'up' }: { compact?: boolean; drop?: 'u
 // Tree menu 2 tingkat: Module > Menu. Parent toggle buka/tutup, leaf buka tab.
 function MenuTree({ onNavigate }: { onNavigate?: () => void }) {
   const { menus, checkMenuAccess } = useAuth();
-  const router = useRouter();
+  const { navigate } = useRoute();
   const { openTab } = useTabs();
   const [openModules, setOpenModules] = useState<Set<string>>(new Set());
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set());
   const [ready, setReady] = useState(false);
-  const pathname = routeFromPathname(usePathname());
+  const pathname = useCurrentPath();
 
   const modules = buildModuleTree(menus);
 
@@ -135,7 +135,7 @@ function MenuTree({ onNavigate }: { onNavigate?: () => void }) {
     }
     const path = '/' + node.mcontrol;
     openTab(path);
-    router.push(path);
+    navigate(path);
     onNavigate?.();
   };
 
@@ -163,7 +163,7 @@ function MenuTree({ onNavigate }: { onNavigate?: () => void }) {
     <div className="menutree">
       <button
         className={`tree-row home${pathname === '/' ? ' active' : ''}`}
-        onClick={() => { openTab('/'); router.push('/'); onNavigate?.(); }}
+        onClick={() => { openTab('/'); navigate('/'); onNavigate?.(); }}
       >
         <span className="tree-caret"><Icon name="home" size={14} /></span>
         <span className="tree-label">Home</span>
@@ -190,8 +190,8 @@ function MenuTree({ onNavigate }: { onNavigate?: () => void }) {
 
 export function StandardShell({ title, children }: { title: string; children: React.ReactNode }) {
   const { profile, logout } = useAuth();
-  const router = useRouter();
-  const pathname = routeFromPathname(usePathname());
+  const { navigate } = useRoute();
+  const pathname = useCurrentPath();
   const { tabs, openTab, closeTab } = useTabs();
   const { open } = useModal();
   const sidebar = useRef<SidebarApi>(null);
@@ -202,7 +202,7 @@ export function StandardShell({ title, children }: { title: string; children: Re
 
   const go = (path: string) => {
     openTab(path);
-    router.push(path);
+    navigate(path);
   };
 
   const close = (path: string) => {
@@ -210,7 +210,7 @@ export function StandardShell({ title, children }: { title: string; children: Re
     closeTab(path);
     if (pathname === path) {
       const fallback = tabs[Math.max(0, idx - 1)]?.path || '/';
-      router.push(fallback);
+      navigate(fallback);
     }
   };
 
@@ -262,7 +262,7 @@ export function StandardShell({ title, children }: { title: string; children: Re
 // + taskbar bawah dengan Start menu (memakai tree menu yang sama) & clock.
 export function DesktopShell({ title, children }: { title: string; children: React.ReactNode }) {
   const { profile, logout } = useAuth();
-  const router = useRouter();
+  const { navigate } = useRoute();
   const { open } = useModal();
   const [startOpen, setStartOpen] = useState(false);
 
@@ -300,7 +300,7 @@ export function DesktopShell({ title, children }: { title: string; children: Rea
         <span className="spacer" />
         <ModeLayoutMenu compact />
         <Btn icon="userCircle" onClick={() => open(<UserProfileModal />)}>Profile</Btn>
-        <Btn icon="logout" onClick={async () => { await logout(); router.replace('/login'); }}>Logout</Btn>
+        <Btn icon="logout" onClick={async () => { await logout(); navigate('/login'); }}>Logout</Btn>
         <Clock />
       </div>
     </div>

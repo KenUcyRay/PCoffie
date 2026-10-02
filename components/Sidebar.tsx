@@ -20,10 +20,10 @@
 import {
   forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState,
 } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { buildModuleTree, type MenuNode, type ModuleNode } from '@/lib/menu';
-import { useTabs, routeFromPathname } from '@/lib/tabs';
+import { useTabs } from '@/lib/tabs';
+import { useCurrentPath, useRoute } from '@/lib/route';
 import { useModal } from './Modal';
 import { useIsNarrow } from '@/lib/useIsNarrow';
 import { toast } from './toast';
@@ -79,8 +79,8 @@ type Props = {
 
 const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'App Core' }, ref) {
   const { profile, menus, logout, checkMenuAccess } = useAuth();
-  const router = useRouter();
-  const pathname = routeFromPathname(usePathname());
+  const { navigate } = useRoute();
+  const pathname = useCurrentPath();
   const { openTab } = useTabs();
   const { open } = useModal();
   const isNarrow = useIsNarrow(MOBILE_MAX);
@@ -208,14 +208,14 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'App 
     }
     const path = '/' + n.mcontrol;
     openTab(path);
-    router.push(path);
+    navigate(path);
     if (isNarrow) setDrawerOpen(false);
   };
 
   const goHome = () => {
     setTip(null);
     openTab('/');
-    router.push('/');
+    navigate('/');
     if (isNarrow) setDrawerOpen(false);
   };
 
@@ -371,7 +371,7 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'App 
                 type="button"
                 role="menuitem"
                 className="sb-pop-item danger"
-                onClick={async () => { setPopOpen(false); await logout(); router.replace('/login'); }}
+                onClick={async () => { setPopOpen(false); await logout(); navigate('/login'); }}
               >
                 <Icon name="logout" size={16} />
                 <span>Logout</span>

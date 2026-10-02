@@ -1,23 +1,30 @@
 'use client';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { useRoute } from '@/lib/route';
 import { buildModuleTree } from '@/lib/menu';
 import Shell from '@/components/Shell';
+import MenuHost from '@/components/MenuHost';
+import LoginPage from '@/components/LoginPage';
 import { Icon, iconForModule, iconForLeaf } from '@/components/Icon';
 import { PageHead } from '@/components/Page';
 
-export default function HomePage() {
-  const { status, profile, menus, layoutMode } = useAuth();
-  const router = useRouter();
+// Satu-satunya route Next.js di aplikasi ini ("/app-core"). Halaman yang aktif
+// ditentukan oleh state internal (lib/route), bukan oleh URL — meniru langit_v2
+// yang index.html-nya kosong dan tidak pernah mengubah URL.
 
-  useEffect(() => {
-    if (status === 'guest') router.replace('/login');
-  }, [status, router]);
+function Loading() {
+  return (
+    <div className="card">
+      <div className="card-body">
+        <span className="loading-hint"><Icon name="loading" size={16} className="spin" /> Memuat…</span>
+      </div>
+    </div>
+  );
+}
 
-  if (status !== 'authenticated' && status !== 'expired') {
-    return <div className="card"><div className="card-body"><span className="loading-hint"><Icon name="loading" size={16} className="spin" /> Memuat…</span></div></div>;
-  }
+function HomeView() {
+  const { profile, menus, layoutMode } = useAuth();
 
   const modules = buildModuleTree(menus);
   const user = profile?.USERLOGIN || '-';
@@ -79,4 +86,30 @@ export default function HomePage() {
       </div>
     </Shell>
   );
+}
+
+export default function Page() {
+  const { status } = useAuth();
+  const { current, navigate, ready } = useRoute();
+
+  // Normalisasi rute terhadap status auth:
+  //  guest               -> login (apa pun yang tersimpan di sessionStorage)
+  //  sudah login         -> home (biar tidak tersangkut di /login)
+  useEffect(() => {
+    if (!ready) return;
+    if (status === 'guest') {
+      if (current !== '/login') navigate('/login');
+      return;
+    }
+    if (status === 'authenticated' && current === '/login') navigate('/');
+  }, [ready, status, current, navigate]);
+
+  if (!ready) return <Loading />;
+  if (status === 'guest') return <LoginPage />;
+  if (status !== 'authenticated' && status !== 'expired') return <Loading />;
+  // transien: effect di atas sedang mengarahkan /login -> /
+  if (current === '/login') return <Loading />;
+  if (current === '/') return <HomeView />;
+
+  return <MenuHost mcontrol={current.replace(/^\//, '')} />;
 }

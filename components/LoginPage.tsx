@@ -5,7 +5,7 @@ import { useRoute } from '@/lib/route';
 import { Btn, Icon } from './Icon';
 
 // Halaman login sekarang jadi komponen biasa, bukan route /login terpisah
-// (URL harus selalu /app-core). Di-mount dari app/page.tsx saat status 'guest'.
+// (URL harus selalu /tiket-app). Di-mount dari app/page.tsx saat status 'guest'.
 //
 // Catatan: varian "Sesi Habis" yang dulu ada di sini sudah tidak pernah
 // terpicu (tidak ada yang menuju /login?expired=1). Kasus sesi habis ditangani
@@ -35,7 +35,7 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-brand">
-        <h1><Icon name="layout" size={34} /> Tiket-APP</h1>
+        <h1><Icon name="layout" size={34} /> Ticket APP</h1>
       </div>
       <div className="login-form-wrap">
         <form onSubmit={submit} className="login-form">

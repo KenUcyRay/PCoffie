@@ -9,7 +9,7 @@ import LoginPage from '@/components/LoginPage';
 import { Icon, iconForModule, iconForLeaf } from '@/components/Icon';
 import { PageHead } from '@/components/Page';
 
-// Satu-satunya route Next.js di aplikasi ini ("/app-core"). Halaman yang aktif
+// Satu-satunya route Next.js di aplikasi ini ("/tiket-app"). Halaman yang aktif
 // ditentukan oleh state internal (lib/route), bukan oleh URL — meniru langit_v2
 // yang index.html-nya kosong dan tidak pernah mengubah URL.
 

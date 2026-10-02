@@ -7,7 +7,7 @@ const TOKEN_KEY = 'appcore::auth::token';
 let memoryToken: string | null = null;
 
 export function getApiBase(): string {
-  return process.env.NEXT_PUBLIC_API_BASE || '/app-core/appservice/public/api/core';
+  return process.env.NEXT_PUBLIC_API_BASE || '/tiket-app/appservice/public/api/core';
 }
 
 export function parseBoolean(v: unknown): boolean {

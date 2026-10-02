@@ -1,4 +1,4 @@
-// Sidebar app-core — padanan Cmode_standard.js sidebar langti_v2, ditulis ulang
+// Sidebar tiket-app — padanan Cmode_standard.js sidebar langti_v2, ditulis ulang
 // dengan gaya modern (navy + aksen biru) TANPA mengubah struktur menu atau route.
 //
 // STRUKTUR TIDAK DIUBAH: menu tetap dibangun dari `auth/me` -> `dtmenu`
@@ -77,7 +77,7 @@ type Props = {
   appName?: string;
 };
 
-const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'Tiket-APP' }, ref) {
+const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'Ticket APP' }, ref) {
   const { profile, menus, logout, checkMenuAccess } = useAuth();
   const { navigate } = useRoute();
   const pathname = useCurrentPath();

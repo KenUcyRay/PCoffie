@@ -228,6 +228,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .modal-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; }
           .modal-foot { display: flex; gap: 6px; align-items: center; flex: none; padding: 9px 14px; border-top: 1px solid var(--border); background: var(--surface-2); }
           .modal-foot .spacer { flex: 1; }
+          .confirm-layer { position: fixed; inset: 0; z-index: 200; }
           .confirm-msg { display: flex; gap: 10px; align-items: flex-start; margin: 2px 0; font-size: 13px; color: var(--text); }
           .confirm-msg svg { flex: none; margin-top: 1px; }
           .confirm-msg.info svg { color: var(--brand); }

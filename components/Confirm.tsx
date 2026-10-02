@@ -81,7 +81,11 @@ export function ConfirmHost() {
 
   if (!cur) return null;
 
+  // .confirm-layer (z-index 200) membuat dialog ini selalu di atas semua window
+  // FRM (modal-layer z-index 50+). Tanpa ini, konfirmasi yang dibuka dari dalam
+  // FRM akan tertutup window FRM-nya sendiri karena kalah urutan DOM.
   return (
+    <div className="confirm-layer">
     <Window
       key={cur.id}
       title={cur.title}
@@ -107,5 +111,6 @@ export function ConfirmHost() {
         <span>{cur.message}</span>
       </p>
     </Window>
+    </div>
   );
 }

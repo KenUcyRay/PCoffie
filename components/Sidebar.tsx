@@ -251,16 +251,24 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'Tike
     setOpenMenus(new Set(trail));
     if (collapsed) { setCollapsed(false); writeCollapsed(false); }
     if (isNarrow && !drawerOpen) setDrawerOpen(true);
-    // Tunggu animasi buka/tutup grup selesai baru scroll agar posisi tepat.
-    window.setTimeout(() => {
+    // Scroll module ke paling atas nav. Dijalankan 3 fase: langsung (respon
+    // seketika), koreksi setelah animasi buka/tutup grup (220ms), dan jepit
+    // akhir. Posisi diukur ulang tiap fase karena layout bergeser selama animasi.
+    const doScroll = (smooth: boolean) => {
       const nav = navRef.current;
-      if (!nav) return;
+      if (!nav) return false;
       const el = nav.querySelector(`[data-menukey="${trail[0]}"]`);
-      if (!el) return;
+      if (!el) return false;
+      const max = nav.scrollHeight - nav.clientHeight;
       const top = (el as HTMLElement).getBoundingClientRect().top
         - nav.getBoundingClientRect().top + nav.scrollTop - 4;
-      nav.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-    }, 260);
+      if (max > 0) nav.scrollTo({ top: Math.max(0, Math.min(top, max)), behavior: smooth ? 'smooth' : 'auto' });
+      else (el as HTMLElement).scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+      return true;
+    };
+    window.setTimeout(() => { doScroll(true); }, 100);
+    window.setTimeout(() => { doScroll(true); }, 500);
+    window.setTimeout(() => { doScroll(false); }, 1100);
   }, [nodes, collapsed, isNarrow, drawerOpen]);
 
   useEffect(() => {

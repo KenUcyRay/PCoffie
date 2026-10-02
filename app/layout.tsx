@@ -272,7 +272,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .stat-info { display: grid; gap: 1px; min-width: 0; }
           .stat-info b { font-size: 16px; font-weight: 700; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
           .stat-info span { font-size: 11px; color: var(--muted); font-weight: 600; }
-          .mod-cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill,minmax(250px,1fr)); }
+          .mod-cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill,minmax(250px,1fr)); overflow-y: auto; max-height: calc(100vh - 420px); min-height: 220px; padding: 2px 6px 2px 2px; }
           .mod-card { text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh); padding: 14px; display: grid; gap: 10px; align-content: start; cursor: pointer; font-family: inherit; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
           .mod-card:hover { transform: translateY(-2px); box-shadow: var(--sh-lg); border-color: var(--border-2); }
           .mod-card:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
@@ -297,8 +297,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           @media (max-width: 640px) { .hero-deco { display: none; } .stat-grid { grid-template-columns: 1fr; } }
 
           /* ============ 11. SCROLLBAR HALUS ============ */
-          .content::-webkit-scrollbar, .sb-nav::-webkit-scrollbar, .table-wrap::-webkit-scrollbar, .modal::-webkit-scrollbar { width: 10px; height: 10px; }
-          .content::-webkit-scrollbar-thumb, .sb-nav::-webkit-scrollbar-thumb, .table-wrap::-webkit-scrollbar-thumb, .modal::-webkit-scrollbar-thumb { background: rgba(100,116,139,.3); border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; }
+          .content::-webkit-scrollbar, .sb-nav::-webkit-scrollbar, .table-wrap::-webkit-scrollbar, .modal::-webkit-scrollbar, .mod-cards::-webkit-scrollbar { width: 10px; height: 10px; }
+          .content::-webkit-scrollbar-thumb, .sb-nav::-webkit-scrollbar-thumb, .table-wrap::-webkit-scrollbar-thumb, .modal::-webkit-scrollbar-thumb, .mod-cards::-webkit-scrollbar-thumb { background: rgba(100,116,139,.3); border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; }
           .content::-webkit-scrollbar-thumb:hover, .table-wrap::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,.5); background-clip: padding-box; }
           .sb-nav::-webkit-scrollbar-thumb { background: rgba(148,163,184,.3); background-clip: padding-box; }
 

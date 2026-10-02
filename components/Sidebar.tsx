@@ -34,6 +34,14 @@ const STORE_KEY = 'appcore::sidebar::collapsed';
 // Batas yang sama antara JS (matchMedia) dan CSS media query di app/layout.tsx.
 const MOBILE_MAX = 768;
 
+// Dipakai halaman Home: setelah user klik kartu/chip menu, sidebar menutup
+// semua grup kecuali jalur menu itu lalu scroll module-nya ke paling atas
+// (pola event sama seperti toast/confirmDialog).
+export function focusSidebar(mcontrol: string) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('appcore:sidebar-focus', { detail: { mcontrol } }));
+}
+
 function readCollapsed(): boolean {
   try { return localStorage.getItem(STORE_KEY) === '1'; } catch { return false; }
 }
@@ -91,6 +99,7 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'Tike
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set());
   const [tip, setTip] = useState<{ text: string; top: number } | null>(null);
   const footRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const inited = useRef(false);
 
   const nodes = useMemo(() => buildModuleTree(menus).map(moduleAsNode), [menus]);
@@ -219,6 +228,50 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'Tike
     if (isNarrow) setDrawerOpen(false);
   };
 
+  // Tutup semua grup kecuali jalur menuju mcontrol, lalu scroll module-nya
+  // ke paling atas nav (smooth). Dipicu dari Home via focusSidebar().
+  const focusMenu = useCallback((mcontrol: string) => {
+    const mc = String(mcontrol || '').toLowerCase();
+    if (!mc || mc === '-') return;
+    const trail: string[] = [];
+    let found = false;
+    const walk = (list: MenuNode[], path: string[]) => {
+      for (const n of list) {
+        const t = [...path, n.menuKey];
+        if (!n.children.length) {
+          if (n.mcontrol === mc) { trail.push(...t); found = true; return; }
+          continue;
+        }
+        walk(n.children, t);
+        if (found) return;
+      }
+    };
+    walk(nodes, []);
+    if (!found) return;
+    setOpenMenus(new Set(trail));
+    if (collapsed) { setCollapsed(false); writeCollapsed(false); }
+    if (isNarrow && !drawerOpen) setDrawerOpen(true);
+    // Tunggu animasi buka/tutup grup selesai baru scroll agar posisi tepat.
+    window.setTimeout(() => {
+      const nav = navRef.current;
+      if (!nav) return;
+      const el = nav.querySelector(`[data-menukey="${trail[0]}"]`);
+      if (!el) return;
+      const top = (el as HTMLElement).getBoundingClientRect().top
+        - nav.getBoundingClientRect().top + nav.scrollTop - 4;
+      nav.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    }, 260);
+  }, [nodes, collapsed, isNarrow, drawerOpen]);
+
+  useEffect(() => {
+    const onFocus = (e: Event) => {
+      const d = (e as CustomEvent).detail as { mcontrol?: string };
+      if (d?.mcontrol) focusMenu(d.mcontrol);
+    };
+    window.addEventListener('appcore:sidebar-focus', onFocus);
+    return () => window.removeEventListener('appcore:sidebar-focus', onFocus);
+  }, [focusMenu]);
+
   // Tooltip hanya saat collapsed (desktop).
   const showTip = (text: string, el: HTMLElement) => {
     if (isNarrow || !collapsed) return;
@@ -243,7 +296,7 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'Tike
 
         if (isGroup) {
           return (
-            <li key={n.menuKey} className="sb-node">
+            <li key={n.menuKey} className="sb-node" data-menukey={n.menuKey}>
               <button
                 type="button"
                 className={`sb-item sb-group${open ? ' open' : ''}${inPath ? ' has-active' : ''}`}
@@ -328,7 +381,7 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'Tike
         </div>
 
         {/* NAV — Home dulu, baru label grup "Menu", lalu modul-grupnya */}
-        <nav className="sb-nav">
+        <nav className="sb-nav" ref={navRef}>
           <ul className="sb-list">
             <li className="sb-node">
               <button

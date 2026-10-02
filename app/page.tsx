@@ -5,6 +5,7 @@ import { useRoute } from '@/lib/route';
 import { useTabs } from '@/lib/tabs';
 import { buildModuleTree, type MenuNode } from '@/lib/menu';
 import Shell from '@/components/Shell';
+import { focusSidebar } from '@/components/Sidebar';
 import MenuHost from '@/components/MenuHost';
 import LoginPage from '@/components/LoginPage';
 import { Icon, iconForModule, iconForLeaf } from '@/components/Icon';
@@ -54,13 +55,15 @@ function HomeView() {
   const leaves = collectLeaves(modules.flatMap((m) => m.children));
   const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-  // Sama seperti klik leaf di sidebar: buka tab + pindah halaman.
+  // Sama seperti klik leaf di sidebar: buka tab + pindah halaman,
+  // plus sinkronkan sidebar (tutup grup lain, scroll module ke atas).
   const go = (mcontrol: string) => {
     const mc = String(mcontrol || '').toLowerCase();
     if (!mc || mc === '-') return;
     const path = '/' + mc;
     openTab(path);
     navigate(path);
+    focusSidebar(mc);
   };
 
   return (

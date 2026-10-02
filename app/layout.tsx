@@ -133,7 +133,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .loading-hint, .empty-hint { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
 
           /* ============ 6. SIDEBAR (lihat components/Sidebar.tsx) ============ */
-          .sb { width: 264px; flex: none; background: #0f1729; color: #cbd5e1; display: flex; flex-direction: column; overflow: hidden; transition: width 240ms cubic-bezier(.4,0,.2,1); }
+          .sb { position: sticky; top: 0; height: 100vh; width: 264px; flex: none; background: #0f1729; color: #cbd5e1; display: flex; flex-direction: column; overflow: hidden; transition: width 240ms cubic-bezier(.4,0,.2,1); }
           .sb.sb-collapsed { width: 64px; }
           .sb-overlay { position: fixed; inset: 0; z-index: 65; background: rgba(2,6,23,.6); }
           .sb-head { height: 64px; min-height: 64px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid rgba(255,255,255,.07); }

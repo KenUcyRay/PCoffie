@@ -415,9 +415,11 @@ Contoh FRM yang jadi acuan: `app/cp_usersetting/FRMcp_usersetting.tsx`
 (2 kolom, `width="44%"`) dan `app/cp_usersetting/FRMprofile_user.tsx`
 (3 fieldset, 1 kolom untuk password).
 
-Catatan: app-core **tidak memakai konsep department**. Kolom `CPUSER.USERDEPT`
-masih ada di tabel tapi tidak diisi lagi oleh `Mcpuser::create_user_akses` /
-`edit_user_akses`, dan tidak ada lagi UI/endpoint department.
+Kolom `CPUSER.USERDEPT` dan baris `CPMATRIX` ber-`DEFMODULE='MDEPARTMENT'`
+sudah dibersihkan (tidak dipakai lagi). Kolom `USERDEPT` sengaja tidak di-DROP
+karena `SP_USERLOGIN` / `SP_USER_RELOAD` masih menyebutkannya — dan karena kolom
+itu nullable, isinya otomatis hilang dari hasil SP setelah data department
+dihapus.
 
 ### Grid: satu komponen untuk semua menu
 

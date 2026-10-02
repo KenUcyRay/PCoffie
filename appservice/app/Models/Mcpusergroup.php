@@ -103,7 +103,7 @@ class Mcpusergroup extends Model
 
     // dipanggil saat 1 baris group di-klik -> return FLAT list menu (bukan nested),
     // frontend yang bangun tree-nya sendiri (lihat buildTreeMenuData di cp_usergroup.js)
-    public static function read_akses_menu_department($param)
+    public static function read_akses_menu($param)
     {
         $vdata = json_decode($param['vdata'] ?? '{}', true) ?: [];
         $vgroup_user = $vdata['DEFCODE'] ?? '';

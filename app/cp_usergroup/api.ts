@@ -12,10 +12,10 @@ export async function read_data(opts: { limit?: number; offset?: number; q?: str
   });
 }
 
-// read_akses_menu_department: flat list menu + flag CHECKED untuk 1 group.
-export async function read_akses_menu_department(vdata: unknown) {
+// read_akses_menu: flat list menu + flag CHECKED untuk 1 group.
+export async function read_akses_menu(vdata: unknown) {
   return apiPost('home/cpusergroup/cpusergroup', {
-    method: 'read_akses_menu_department',
+    method: 'read_akses_menu',
     vdata: JSON.stringify(vdata),
   });
 }

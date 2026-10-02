@@ -8,7 +8,6 @@ import { Btn } from '@/components/Icon';
 import { Window, FrmRow, FrmSet } from '@/components/Window';
 
 // Padanan FRMprofile_user.js langit_v2: info user read-only + Change Password.
-// (Department Access sudah dihapus — tidak ada konsep department di app-core.)
 export default function FRMprofile_user() {
   const { close } = useModal();
   const [pw, setPw] = useState({ USERLOGIN: '', USERPASSWORD: '', NEWPASSWORD: '', CONFIRMPASSWORD: '' });

@@ -60,8 +60,8 @@ class Mcpuser extends Model
     }
 
     // {method: create_user_akses, vheader:{...}}
-    // Catatan: app-core tidak memakai konsep department, jadi USERDEPT tidak
-    // lagi diisi di sini (kolomnya nullable dan tidak disentuh saat update).
+    // USERDEPT sengaja tidak diisi di sini: kolom itu legacy, nullable,
+    // dan dibiarkan apa adanya supaya data lama tidak ikut tertimpa.
     public static function create_user_akses($param)
     {
         $vheader = json_decode($param['vheader'] ?? '{}', true) ?: [];

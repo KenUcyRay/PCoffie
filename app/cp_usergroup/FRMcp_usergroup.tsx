@@ -34,7 +34,7 @@ const FRMcp_usergroup = forwardRef<AksesApi>(function FRMcp_usergroup(_props, re
 
   const load = useCallback(async (g: GroupRow) => {
     setGroup(g);
-    const res: any = await proxy.read_akses_menu_department(g);
+    const res: any = await proxy.read_akses_menu(g);
     if (!parseBoolean(res?.success)) { toast('Error', res?.message, 'err'); return; }
     const rows: MenuRow[] = res.Rows || [];
     setMenus(rows);

@@ -1,8 +1,5 @@
 // API menu cp_usersetting — padanan store/proxy "cpuser/cpuser" langit_v2.
 // Endpoint: api/core/home/cpuser/cpuser (method read_data/process_*).
-//
-// TIDAK ada konsep department di app-core, jadi tidak ada read_akses_department
-// dan tidak ada vdata daftar department lagi.
 import { apiPost } from '@/lib/api';
 
 const SEGMENT = 'home/cpuser/cpuser';

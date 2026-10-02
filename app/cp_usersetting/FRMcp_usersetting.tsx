@@ -21,7 +21,6 @@ export type UserForm = {
 type Group = { DEFCODE: string; DEFNAME?: string };
 
 // Padanan FRMcp_usersetting.js langit_v2: User Info + Password + Save User.
-// (Department Access sudah dihapus — tidak ada konsep department di app-core.)
 export default function FRMcp_usersetting({
   isNew,
   initial,

@@ -1,48 +1,48 @@
 -- Module Registration for App Core
 -- Idempotent: Cek dulu apakah sudah ada, baru INSERT
 -- Module System (1) sudah ada, tidak diubah
--- Module Discovery (2) -> DEFSHORT=20
--- Module Event (3) -> DEFSHORT=30
--- Module Ticketing (4) -> DEFSHORT=40
--- Module Merchandise (5) -> DEFSHORT=50
--- Module Marketing (6) -> DEFSHORT=60
--- Module Finance (7) -> DEFSHORT=70
--- Module Account (8) -> DEFSHORT=80
--- Module System (1) -> DEFSHORT=10 (sudah ada, tidak diubah)
+-- Module Discovery (2) -> DEFSHORT=2
+-- Module Event (3) -> DEFSHORT=3
+-- Module Ticketing (4) -> DEFSHORT=4
+-- Module Merchandise (5) -> DEFSHORT=5
+-- Module Marketing (6) -> DEFSHORT=6
+-- Module Finance (7) -> DEFSHORT=7
+-- Module Account (8) -> DEFSHORT=8
+-- Module System (1) -> DEFSHORT=1 (sudah ada, tidak diubah)
 
 -- 1) Module Discovery (icon: planet) -> MODDISC
 INSERT INTO CPMATRIX (DEFMODULE, DEFCODE, DEFNAME, DEFSHORT, DEFIMAGE)
-SELECT 'MODULE MENU', 'MODDISC', 'Module Discovery', 20, 'planet'
+SELECT 'MODULE MENU', 'MODDISC', 'Module Discovery', 2, 'planet'
 WHERE NOT EXISTS (SELECT 1 FROM CPMATRIX WHERE DEFMODULE='MODULE MENU' AND DEFCODE='MODDISC');
 
 -- 2) Module Event (icon: calendarEvent) -> MODEVENT
 INSERT INTO CPMATRIX (DEFMODULE, DEFCODE, DEFNAME, DEFSHORT, DEFIMAGE)
-SELECT 'MODULE MENU', 'MODEVENT', 'Module Event', 30, 'calendarEvent'
+SELECT 'MODULE MENU', 'MODEVENT', 'Module Event', 3, 'calendarEvent'
 WHERE NOT EXISTS (SELECT 1 FROM CPMATRIX WHERE DEFMODULE='MODULE MENU' AND DEFCODE='MODEVENT');
 
 -- 3) Module Ticketing (icon: ticket) -> MODTICKET
 INSERT INTO CPMATRIX (DEFMODULE, DEFCODE, DEFNAME, DEFSHORT, DEFIMAGE)
-SELECT 'MODULE MENU', 'MODTICKET', 'Module Ticketing', 40, 'ticket'
+SELECT 'MODULE MENU', 'MODTICKET', 'Module Ticketing', 4, 'ticket'
 WHERE NOT EXISTS (SELECT 1 FROM CPMATRIX WHERE DEFMODULE='MODULE MENU' AND DEFCODE='MODTICKET');
 
 -- 4) Module Merchandise (icon: package) -> MODMERCH
 INSERT INTO CPMATRIX (DEFMODULE, DEFCODE, DEFNAME, DEFSHORT, DEFIMAGE)
-SELECT 'MODULE MENU', 'MODMERCH', 'Module Merchandise', 50, 'package'
+SELECT 'MODULE MENU', 'MODMERCH', 'Module Merchandise', 5, 'package'
 WHERE NOT EXISTS (SELECT 1 FROM CPMATRIX WHERE DEFMODULE='MODULE MENU' AND DEFCODE='MODMERCH');
 
 -- 5) Module Marketing (icon: megaphone) -> MODMARKETING
 INSERT INTO CPMATRIX (DEFMODULE, DEFCODE, DEFNAME, DEFSHORT, DEFIMAGE)
-SELECT 'MODULE MENU', 'MODMARKETING', 'Module Marketing', 60, 'megaphone'
+SELECT 'MODULE MENU', 'MODMARKETING', 'Module Marketing', 6, 'megaphone'
 WHERE NOT EXISTS (SELECT 1 FROM CPMATRIX WHERE DEFMODULE='MODULE MENU' AND DEFCODE='MODMARKETING');
 
 -- 6) Module Finance (icon: cash) -> MODFINANCE
 INSERT INTO CPMATRIX (DEFMODULE, DEFCODE, DEFNAME, DEFSHORT, DEFIMAGE)
-SELECT 'MODULE MENU', 'MODFINANCE', 'Module Finance', 70, 'cash'
+SELECT 'MODULE MENU', 'MODFINANCE', 'Module Finance', 7, 'cash'
 WHERE NOT EXISTS (SELECT 1 FROM CPMATRIX WHERE DEFMODULE='MODULE MENU' AND DEFCODE='MODFINANCE');
 
 -- 7) Module Account (icon: userCircle) -> MODACCOUNT
 INSERT INTO CPMATRIX (DEFMODULE, DEFCODE, DEFNAME, DEFSHORT, DEFIMAGE)
-SELECT 'MODULE MENU', 'MODACCOUNT', 'Module Account', 80, 'userCircle'
+SELECT 'MODULE MENU', 'MODACCOUNT', 'Module Account', 8, 'userCircle'
 WHERE NOT EXISTS (SELECT 1 FROM CPMATRIX WHERE DEFMODULE='MODULE MENU' AND DEFCODE='MODACCOUNT');
 
 -- 8) Module System (icon: settings) - sudah ada, pastikan data konsisten

@@ -241,7 +241,14 @@ class Mcpfee extends Model
             trim($vdata['FEENOTE']), $param['VUSERLOGIN'] ?? '',
         ]);
 
-        self::auditTrail('CREATE_VERSION', trim($vdata['EFFECTIVEFROM'] ?? ''));
+        AuditTrail::log([
+            'action' => 'CREATE', 'mcontrol' => 'cp_fee', 'page' => 'Fee Setting',
+            'table' => 'T_FEE_SETTING', 'dataId' => trim($vdata['EFFECTIVEFROM'] ?? ''),
+            'summary' => 'Versi berlaku ' . trim($vdata['EFFECTIVEFROM'] ?? ''),
+            'before' => [],
+            'after' => ['EFFECTIVEFROM' => trim($vdata['EFFECTIVEFROM'] ?? ''), 'PLATFORMPCT' => trim($vdata['PLATFORMPCT'] ?? '')],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         return json_encode(['success' => 'true', 'message' => 'Versi pengaturan berhasil dibuat.']);
     }
@@ -273,16 +280,16 @@ class Mcpfee extends Model
             WHERE FEEID = ?
         ", [$param['VUSERLOGIN'] ?? '', $feeid]);
 
-        self::auditTrail('CANCEL_VERSION', $effDate);
+        AuditTrail::log([
+            'action' => 'STATUS', 'mcontrol' => 'cp_fee', 'page' => 'Fee Setting',
+            'table' => 'T_FEE_SETTING', 'dataId' => $feeid,
+            'summary' => 'Versi ' . $effDate . ' dibatalkan',
+            'before' => ['FEESTATUS' => 'AKTIF'],
+            'after' => ['FEESTATUS' => 'DIBATALKAN'],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         return json_encode(['success' => 'true', 'message' => 'Versi mendatang berhasil dibatalkan.']);
     }
 
-    // Titik panggil audit: mekanisme Audit Log terpusat belum ada di project,
-    // jadi dicatat lewat kolom audit baris (SYSCREATEUSER/SYSUPDATEUSER) di atas.
-    // Begitu tabel/menu Audit Log jadi, isi method ini dengan INSERT ke sana.
-    private static function auditTrail(string $action, string $detail): void
-    {
-        // TODO(audit-log): INSERT INTO T_AUDITLOG (...) VALUES ($action, $detail, ...)
-    }
 }

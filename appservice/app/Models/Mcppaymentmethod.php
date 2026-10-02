@@ -229,6 +229,13 @@ class Mcppaymentmethod extends Model
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'YES', ?, GETDATE())
         ", self::rowArgs($vdata, $param['VUSERLOGIN'] ?? ''));
 
+        AuditTrail::log([
+            'action' => 'CREATE', 'mcontrol' => 'cp_paymentmethod', 'page' => 'Payment Method',
+            'table' => 'T_PAYMENT_METHOD', 'dataId' => trim($vdata['PAYCODE']), 'summary' => 'PAYCODE ' . trim($vdata['PAYCODE']),
+            'before' => [], 'after' => ['PAYCODE' => trim($vdata['PAYCODE']), 'PAYNAME' => trim($vdata['PAYNAME'])],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
+
         return json_encode(['success' => 'true', 'message' => 'Metode berhasil dibuat.']);
     }
 
@@ -246,6 +253,8 @@ class Mcppaymentmethod extends Model
             return json_encode(['success' => 'false', 'message' => $err]);
         }
 
+        $beforePay = DB::selectOne("SELECT PAYID, PAYCODE, PAYNAME, PAYTYPE FROM T_PAYMENT_METHOD WHERE PAYID = ?", [$payid]);
+
         $old = DB::selectOne("SELECT LOGO FROM T_PAYMENT_METHOD WHERE PAYID = ?", [$payid]);
 
         DB::update("
@@ -255,6 +264,14 @@ class Mcppaymentmethod extends Model
                 SYSUPDATEUSER = ?, SYSUPDATEDATE = GETDATE()
             WHERE PAYID = ?
         ", array_merge(self::rowArgs($vdata, $param['VUSERLOGIN'] ?? ''), [$payid]));
+
+        AuditTrail::log([
+            'action' => 'UPDATE', 'mcontrol' => 'cp_paymentmethod', 'page' => 'Payment Method',
+            'table' => 'T_PAYMENT_METHOD', 'dataId' => $payid, 'summary' => 'PAYCODE ' . trim($vdata['PAYCODE']),
+            'before' => $beforePay ? (array) $beforePay : [],
+            'after' => ['PAYCODE' => trim($vdata['PAYCODE']), 'PAYNAME' => trim($vdata['PAYNAME'])],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         self::pruneLogo($old->LOGO ?? null, $vdata['LOGO'] ?? null);
 
@@ -299,11 +316,21 @@ class Mcppaymentmethod extends Model
             return json_encode(['success' => 'false', 'message' => 'Status harus YES atau NO.']);
         }
 
+        $beforeStPay = DB::selectOne("SELECT PAYID, PAYCODE, PAYACTIVE FROM T_PAYMENT_METHOD WHERE PAYID = ?", [$payid]);
+
         DB::update("
             UPDATE T_PAYMENT_METHOD
             SET PAYACTIVE = ?, SYSUPDATEUSER = ?, SYSUPDATEDATE = GETDATE()
             WHERE PAYID = ?
         ", [$active, $param['VUSERLOGIN'] ?? '', $payid]);
+
+        AuditTrail::log([
+            'action' => 'STATUS', 'mcontrol' => 'cp_paymentmethod', 'page' => 'Payment Method',
+            'table' => 'T_PAYMENT_METHOD', 'dataId' => $payid, 'summary' => 'PAYCODE ' . ($beforeStPay->PAYCODE ?? $payid) . ' -> ' . $active,
+            'before' => $beforeStPay ? ['PAYACTIVE' => (string) $beforeStPay->PAYACTIVE] : [],
+            'after' => ['PAYACTIVE' => $active],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         $msg = $active === 'YES' ? 'Metode berhasil diaktifkan.' : 'Metode berhasil dinonaktifkan.';
         return json_encode(['success' => 'true', 'message' => $msg]);
@@ -358,6 +385,14 @@ class Mcppaymentmethod extends Model
 
         DB::delete("DELETE FROM T_PAYMENT_METHOD WHERE PAYID = ?", [$payid]);
         self::pruneLogo($row->LOGO ?? null, null);
+
+        AuditTrail::log([
+            'action' => 'DELETE', 'mcontrol' => 'cp_paymentmethod', 'page' => 'Payment Method',
+            'table' => 'T_PAYMENT_METHOD', 'dataId' => $payid, 'summary' => 'PAYCODE ' . ($row->PAYCODE ?? $payid),
+            'before' => $row ? (array) $row : [],
+            'after' => [],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         return json_encode(['success' => 'true', 'message' => 'Metode berhasil dihapus.']);
     }

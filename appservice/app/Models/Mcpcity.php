@@ -171,6 +171,14 @@ class Mcpcity extends Model
             strtoupper(trim($vdata['CITYTZ'])), $param['VUSERLOGIN'] ?? '',
         ]);
 
+        AuditTrail::log([
+            'action' => 'CREATE', 'mcontrol' => 'cp_city', 'page' => 'City Data',
+            'table' => 'T_CITY', 'dataId' => trim($vdata['CITYCODE']), 'summary' => 'CITYCODE ' . trim($vdata['CITYCODE']),
+            'before' => [],
+            'after' => ['CITYCODE' => trim($vdata['CITYCODE']), 'CITYNAME' => trim($vdata['CITYNAME'])],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
+
         return json_encode(['success' => 'true', 'message' => 'Kota berhasil dibuat.']);
     }
 
@@ -188,6 +196,8 @@ class Mcpcity extends Model
             return json_encode(['success' => 'false', 'message' => $err]);
         }
 
+        $beforeCity = DB::selectOne("SELECT CITYID, CITYCODE, CITYNAME, CITYPROV, CITYTZ, CITYACTIVE FROM T_CITY WHERE CITYID = ?", [$cityid]);
+
         DB::update("
             UPDATE T_CITY
             SET CITYCODE = ?, CITYNAME = ?, CITYPROV = ?, CITYTZ = ?,
@@ -196,6 +206,14 @@ class Mcpcity extends Model
         ", [
             trim($vdata['CITYCODE']), trim($vdata['CITYNAME']), trim($vdata['CITYPROV']),
             strtoupper(trim($vdata['CITYTZ'])), $param['VUSERLOGIN'] ?? '', $cityid,
+        ]);
+
+        AuditTrail::log([
+            'action' => 'UPDATE', 'mcontrol' => 'cp_city', 'page' => 'City Data',
+            'table' => 'T_CITY', 'dataId' => $cityid, 'summary' => 'CITYCODE ' . trim($vdata['CITYCODE']),
+            'before' => $beforeCity ? (array) $beforeCity : [],
+            'after' => ['CITYCODE' => trim($vdata['CITYCODE']), 'CITYNAME' => trim($vdata['CITYNAME'])],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
         ]);
 
         return json_encode(['success' => 'true', 'message' => 'Kota berhasil diupdate.']);
@@ -219,6 +237,14 @@ class Mcpcity extends Model
             SET CITYACTIVE = ?, SYSUPDATEUSER = ?, SYSUPDATEDATE = GETDATE()
             WHERE CITYID = ?
         ", [$active, $param['VUSERLOGIN'] ?? '', $cityid]);
+
+        AuditTrail::log([
+            'action' => 'STATUS', 'mcontrol' => 'cp_city', 'page' => 'City Data',
+            'table' => 'T_CITY', 'dataId' => $cityid, 'summary' => 'CITYCODE ' . trim($vdata['CITYCODE'] ?? '') . ' -> ' . $active,
+            'before' => ['CITYACTIVE' => $active === 'YES' ? 'NO' : 'YES'],
+            'after' => ['CITYACTIVE' => $active],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         $msg = $active === 'YES' ? 'Kota berhasil diaktifkan.' : 'Kota berhasil dinonaktifkan.';
         return json_encode(['success' => 'true', 'message' => $msg]);
@@ -270,7 +296,17 @@ class Mcpcity extends Model
             ]);
         }
 
+        $beforeDelCity = DB::selectOne("SELECT CITYID, CITYCODE, CITYNAME FROM T_CITY WHERE CITYID = ?", [$cityid]);
+
         DB::delete("DELETE FROM T_CITY WHERE CITYID = ?", [$cityid]);
+
+        AuditTrail::log([
+            'action' => 'DELETE', 'mcontrol' => 'cp_city', 'page' => 'City Data',
+            'table' => 'T_CITY', 'dataId' => $cityid, 'summary' => 'CITYCODE ' . ($beforeDelCity->CITYCODE ?? $cityid),
+            'before' => $beforeDelCity ? (array) $beforeDelCity : [],
+            'after' => [],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         return json_encode(['success' => 'true', 'message' => 'Kota berhasil dihapus.']);
     }

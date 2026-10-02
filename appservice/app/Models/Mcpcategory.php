@@ -171,6 +171,14 @@ class Mcpcategory extends Model
             VALUES (?, ?, ?, 'YES', ?, GETDATE())
         ", [trim($vdata['CATCODE']), trim($vdata['CATNAME']), (int) $catsort, $param['VUSERLOGIN'] ?? '']);
 
+        AuditTrail::log([
+            'action' => 'CREATE', 'mcontrol' => 'cp_category', 'page' => 'Category',
+            'table' => 'T_CATEGORY', 'dataId' => trim($vdata['CATCODE']), 'summary' => 'CATCODE ' . trim($vdata['CATCODE']),
+            'before' => [],
+            'after' => ['CATCODE' => trim($vdata['CATCODE']), 'CATNAME' => trim($vdata['CATNAME'])],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
+
         return json_encode(['success' => 'true', 'message' => 'Kategori berhasil dibuat.']);
     }
 
@@ -193,12 +201,22 @@ class Mcpcategory extends Model
             $catsort = '0';
         }
 
+        $beforeCat = DB::selectOne("SELECT CATID, CATCODE, CATNAME, CATSORT, CATACTIVE FROM T_CATEGORY WHERE CATID = ?", [$catid]);
+
         DB::update("
             UPDATE T_CATEGORY
             SET CATCODE = ?, CATNAME = ?, CATSORT = ?,
                 SYSUPDATEUSER = ?, SYSUPDATEDATE = GETDATE()
             WHERE CATID = ?
         ", [trim($vdata['CATCODE']), trim($vdata['CATNAME']), (int) $catsort, $param['VUSERLOGIN'] ?? '', $catid]);
+
+        AuditTrail::log([
+            'action' => 'UPDATE', 'mcontrol' => 'cp_category', 'page' => 'Category',
+            'table' => 'T_CATEGORY', 'dataId' => $catid, 'summary' => 'CATCODE ' . trim($vdata['CATCODE']),
+            'before' => $beforeCat ? (array) $beforeCat : [],
+            'after' => ['CATCODE' => trim($vdata['CATCODE']), 'CATNAME' => trim($vdata['CATNAME'])],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         return json_encode(['success' => 'true', 'message' => 'Kategori berhasil diupdate.']);
     }
@@ -221,6 +239,14 @@ class Mcpcategory extends Model
             SET CATACTIVE = ?, SYSUPDATEUSER = ?, SYSUPDATEDATE = GETDATE()
             WHERE CATID = ?
         ", [$active, $param['VUSERLOGIN'] ?? '', $catid]);
+
+        AuditTrail::log([
+            'action' => 'STATUS', 'mcontrol' => 'cp_category', 'page' => 'Category',
+            'table' => 'T_CATEGORY', 'dataId' => $catid, 'summary' => 'CATCODE ' . trim($vdata['CATCODE'] ?? '') . ' -> ' . $active,
+            'before' => ['CATACTIVE' => $active === 'YES' ? 'NO' : 'YES'],
+            'after' => ['CATACTIVE' => $active],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         $msg = $active === 'YES' ? 'Kategori berhasil diaktifkan.' : 'Kategori berhasil dinonaktifkan.';
         return json_encode(['success' => 'true', 'message' => $msg]);
@@ -272,7 +298,17 @@ class Mcpcategory extends Model
             ]);
         }
 
+        $beforeDelCat = DB::selectOne("SELECT CATID, CATCODE, CATNAME FROM T_CATEGORY WHERE CATID = ?", [$catid]);
+
         DB::delete("DELETE FROM T_CATEGORY WHERE CATID = ?", [$catid]);
+
+        AuditTrail::log([
+            'action' => 'DELETE', 'mcontrol' => 'cp_category', 'page' => 'Category',
+            'table' => 'T_CATEGORY', 'dataId' => $catid, 'summary' => 'CATCODE ' . ($beforeDelCat->CATCODE ?? $catid),
+            'before' => $beforeDelCat ? (array) $beforeDelCat : [],
+            'after' => [],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         return json_encode(['success' => 'true', 'message' => 'Kategori berhasil dihapus.']);
     }

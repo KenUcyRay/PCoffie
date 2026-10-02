@@ -78,6 +78,13 @@ class Mcpusergroup extends Model
             [$defcode, $defname, $param['VUSERLOGIN'] ?? '']
         );
 
+        AuditTrail::log([
+            'action' => 'CREATE', 'mcontrol' => 'cp_usergroup', 'page' => 'User Group',
+            'table' => 'CPMATRIX', 'dataId' => $defcode, 'summary' => 'GROUP ' . $defcode,
+            'before' => [], 'after' => ['DEFCODE' => $defcode, 'DEFNAME' => $defname],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
+
         return json_encode(['success' => 'true', 'message' => 'Group User berhasil dibuat.']);
     }
 
@@ -96,7 +103,17 @@ class Mcpusergroup extends Model
             return json_encode(['success' => 'false', 'message' => 'Data tidak ditemukan.']);
         }
 
+        $beforeGrp = DB::selectOne("SELECT DEFID, DEFCODE, DEFNAME FROM CPMATRIX WHERE DEFID = ?", [$defid]);
+
         DB::delete("DELETE FROM CPMATRIX WHERE DEFID = ?", [$defid]);
+
+        AuditTrail::log([
+            'action' => 'DELETE', 'mcontrol' => 'cp_usergroup', 'page' => 'User Group',
+            'table' => 'CPMATRIX', 'dataId' => $defid, 'summary' => 'GROUP ' . ($beforeGrp->DEFCODE ?? $defid),
+            'before' => $beforeGrp ? (array) $beforeGrp : [],
+            'after' => [],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         return json_encode(['success' => 'true', 'message' => 'Group User berhasil dihapus.']);
     }
@@ -209,7 +226,22 @@ class Mcpusergroup extends Model
                 INSERT (RGROUP, RMODULE, RMENUID) VALUES (SOURCE2.RGROUP, SOURCE2.RMODULE, SOURCE2.RMENUID);
         ";
 
+        $beforeAcc = array_map(function ($r) { return (string) $r->RMENUID; }, DB::select(
+            "SELECT RMENUID FROM CPMENUACCESS WHERE RGROUP = ?", [$vgroup_user]
+        ));
+
         DB::statement($SQL, [$vdataForSql, $vgroup_user]);
+
+        $afterAcc = array_map(function ($r) { return (string) ($r['MCODE'] ?? ''); }, $arrChecked);
+
+        AuditTrail::log([
+            'action' => 'UPDATE', 'mcontrol' => 'cp_usergroup', 'page' => 'User Group',
+            'table' => 'CPMENUACCESS', 'dataId' => $vgroup_user,
+            'summary' => 'GROUP ' . $vgroup_user . ' akses ' . count($beforeAcc) . ' -> ' . count($afterAcc) . ' menu',
+            'before' => ['RMENUID' => $beforeAcc],
+            'after' => ['RMENUID' => $afterAcc],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         return json_encode(['success' => 'true', 'message' => 'Data berhasil di update']);
     }

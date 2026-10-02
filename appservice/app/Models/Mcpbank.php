@@ -164,6 +164,13 @@ class Mcpbank extends Model
             $param['VUSERLOGIN'] ?? '',
         ]);
 
+        AuditTrail::log([
+            'action' => 'CREATE', 'mcontrol' => 'cp_bank', 'page' => 'Bank Data',
+            'table' => 'T_BANK', 'dataId' => trim($vdata['BANKCODE']), 'summary' => 'BANKCODE ' . trim($vdata['BANKCODE']),
+            'before' => [], 'after' => ['BANKCODE' => trim($vdata['BANKCODE']), 'BANKNAME' => trim($vdata['BANKNAME'])],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
+
         return json_encode(['success' => 'true', 'message' => 'Bank berhasil dibuat.']);
     }
 
@@ -181,6 +188,8 @@ class Mcpbank extends Model
             return json_encode(['success' => 'false', 'message' => $err]);
         }
 
+        $beforeBank = DB::selectOne("SELECT BANKID, BANKCODE, BANKNAME, BANKSHORT, BANKACTIVE FROM T_BANK WHERE BANKID = ?", [$bankid]);
+
         DB::update("
             UPDATE T_BANK
             SET BANKCODE = ?, BANKNAME = ?, BANKSHORT = ?,
@@ -189,6 +198,14 @@ class Mcpbank extends Model
         ", [
             trim($vdata['BANKCODE']), trim($vdata['BANKNAME']), trim($vdata['BANKSHORT']),
             $param['VUSERLOGIN'] ?? '', $bankid,
+        ]);
+
+        AuditTrail::log([
+            'action' => 'UPDATE', 'mcontrol' => 'cp_bank', 'page' => 'Bank Data',
+            'table' => 'T_BANK', 'dataId' => $bankid, 'summary' => 'BANKCODE ' . trim($vdata['BANKCODE']),
+            'before' => $beforeBank ? (array) $beforeBank : [],
+            'after' => ['BANKCODE' => trim($vdata['BANKCODE']), 'BANKNAME' => trim($vdata['BANKNAME'])],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
         ]);
 
         return json_encode(['success' => 'true', 'message' => 'Bank berhasil diupdate.']);
@@ -207,11 +224,21 @@ class Mcpbank extends Model
             return json_encode(['success' => 'false', 'message' => 'Status harus YES atau NO.']);
         }
 
+        $beforeSt = DB::selectOne("SELECT BANKID, BANKCODE, BANKACTIVE FROM T_BANK WHERE BANKID = ?", [$bankid]);
+
         DB::update("
             UPDATE T_BANK
             SET BANKACTIVE = ?, SYSUPDATEUSER = ?, SYSUPDATEDATE = GETDATE()
             WHERE BANKID = ?
         ", [$active, $param['VUSERLOGIN'] ?? '', $bankid]);
+
+        AuditTrail::log([
+            'action' => 'STATUS', 'mcontrol' => 'cp_bank', 'page' => 'Bank Data',
+            'table' => 'T_BANK', 'dataId' => $bankid, 'summary' => 'BANKCODE ' . ($beforeSt->BANKCODE ?? $bankid) . ' -> ' . $active,
+            'before' => $beforeSt ? ['BANKACTIVE' => (string) $beforeSt->BANKACTIVE] : [],
+            'after' => ['BANKACTIVE' => $active],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         $msg = $active === 'YES' ? 'Bank berhasil diaktifkan.' : 'Bank berhasil dinonaktifkan.';
         return json_encode(['success' => 'true', 'message' => $msg]);
@@ -263,7 +290,17 @@ class Mcpbank extends Model
             ]);
         }
 
+        $beforeDelBank = $row;
+
         DB::delete("DELETE FROM T_BANK WHERE BANKID = ?", [$bankid]);
+
+        AuditTrail::log([
+            'action' => 'DELETE', 'mcontrol' => 'cp_bank', 'page' => 'Bank Data',
+            'table' => 'T_BANK', 'dataId' => $bankid, 'summary' => 'BANKCODE ' . ($beforeDelBank->BANKCODE ?? $bankid),
+            'before' => $beforeDelBank ? (array) $beforeDelBank : [],
+            'after' => [],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         return json_encode(['success' => 'true', 'message' => 'Bank berhasil dihapus.']);
     }

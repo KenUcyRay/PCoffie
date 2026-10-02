@@ -97,6 +97,13 @@ class Mcpuserlogin extends Model
             VALUES (?, ?, dbo.app_encrypt(?), ?, 'YES', ?, ?, GETDATE())
         ", [$userlogin, $username, $userpassword, $usergroup, $useremail, $param['VUSERLOGIN'] ?? '']);
 
+        AuditTrail::log([
+            'action' => 'CREATE', 'mcontrol' => 'cp_userlogin', 'page' => 'User Login',
+            'table' => 'CPUSER', 'dataId' => $userlogin, 'summary' => 'USERLOGIN ' . $userlogin,
+            'before' => [], 'after' => ['USERLOGIN' => $userlogin, 'USERNAME' => $username, 'USERGROUP' => $usergroup, 'USEREMAIL' => $useremail],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
+
         return json_encode(['success' => 'true', 'message' => 'User berhasil dibuat.']);
     }
 
@@ -114,6 +121,8 @@ class Mcpuserlogin extends Model
         if (empty($userid)) {
             return json_encode(['success' => 'false', 'message' => 'USERID tidak ditemukan.']);
         }
+
+        $beforeUser = DB::selectOne("SELECT USERID, USERLOGIN, USERNAME, USERGROUP, USEREMAIL, USERACTIVE FROM CPUSER WHERE USERID = ?", [$userid]);
 
         if ($userpassword !== '') {
             // password diisi -> ikut diupdate (re-encrypt)
@@ -133,6 +142,14 @@ class Mcpuserlogin extends Model
             ", [$username, $usergroup, $useremail, $useractive, $param['VUSERLOGIN'] ?? '', $userid]);
         }
 
+        AuditTrail::log([
+            'action' => 'UPDATE', 'mcontrol' => 'cp_userlogin', 'page' => 'User Login',
+            'table' => 'CPUSER', 'dataId' => $userid, 'summary' => 'USERLOGIN ' . ($beforeUser->USERLOGIN ?? $userid),
+            'before' => $beforeUser ? (array) $beforeUser : [],
+            'after' => ['USERNAME' => $username, 'USERGROUP' => $usergroup, 'USEREMAIL' => $useremail, 'USERACTIVE' => $useractive],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
+
         return json_encode(['success' => 'true', 'message' => 'User berhasil diupdate.']);
     }
 
@@ -145,7 +162,17 @@ class Mcpuserlogin extends Model
             return json_encode(['success' => 'false', 'message' => 'USERID tidak ditemukan.']);
         }
 
+        $beforeDel = DB::selectOne("SELECT USERID, USERLOGIN, USERNAME, USERGROUP, USEREMAIL FROM CPUSER WHERE USERID = ?", [$userid]);
+
         DB::delete("DELETE FROM CPUSER WHERE USERID = ?", [$userid]);
+
+        AuditTrail::log([
+            'action' => 'DELETE', 'mcontrol' => 'cp_userlogin', 'page' => 'User Login',
+            'table' => 'CPUSER', 'dataId' => $userid, 'summary' => 'USERLOGIN ' . ($beforeDel->USERLOGIN ?? $userid),
+            'before' => $beforeDel ? (array) $beforeDel : [],
+            'after' => [],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
         return json_encode(['success' => 'true', 'message' => 'User berhasil dihapus.']);
     }

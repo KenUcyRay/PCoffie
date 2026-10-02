@@ -77,7 +77,7 @@ type Props = {
   appName?: string;
 };
 
-const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'Ticket APP' }, ref) {
+const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = 'Tiket APP' }, ref) {
   const { profile, menus, logout, checkMenuAccess } = useAuth();
   const { navigate } = useRoute();
   const pathname = useCurrentPath();

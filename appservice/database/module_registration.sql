@@ -7,7 +7,6 @@
 -- Module Merchandise (5) -> DEFSHORT=5
 -- Module Marketing (6) -> DEFSHORT=6
 -- Module Finance (7) -> DEFSHORT=7
--- Module Account (8) -> DEFSHORT=8
 -- Module System (1) -> DEFSHORT=1 (sudah ada, tidak diubah)
 
 -- 1) Module Discovery (icon: planet) -> MODDISC
@@ -40,12 +39,7 @@ INSERT INTO CPMATRIX (DEFMODULE, DEFCODE, DEFNAME, DEFSHORT, DEFIMAGE)
 SELECT 'MODULE MENU', 'MODFINANCE', 'Module Finance', 7, 'cash'
 WHERE NOT EXISTS (SELECT 1 FROM CPMATRIX WHERE DEFMODULE='MODULE MENU' AND DEFCODE='MODFINANCE');
 
--- 7) Module Account (icon: userCircle) -> MODACCOUNT
-INSERT INTO CPMATRIX (DEFMODULE, DEFCODE, DEFNAME, DEFSHORT, DEFIMAGE)
-SELECT 'MODULE MENU', 'MODACCOUNT', 'Module Account', 8, 'userCircle'
-WHERE NOT EXISTS (SELECT 1 FROM CPMATRIX WHERE DEFMODULE='MODULE MENU' AND DEFCODE='MODACCOUNT');
-
--- 8) Module System (icon: settings) - sudah ada, pastikan data konsisten
+-- 7) Module System (icon: settings) - sudah ada, pastikan data konsisten
 -- (tidak di-UPDATE untuk menghindari perubahan yang tidak diinginkan)
 
 -- Verifikasi: urutkan berdasarkan DEFSHORT

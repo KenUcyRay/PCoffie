@@ -1,6 +1,6 @@
 import type { Viewport } from 'next';
 
-export const metadata = { title: 'Ticket APP', description: 'Core universal — login + usergroup + usersetting' };
+export const metadata = { title: 'Tiket APP', description: 'Core universal — login + usergroup + usersetting' };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, maximumScale: 1 };
 
 import Providers from './providers';

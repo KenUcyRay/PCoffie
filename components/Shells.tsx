@@ -282,7 +282,7 @@ export function DesktopShell({ title, children }: { title: string; children: Rea
         {startOpen && (
           <div className="desktop-start" onClick={(e) => e.stopPropagation()}>
             <div className="desktop-start-head">
-              <b>Ticket APP</b>
+              <b>Tiket APP</b>
               <span className="start-user">{profile?.USERNAME || profile?.USERLOGIN}</span>
             </div>
             <div className="desktop-start-menu">

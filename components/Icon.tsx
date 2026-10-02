@@ -124,7 +124,6 @@ export function iconForModule(code: string): IconName {
   if (c.includes('modmerch')) return 'box';
   if (c.includes('modmarketing')) return 'chart';
   if (c.includes('modfinance')) return 'cash';
-  if (c.includes('modaccount')) return 'userCircle';
   if (c.includes('modsystem')) return 'gear';
   return 'box';
 }
@@ -160,9 +159,6 @@ const LEAF_ICONS: Record<string, IconName> = {
   modfinancesellerbalance: 'cash',
   modfinancesellerwithdraw: 'download',
   modfinancebank: 'dept',
-  modaccountnotification: 'mail',
-  modaccountprofile: 'user',
-  modaccountchangepassword: 'key',
   cp_matrix: 'grid',
   cp_menu: 'menu',
   cp_category: 'grid',

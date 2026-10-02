@@ -1,5 +1,5 @@
 -- Menu Registration for Module Discovery, Module Event, Module Ticketing
--- Module Merchandise, Module Marketing, Module Finance, Module Account
+-- Module Merchandise, Module Marketing, Module Finance
 -- Idempotent: Cek dulu apakah sudah ada, baru INSERT
 -- Module System (MODSYSTEM) sudah ada, tidak diubah
 -- ROOT MENU TIDAK perlu dibuat di CPMENU (sudah ada di CPMATRIX sebagai DEFCODE)
@@ -224,36 +224,11 @@ INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAN
 SELECT 70040001, 0, 'MODFINANCE', 'modfinancebank', 'Bank Account', 'FALSE', 'FALSE', 'TRUE', 4
 WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 70040001);
 
--- =====================================================
--- MODULE ACCOUNT (MODACCOUNT)
--- =====================================================
-
--- Module Account > Notification (leaf, no child)
-INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 80010001, 0, 'MODACCOUNT', 'modaccountnotification', 'Notification', 'FALSE', 'FALSE', 'TRUE', 1
-WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 80010001);
-
--- Module Account > Account Setting (induk, MPARRENT=0)
-INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 80020001, 0, 'MODACCOUNT', '-', 'Account Setting', 'TRUE', 'FALSE', 'FALSE', 2
-WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 80020001);
-
--- Module Account > Account Setting > Profile Data
-INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 80020002, 80020001, 'MODACCOUNT', 'modaccountprofile', 'Profile Data', 'FALSE', 'FALSE', 'TRUE', 1
-WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 80020002);
-
--- Module Account > Account Setting > Change Password
-INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)
-SELECT 80020003, 80020001, 'MODACCOUNT', 'modaccountchangepassword', 'Change Password', 'FALSE', 'FALSE', 'TRUE', 2
-WHERE NOT EXISTS (SELECT 1 FROM CPMENU WHERE MCODE = 80020003);
-
--- =====================================================
 -- VERIFIKASI
 -- =====================================================
--- SELECT * FROM CPMENU WHERE MMODULE IN ('MODDISC','MODEVENT','MODTICKET','MODMERCH','MODMARKETING','MODFINANCE','MODACCOUNT')
+-- SELECT * FROM CPMENU WHERE MMODULE IN ('MODDISC','MODEVENT','MODTICKET','MODMERCH','MODMARKETING','MODFINANCE')
 -- ORDER BY MMODULE, MPARRENT, MSHORT;
--- Expected: 36 rows (16 root + 20 child)
+-- Expected: 40 rows (14 root + 26 child)
 -- Module System Menu Updates (10010000+ range)
 -- Module Setup
 INSERT INTO CPMENU (MCODE, MPARRENT, MMODULE, MCONTROL, MNAME, MCHILDREN, MEXPAND, MLEAF, MSHORT)

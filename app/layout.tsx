@@ -260,17 +260,41 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .alert-inline { display: flex; align-items: flex-start; gap: 9px; }
 
           /* ============ 10. HOME / STAT ============ */
-          .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-          .stat { position: relative; display: grid; gap: 4px; padding: 13px 15px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh); }
-          .stat span { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11.5px; font-weight: 600; }
-          .stat span svg { color: var(--brand); }
-          .stat b { font-size: 17px; font-weight: 700; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; }
-          .menu-list { display: grid; gap: 12px; }
-          .menu-group { display: grid; gap: 6px; }
-          .menu-group-head { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--text); }
-          .menu-group-head svg { color: var(--brand); }
-          .menu-group ul { margin: 0; padding: 0 0 0 20px; list-style: none; display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
-          .menu-group li { display: flex; align-items: center; gap: 8px; }
+          .hero { position: relative; overflow: hidden; border-radius: var(--r-lg); background: linear-gradient(135deg,#1e3a8a,#1d4ed8 55%,#0ea5e9); color: #fff; padding: 20px 22px; display: flex; align-items: center; gap: 16px; box-shadow: var(--sh-lg); }
+          .hero-info { flex: 1; min-width: 0; display: grid; gap: 4px; }
+          .hero-hi { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
+          .hero-sub { margin: 0; font-size: 12.5px; color: rgba(255,255,255,.85); }
+          .hero-chip { justify-self: start; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 11.5px; font-weight: 700; color: #fff; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); border-radius: 999px; padding: 3px 11px; }
+          .hero-deco { flex: none; display: inline-flex; opacity: .22; }
+          .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+          .stat-card { display: flex; align-items: center; gap: 12px; padding: 13px 15px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh); min-width: 0; }
+          .stat-ico { width: 38px; height: 38px; flex: none; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; }
+          .stat-info { display: grid; gap: 1px; min-width: 0; }
+          .stat-info b { font-size: 16px; font-weight: 700; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .stat-info span { font-size: 11px; color: var(--muted); font-weight: 600; }
+          .mod-cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill,minmax(250px,1fr)); }
+          .mod-card { text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh); padding: 14px; display: grid; gap: 10px; align-content: start; cursor: pointer; font-family: inherit; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+          .mod-card:hover { transform: translateY(-2px); box-shadow: var(--sh-lg); border-color: var(--border-2); }
+          .mod-card:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+          .mod-top { display: flex; align-items: center; gap: 10px; }
+          .mod-ico { width: 40px; height: 40px; flex: none; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; }
+          .mod-meta { flex: 1; min-width: 0; display: grid; gap: 1px; }
+          .mod-meta b { font-size: 13.5px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .mod-meta span { font-size: 11px; color: var(--muted); font-weight: 600; }
+          .mod-top svg { flex: none; color: var(--muted-2); }
+          .mod-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+          .mod-chip { display: inline-flex; align-items: center; gap: 5px; font-family: inherit; font-size: 11.5px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; cursor: pointer; transition: background .15s ease, border-color .15s ease, color .15s ease; }
+          .mod-chip:hover { background: var(--brand-soft); border-color: var(--brand); color: var(--brand); }
+          .mod-more { align-self: center; font-size: 11px; font-weight: 700; color: var(--muted); }
+          .tint-0 { background: #dbeafe; color: #1d4ed8; }
+          .tint-1 { background: #dcfce7; color: #15803d; }
+          .tint-2 { background: #fef3c7; color: #b45309; }
+          .tint-3 { background: #fce7f3; color: #be185d; }
+          .tint-4 { background: #e0e7ff; color: #4338ca; }
+          .tint-5 { background: #cffafe; color: #0e7490; }
+          .tint-6 { background: #ede9fe; color: #6d28d9; }
+          @media (max-width: 900px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+          @media (max-width: 640px) { .hero-deco { display: none; } .stat-grid { grid-template-columns: 1fr; } }
 
           /* ============ 11. SCROLLBAR HALUS ============ */
           .content::-webkit-scrollbar, .sb-nav::-webkit-scrollbar, .table-wrap::-webkit-scrollbar, .modal::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -339,7 +363,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           @media (max-width: 900px) {
             .two-col { grid-template-columns: 1fr; height: auto; }
             .two-col .card-body { max-height: 70vh; }
-            .stat-grid { grid-template-columns: 1fr; }
             .content { padding: 16px; }
             .modal { width: 100%; }
           }

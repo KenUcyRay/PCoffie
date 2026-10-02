@@ -11,13 +11,14 @@ import { toast } from './toast';
 import { Icon, Btn, iconForModule, iconForLeaf } from './Icon';
 import { APP_NAME } from '@/lib/app-config';
 import Sidebar, { type SidebarApi } from './Sidebar';
+import OsDesktop from './OsDesktop';
 
 // Icon per module & per menu leaf dipetakan dari kode MMODULE/MCONTROL
 // (src: components/Icon.tsx). Shell cukup memakai hasilnya.
 const moduleIcon = iconForModule;
 const leafIcon = iconForLeaf;
 
-function Clock() {
+export function Clock() {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     setNow(new Date());
@@ -33,7 +34,7 @@ function Clock() {
 // Hanya satu dropdown Mode Layout yang boleh terbuka (appbar / drawer / bottombar).
 const MODE_MENU_EVENT = 'appcore:mode-menu-open';
 
-function ModeLayoutMenu({ compact, drop = 'up' }: { compact?: boolean; drop?: 'up' | 'down' }) {
+export function ModeLayoutMenu({ compact, drop = 'up' }: { compact?: boolean; drop?: 'up' | 'down' }) {
   const { layoutMode, changeLayout } = useAuth();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -94,7 +95,7 @@ function ModeLayoutMenu({ compact, drop = 'up' }: { compact?: boolean; drop?: 'u
 }
 
 // Tree menu 2 tingkat: Module > Menu. Parent toggle buka/tutup, leaf buka tab.
-function MenuTree({ onNavigate }: { onNavigate?: () => void }) {
+export function MenuTree({ onNavigate, filter }: { onNavigate?: () => void; filter?: string }) {
   const { menus, checkMenuAccess } = useAuth();
   const { navigate } = useRoute();
   const { openTab } = useTabs();
@@ -104,6 +105,12 @@ function MenuTree({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useCurrentPath();
 
   const modules = buildModuleTree(menus);
+
+  // Filter search (Start menu OS): cocokkan nama node atau turunannya.
+  // Tanpa filter, perilaku sama persis seperti sebelumnya.
+  const f = (filter || '').trim().toLowerCase();
+  const matchBranch = (n: MenuNode): boolean =>
+    !f || n.name.toLowerCase().includes(f) || n.children.some(matchBranch);
 
   useEffect(() => {
     if (!modules.length || ready) return;
@@ -142,19 +149,19 @@ function MenuTree({ onNavigate }: { onNavigate?: () => void }) {
 
   const renderMenu = (list: MenuNode[]) => (
     <ul className="tree">
-      {list.map((n) => (
+      {list.filter(matchBranch).map((n) => (
         <li key={n.menuKey}>
           <button className="tree-row" onClick={() => clickNode(n)}>
             <span className="tree-caret">
               {n.children.length ? (
-                <Icon name={openMenus.has(n.menuKey) ? 'chevD' : 'chevR'} size={12} />
+                <Icon name={f || openMenus.has(n.menuKey) ? 'chevD' : 'chevR'} size={12} />
               ) : (
                 <Icon name={leafIcon(n.mcontrol)} size={14} />
               )}
             </span>
             <span className="tree-label">{n.name}</span>
           </button>
-          {n.children.length > 0 && openMenus.has(n.menuKey) && renderMenu(n.children)}
+          {n.children.length > 0 && (f || openMenus.has(n.menuKey)) && renderMenu(n.children)}
         </li>
       ))}
     </ul>
@@ -169,7 +176,7 @@ function MenuTree({ onNavigate }: { onNavigate?: () => void }) {
         <span className="tree-caret"><Icon name="home" size={14} /></span>
         <span className="tree-label">Home</span>
       </button>
-      {modules.map((mod) => (
+      {modules.filter((mod) => !f || mod.name.toLowerCase().includes(f) || mod.children.some(matchBranch)).map((mod) => (
         <div key={mod.code} className="module">
           <button className="tree-row module-row" onClick={() => setOpenModules((prev) => {
             const n = new Set(prev);
@@ -177,12 +184,12 @@ function MenuTree({ onNavigate }: { onNavigate?: () => void }) {
             return n;
           })}>
             <span className="tree-caret">
-              <Icon name={openModules.has(mod.code) ? 'chevD' : 'chevR'} size={12} />
+              <Icon name={f || openModules.has(mod.code) ? 'chevD' : 'chevR'} size={12} />
             </span>
             <Icon name={moduleIcon(mod.code)} size={15} />
             <span className="tree-label">{mod.name}</span>
           </button>
-          {openModules.has(mod.code) && mod.children.length > 0 && renderMenu(mod.children)}
+          {(f || openModules.has(mod.code)) && mod.children.length > 0 && renderMenu(mod.children)}
         </div>
       ))}
     </div>
@@ -261,49 +268,12 @@ export function StandardShell({ title, children }: { title: string; children: Re
 
 // Desktop shell (ala mode_desktop langit_v2): wallpaper + jendela halaman aktif
 // + taskbar bawah dengan Start menu (memakai tree menu yang sama) & clock.
+// Desktop shell OS (Windows 11-style): wallpaper + ikon modul + jendela
+// aplikasi multi-window + taskbar (Start, tombol jendela, tray).
+// Logic lengkap di components/OsDesktop.tsx agar file ini tetap ramping.
+// Props title/children milik kontrak Shell lama — isi jendela OS diatur
+// mandiri dari state internal, jadi keduanya sengaja tidak dipakai.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function DesktopShell({ title, children }: { title: string; children: React.ReactNode }) {
-  const { profile, logout } = useAuth();
-  const { navigate } = useRoute();
-  const { open } = useModal();
-  const [startOpen, setStartOpen] = useState(false);
-
-  return (
-    <div className="layout desktop">
-      <div className="desktop-area" onClick={() => setStartOpen(false)}>
-        <div className="desktop-window" onClick={(e) => e.stopPropagation()}>
-          <div className="desktop-window-title">
-            <Icon name="layout" size={15} />
-            <b>{title}</b>
-            <span className="spacer" />
-            <Btn icon="userCircle" onClick={() => open(<UserProfileModal />)}>Profile</Btn>
-          </div>
-          <div className="desktop-window-body">{children}</div>
-        </div>
-
-        {startOpen && (
-          <div className="desktop-start" onClick={(e) => e.stopPropagation()}>
-            <div className="desktop-start-head">
-              <b>{APP_NAME}</b>
-              <span className="start-user">{profile?.USERNAME || profile?.USERLOGIN}</span>
-            </div>
-            <div className="desktop-start-menu">
-              <MenuTree onNavigate={() => setStartOpen(false)} />
-            </div>
-            <div className="desktop-start-foot">
-              <ModeLayoutMenu />
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="desktop-taskbar">
-        <Btn className="taskbar-start" icon="start" onClick={() => setStartOpen((v) => !v)}>Start</Btn>
-        <span className="spacer" />
-        <ModeLayoutMenu compact />
-        <Btn icon="userCircle" onClick={() => open(<UserProfileModal />)}>Profile</Btn>
-        <Btn icon="logout" onClick={async () => { await logout(); navigate('/login'); }}>Logout</Btn>
-        <Clock />
-      </div>
-    </div>
-  );
+  return <OsDesktop />;
 }

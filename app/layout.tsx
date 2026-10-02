@@ -334,27 +334,77 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .akses-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: var(--r-sm); font-size: 12.5px; color: var(--text); cursor: pointer; }
           .akses-row:hover { background: var(--surface-2); }
           .akses-row svg { flex: none; color: var(--muted); }
-          .layout.desktop { min-height: 100vh; display: flex; flex-direction: column; background: linear-gradient(135deg,#0f172a,#1e293b 60%,#0b1220); }
-          .desktop-area { flex: 1; position: relative; padding: 18px; overflow: hidden; }
-          .desktop-window { position: absolute; inset: 18px 18px 18px 18px; display: flex; flex-direction: column; background: var(--bg); border: 1px solid #0f172a; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.45); }
-          .desktop-window-title { display: flex; align-items: center; gap: 8px; background: #1e293b; color: #fff; padding: 7px 12px; }
-          .desktop-window-title .spacer { flex: 1; }
-          .desktop-window-title .btn { min-height: 32px; background: #334155; border-color: #475569; color: #fff; }
-          .desktop-window-body { flex: 1; overflow: auto; padding: 16px; display: grid; gap: 14px; align-content: start; }
-          .desktop-start { position: absolute; left: 18px; bottom: 18px; width: 300px; max-height: 70vh; overflow-y: auto; background: #0f1729; color: #e2e8f0; border: 1px solid #1e293b; border-radius: 14px; padding: 10px; z-index: 45; box-shadow: 0 20px 50px rgba(0,0,0,.5); }
-          .desktop-start-head { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1e293b; padding-bottom: 8px; margin-bottom: 8px; }
-          .desktop-start-head .start-user { flex: 1; }
-          .desktop-start-menu { margin-bottom: 8px; }
-          .desktop-start-foot { border-top: 1px solid #1e293b; padding-top: 8px; }
-          .desktop-start .tree-row { color: #e2e8f0; }
-          .desktop-start .tree-row:hover { background: #1e293b; }
-          .desktop-start .tree-row.active { background: var(--brand); color: #fff; }
-          .desktop-start .module-row .tree-label { color: #fff; font-weight: 700; }
-          .desktop-taskbar { display: flex; align-items: center; gap: 10px; background: rgba(15,23,42,.95); border-top: 1px solid #1e293b; color: #e2e8f0; padding: 8px 16px; min-height: 50px; }
-          .desktop-taskbar .spacer { flex: 1; }
-          .desktop-taskbar .btn { min-height: 40px; background: #1e293b; border-color: #334155; color: #e2e8f0; }
-          .desktop-taskbar .clock { color: #cbd5e1; }
-          .taskbar-start { min-height: 40px; background: var(--brand); color: #fff; border: 1px solid var(--brand); border-radius: var(--r); padding: 0 15px; font-weight: 700; }
+          /* ============ 12. DESKTOP OS (mode_desktop saja; standard tak tersentuh) ============ */
+          .layout.desktop { min-height: 100vh; height: 100vh; display: flex; flex-direction: column; background: #0b1220; overflow: hidden; }
+          .os-area { flex: 1; min-height: 0; position: relative; overflow: hidden; background: radial-gradient(1000px 480px at 72% -10%, #17295c 0%, rgba(23,41,92,0) 60%), linear-gradient(180deg,#0d1526,#0b1220); }
+          .os-icons { position: absolute; left: 14px; top: 14px; bottom: 14px; display: flex; flex-direction: column; flex-wrap: wrap; gap: 4px; align-content: flex-start; z-index: 1; }
+          .os-icon { width: 92px; padding: 8px 4px; background: transparent; border: 1px solid transparent; border-radius: 8px; color: #e2e8f0; display: grid; justify-items: center; gap: 6px; cursor: pointer; font-family: inherit; }
+          .os-icon:hover { background: rgba(255,255,255,.08); }
+          .os-icon.selected { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.25); }
+          .os-icon .os-ico { width: 44px; height: 44px; border-radius: 12px; background: rgba(59,130,246,.18); border: 1px solid rgba(147,197,253,.35); color: #bfdbfe; display: inline-flex; align-items: center; justify-content: center; }
+          .os-icon span:last-child { font-size: 11.5px; text-align: center; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+          .os-win { position: absolute; width: min(920px, calc(100% - 48px)); height: 82%; background: var(--surface); border: 1px solid var(--border-2); border-radius: 12px; box-shadow: 0 24px 64px rgba(2,6,23,.45); display: flex; flex-direction: column; overflow: hidden; }
+          .os-win.maxed { left: 0; top: 0; width: 100%; height: 100%; border-radius: 0; border: 0; }
+          .os-title { flex: none; display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 6px 0 12px; background: var(--surface-2); border-bottom: 1px solid var(--border); cursor: grab; user-select: none; touch-action: none; }
+          .os-title:active { cursor: grabbing; }
+          .os-title svg { flex: none; color: var(--muted); }
+          .os-title b { flex: 1; min-width: 0; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .os-tbtn { width: 34px; height: 30px; flex: none; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: 0; border-radius: 6px; color: var(--muted); cursor: pointer; }
+          .os-tbtn:hover { background: #e2e8f0; color: var(--text); }
+          .os-tbtn.danger:hover { background: var(--danger); color: #fff; }
+          .os-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; background: var(--bg); }
+          .os-body .page-head, .os-body .hero, .os-body .stat-grid { flex: none; }
+          .os-body .card-grid, .os-body .two-col, .os-body .card-flex { flex: 1; min-height: 0; height: auto; }
+          .os-taskbar { height: 48px; flex: none; display: flex; align-items: center; gap: 6px; padding: 0 10px; background: rgba(15,23,42,.82); backdrop-filter: blur(14px); border-top: 1px solid rgba(255,255,255,.08); color: #e2e8f0; }
+          .os-taskbar .clock { color: #cbd5e1; padding: 0 6px; }
+          .os-startbtn { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; background: var(--brand); color: #fff; border: 1px solid var(--brand); border-radius: 8px; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+          .os-winbtn { display: inline-flex; align-items: center; gap: 8px; height: 36px; max-width: 180px; padding: 0 10px; background: transparent; border: 0; border-radius: 8px; color: #cbd5e1; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; box-shadow: inset 0 -2px 0 transparent; }
+          .os-winbtn svg { flex: none; }
+          .os-winbtn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .os-winbtn:hover { background: rgba(255,255,255,.08); }
+          .os-winbtn.active { background: rgba(255,255,255,.12); color: #fff; box-shadow: inset 0 -2px 0 var(--brand); }
+          .os-winbtn.min { opacity: .55; }
+          .os-taskbar .spacer { flex: 1; }
+          .os-tray { position: relative; display: flex; align-items: center; gap: 2px; }
+          .os-traybtn { position: relative; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: 0; border-radius: 8px; color: #cbd5e1; cursor: pointer; }
+          .os-traybtn:hover { background: rgba(255,255,255,.1); color: #fff; }
+          .os-badge { position: absolute; top: 1px; right: 1px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 9.5px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
+          .os-clock { font-size: 11px; line-height: 1.35; text-align: right; color: #cbd5e1; padding: 0 8px; white-space: nowrap; }
+          .os-start { position: absolute; left: 12px; bottom: 12px; width: 340px; max-width: calc(100% - 24px); max-height: calc(100% - 24px); display: flex; flex-direction: column; background: rgba(15,23,42,.88); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,.5); z-index: 60; color: #e2e8f0; overflow: hidden; }
+          .os-start-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px 8px; border-bottom: 1px solid rgba(255,255,255,.08); }
+          .os-start-head .start-user { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; color: #94a3b8; }
+          .os-start-search { display: flex; align-items: center; gap: 8px; margin: 8px 10px 0; padding: 0 10px; height: 32px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; color: #94a3b8; }
+          .os-start-search input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #e2e8f0; font-family: inherit; font-size: 12.5px; }
+          .os-start-menu { overflow-y: auto; padding: 6px 10px 10px; }
+          .os-start-menu .tree-row { color: #e2e8f0; }
+          .os-start-menu .tree-row:hover { background: rgba(255,255,255,.08); }
+          .os-start-menu .module-row .tree-label { color: #fff; font-weight: 700; }
+          .os-start-foot { border-top: 1px solid rgba(255,255,255,.08); padding: 8px 10px; }
+          .os-panel { position: absolute; right: 0; bottom: 44px; width: 300px; max-width: calc(100vw - 24px); background: rgba(15,23,42,.92); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,.5); z-index: 60; color: #e2e8f0; padding: 6px; overflow: hidden; }
+          .os-panel .drop-head { border-bottom-color: rgba(255,255,255,.08); color: #fff; }
+          .os-panel .dropdown-item { color: #cbd5e1; }
+          .os-panel .dropdown-item:hover { background: rgba(255,255,255,.08); color: #fff; }
+          .os-panel .drop-note small { color: #94a3b8; }
+          .os-panel .empty-hint { color: #94a3b8; }
+          .drop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 11px; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+          .drop-link { background: transparent; border: 0; padding: 0; color: var(--brand); font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; }
+          .drop-note { display: flex; gap: 9px; padding: 8px 11px; align-items: flex-start; }
+          .drop-note svg { flex: none; margin-top: 1px; }
+          .drop-note span { display: grid; gap: 1px; min-width: 0; }
+          .drop-note b { font-size: 12px; }
+          .drop-note small { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+          .dropdown-item.danger { color: var(--danger); }
+          .dropdown-item.danger svg { color: var(--danger); }
+          /* Context menu */
+          .ctx-backdrop { position: fixed; inset: 0; z-index: 320; }
+          .ctx-menu { position: fixed; background: var(--surface); border: 1px solid var(--border-2); border-radius: 8px; box-shadow: var(--sh-lg); padding: 6px; }
+          .ctx-item { display: flex; align-items: center; gap: 9px; width: 100%; padding: 7px 10px; background: transparent; border: 0; border-radius: 6px; font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--text-2); cursor: pointer; text-align: left; white-space: nowrap; }
+          .ctx-item svg { flex: none; color: var(--muted); }
+          .ctx-item:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+          .ctx-item:disabled { opacity: .45; cursor: default; }
+          .ctx-item.danger { color: var(--danger); }
+          .ctx-item.danger svg { color: var(--danger); }
+          .ctx-item.danger:hover:not(:disabled) { background: var(--danger-soft); }
 
           /* ============ 13. LOGIN ============ */
           .login-page { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; background: var(--bg); }

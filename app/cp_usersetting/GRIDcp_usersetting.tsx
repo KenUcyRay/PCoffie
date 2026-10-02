@@ -10,6 +10,8 @@ import { useModal } from '@/components/Modal';
 import { toast } from '@/components/toast'
 import { confirmDialog } from '@/components/Confirm';
 import { parseBoolean } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { openContextMenu } from '@/components/ContextMenu';
 import { Btn } from '@/components/Icon';
 import {
   DataTable, GridPager, noColumn, actionsColumn, selectColumn,
@@ -74,6 +76,7 @@ function buildColumns(h: { onEdit: (u: UserRow) => void; onRemove: (u: UserRow) 
 
 const GRIDcp_usersetting = forwardRef<GridApi>(function GRIDcp_usersetting(_props, ref) {
   const { open } = useModal();
+  const { layoutMode } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [filters, setFilters] = useState<Filters>({});
   const [page, setPage] = useState(0);
@@ -124,6 +127,18 @@ const GRIDcp_usersetting = forwardRef<GridApi>(function GRIDcp_usersetting(_prop
     open(<FRMcp_usersetting isNew onSaved={() => load({ page: 0 })} />);
   }, [load, open]);
 
+  // Klik-kanan baris (hanya mode desktop; standard tidak berubah).
+  const rowMenu = useCallback((u: UserRow, e: React.MouseEvent) => {
+    e.preventDefault();
+    openContextMenu({
+      x: e.clientX, y: e.clientY,
+      items: [
+        { label: `Buka ${u.USERLOGIN}`, icon: 'chevR', onClick: () => openUser(u) },
+        { label: `Hapus ${u.USERLOGIN}`, icon: 'del', danger: true, onClick: () => removeUser(u) },
+      ],
+    });
+  }, [openUser, removeUser]);
+
   const columns = useMemo(() => buildColumns({ onEdit: openUser, onRemove: removeUser }), [openUser, removeUser]);
 
   useImperativeHandle(
@@ -147,6 +162,7 @@ const GRIDcp_usersetting = forwardRef<GridApi>(function GRIDcp_usersetting(_prop
         startRow={page * PAGE_SIZE}
         loading={loading}
         rowKey={(u) => String(u.USERID ?? u.USERLOGIN)}
+        onRowContextMenu={layoutMode === 'mode_desktop' ? rowMenu : undefined}
       />
       <GridPager total={total} page={page} pageSize={PAGE_SIZE} onPage={(p) => load({ page: p })} />
     </div>

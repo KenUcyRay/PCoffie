@@ -22,6 +22,8 @@ import {
   // sidebar & navigasi
   IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand,
   IconApps, IconSelect, IconFolderOpen, IconStack, IconSitemap, IconInfoCircle,
+  // module icons
+  IconCalendarEvent, IconTicket, IconPackage, IconSpeakerphone, IconCash, IconPlanet,
   type Icon as TablerIcon,
 } from '@tabler/icons-react';
 
@@ -32,8 +34,9 @@ export type IconName =
   | 'prev' | 'next' | 'check' | 'profile' | 'start' | 'box' | 'gear'
   | 'minus' | 'eraser' | 'userCircle' | 'arrowR' | 'arrowL' | 'checkCircle'
   | 'alertCircle' | 'dashboard' | 'empty' | 'report' | 'history'
-  | 'calendar' | 'view' | 'mail' | 'upload' | 'loading' | 'sortAsc'
-  | 'login' | 'contacts' | 'form' | 'world' | 'chart'
+  | 'calendar' | 'calendarEvent' | 'view' | 'mail' | 'upload' | 'loading' | 'sortAsc'
+  | 'login' | 'contacts' | 'form' | 'world' | 'chart' | 'ticket' | 'package'
+  | 'megaphone' | 'cash' | 'planet' | 'settings'
   | 'panel' | 'panelOpen' | 'apps' | 'select' | 'folderOpen' | 'navStack' | 'sitemap'
   | 'info' | 'alert';
 
@@ -90,6 +93,13 @@ const ICONS: Record<IconName, TablerIcon> = {
   form: IconForms,
   world: IconWorld,
   chart: IconChartBar,
+  calendarEvent: IconCalendarEvent,
+  ticket: IconTicket,
+  package: IconPackage,
+  megaphone: IconSpeakerphone,
+  cash: IconCash,
+  planet: IconPlanet,
+  settings: IconSettings,
   // sidebar & navigasi
   panel: IconLayoutSidebarLeftCollapse,
   panelOpen: IconLayoutSidebarLeftExpand,

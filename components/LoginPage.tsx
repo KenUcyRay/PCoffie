@@ -35,7 +35,7 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-brand">
-        <h1><Icon name="layout" size={34} /> App Core</h1>
+        <h1><Icon name="layout" size={34} /> Tiket-APP</h1>
       </div>
       <div className="login-form-wrap">
         <form onSubmit={submit} className="login-form">

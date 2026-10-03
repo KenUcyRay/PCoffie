@@ -18,6 +18,7 @@ import { Icon, iconForLeaf, iconForModule } from './Icon';
 import { MenuTree, Clock } from './Shells';
 import { openContextMenu, ContextMenuHost } from './ContextMenu';
 import { NotifBridge, useNotifs } from './Notifs';
+import { InboxBell, UrgentBanner } from './MessageInbox';
 
 type Win =
   | { id: number; kind: 'menu'; mcontrol: string; title: string; min: boolean; max: boolean; z: number; x: number; y: number }
@@ -227,18 +228,19 @@ export default function OsDesktop() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
+  // navigate() (setState RouteProvider) TIDAK BOLEH di dalam updater setWins:
+  // updater harus murni (StrictMode bisa menjalankannya 2x) — hitung dulu
+  // dari state saat ini, lalu setWins + navigate berurutan di body callback.
   const closeWin = useCallback((id: number) => {
-    setWins((prev) => {
-      const gone = prev.find((w) => w.id === id);
-      const next = prev.filter((w) => w.id !== id);
-      if (gone && gone.kind === 'menu' && '/' + gone.mcontrol === pathname) {
-        const top = [...next].filter((w) => !w.min).sort((a, b) => b.z - a.z)[0]
-          || [...next].sort((a, b) => b.z - a.z)[0];
-        navigate(top && top.kind === 'menu' ? '/' + top.mcontrol : '/');
-      }
-      return next;
-    });
-  }, [pathname, navigate]);
+    const gone = wins.find((w) => w.id === id);
+    const next = wins.filter((w) => w.id !== id);
+    setWins(next);
+    if (gone && gone.kind === 'menu' && '/' + gone.mcontrol === pathname) {
+      const top = [...next].filter((w) => !w.min).sort((a, b) => b.z - a.z)[0]
+        || [...next].sort((a, b) => b.z - a.z)[0];
+      navigate(top && top.kind === 'menu' ? '/' + top.mcontrol : '/');
+    }
+  }, [wins, pathname, navigate]);
 
   const focusWin = useCallback((id: number) => {
     zTop.current += 1;
@@ -333,6 +335,8 @@ export default function OsDesktop() {
 
   return (
     <div className="layout desktop">
+      {/* Spanduk pesan DARURAT yang belum dibaca. */}
+      <UrgentBanner />
       <div
         ref={areaRef}
         className="os-area"
@@ -485,6 +489,8 @@ export default function OsDesktop() {
         ))}
         <span className="spacer" />
         <div ref={trayRef} className="os-tray">
+          {/* Inbox pesan milik user (tanpa hak akses menu). */}
+          <InboxBell variant="tray" />
           <button
             type="button"
             className="os-traybtn"

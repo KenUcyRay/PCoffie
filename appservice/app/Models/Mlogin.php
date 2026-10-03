@@ -96,15 +96,49 @@ class Mlogin extends Model
             $params['userpassword'] ?? '',
         ];
 
-        $result = DB::select($SQL_CALLSP, $data);
-
         $typed = trim((string) ($params['userlogin'] ?? ''));
+
+        // IP request (untuk cek/blokir IP). '' bila tanpa HTTP (CLI).
+        $ip = '';
+        try {
+            if (function_exists('request')) {
+                $rip = (string) (request()->ip() ?? '');
+                $ip = $rip !== '' ? mb_substr($rip, 0, 45) : '';
+            }
+        } catch (\Throwable $ignored) {
+            // CLI / tanpa request HTTP
+        }
+
+        // Blokir diperiksa SEBELUM password (Blocked Access). Pesan ke pengguna
+        // tetap umum; percobaan dicatat BLOCKED (titik TODO(blocked-access)).
+        if (Mcpblocked::isBlocked($typed, $ip) !== null) {
+            LoginTrail::record('BLOCKED', $typed, 'BLOCKED');
+            return json_encode([
+                'success' => 'false',
+                'message' => 'User atau Password salah..',
+            ]);
+        }
+
+        $result = DB::select($SQL_CALLSP, $data);
 
         if (!empty($result) && $result[0]->success === 'true') {
             LoginTrail::record('SUCCESS', $typed);
 
             $cpUserJWT = new userJWT($data[0], $data[1]);
             $token = JWTAuth::fromUser($cpUserJWT);
+
+            // Sesi login: baris AKTIF di T_USER_SESSION + tegakkan batas sesi
+            // per user. Gagal di sini tidak menggagalkan login (fail-open).
+            try {
+                $urow2 = DB::selectOne("SELECT USERID FROM CPUSER WHERE USERLOGIN = ?", [$typed]);
+                $uid = $urow2 ? (int) $urow2->USERID : null;
+                $sid = Mcpsession::sessionIdFromToken($token);
+                $expTs = Mcpsession::expiryFromToken($token);
+                Mcpsession::createFromLogin($typed, $uid, $sid, $expTs, $ip);
+                Mcpsession::enforceLimit($uid, $typed, $sid);
+            } catch (\Throwable $e) {
+                SysLog::log('ERROR', 'AUTH', 'Gagal menyiapkan sesi login.', ['user' => $typed], $e);
+            }
 
             $flatMenu = self::buildFlatMenu($result[0]->dtmenu_header, $result[0]->dtmenu);
 
@@ -130,10 +164,12 @@ class Mlogin extends Model
                     $reason = 'INACTIVE';
                 }
             }
-            // TODO(blocked-access): bila akun/IP ini diblokir, catat BLOCKED/BLOCKED
-            // di sini (dan tolak login) tanpa mengubah pesan umum di bawah:
-            //   LoginTrail::record('BLOCKED', $typed, 'BLOCKED');
             LoginTrail::record('FAILED', $typed, $reason);
+
+            // Blokir otomatis: gagal beruntun mencapai batas Security Setting.
+            // Dievaluasi SETELAH FAILED tercatat agar hitungannya pas dengan
+            // percobaan ini. Pesan ke pengguna tidak berubah (umum).
+            Mcpblocked::evaluateAuto($typed, $ip);
 
             $hasil = [
                 'success' => 'false',

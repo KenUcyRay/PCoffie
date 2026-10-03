@@ -16,6 +16,11 @@ $router->group(['prefix' => 'api/core'], function () use ($router) {
     $router->get('/auth/me', 'C_home@auth');
     $router->post('/auth/me', 'C_home@auth');
 
+    // Identitas publik aplikasi TANPA login (nama, slogan, logo, favicon).
+    // Sengaja endpoint khusus (bukan dispatcher umum) supaya tidak ada
+    // model/metode lain yang bisa dipanggil tanpa token.
+    $router->post('/public/app-setting', 'C_home@public_setting');
+
     $router->group(['middleware' => 'jwt'], function () use ($router) {
         $router->post('/logout', 'C_home@logout');
         $router->get('/logout', 'C_home@logout');

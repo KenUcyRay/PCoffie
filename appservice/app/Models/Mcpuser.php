@@ -77,6 +77,12 @@ class Mcpuser extends Model
             return json_encode(['success' => 'false', 'message' => 'Username dan Password wajib diisi.']);
         }
 
+        // Kebijakan password dari Security Setting (T_SECURITY_SETTING).
+        $perr = SecurityPolicy::checkPassword($userpassword);
+        if ($perr !== null) {
+            return json_encode(['success' => 'false', 'message' => $perr]);
+        }
+
         $exists = DB::select("SELECT 1 AS X FROM CPUSER WHERE USERLOGIN = ?", [$userlogin]);
         if (!empty($exists)) {
             return json_encode(['success' => 'false', 'message' => 'Username sudah dipakai.']);
@@ -107,6 +113,11 @@ class Mcpuser extends Model
         }
 
         if ($userpassword !== '') {
+            // Kebijakan password dari Security Setting (T_SECURITY_SETTING).
+            $perr = SecurityPolicy::checkPassword($userpassword);
+            if ($perr !== null) {
+                return json_encode(['success' => 'false', 'message' => $perr]);
+            }
             DB::update("
                 UPDATE CPUSER SET USERNAME=?, USERGROUP=?, USEREMAIL=?, USERACTIVE=?,
                     USERPASSWORD=dbo.app_encrypt(?), SYSUPDATEUSER=?, SYSUPDATEDATE=GETDATE()
@@ -160,6 +171,12 @@ class Mcpuser extends Model
 
         if ($newPassword !== $confirmPassword) {
             return json_encode(['success' => 'false', 'message' => 'Password baru tidak sesuai dengan Confirm Password']);
+        }
+
+        // Kebijakan password dari Security Setting (T_SECURITY_SETTING).
+        $perr = SecurityPolicy::checkPassword($newPassword);
+        if ($perr !== null) {
+            return json_encode(['success' => 'false', 'message' => $perr]);
         }
 
         // user yang boleh ganti password adalah dirinya sendiri (USERLOGIN dari form),

@@ -50,6 +50,26 @@ class JWTMiddleware
                     'message' => 'User not found'
                 ], 404);
             }
+
+            // Sesi DB (T_USER_SESSION): token lama tanpa ID sesi langsung ditolak
+            // (paksa login ulang sekali setelah fitur sesi aktif). Sesi yang
+            // dicabut/kedaluarsa/idle ditolak dengan 401 yang sama seperti token
+            // tidak valid supaya frontend membuka dialog login ulang.
+            $sid = trim((string) ($payload['jti'] ?? ''));
+            if ($sid === '') {
+                return response()->json([
+                    'success' => 'false',
+                    'message' => 'Token is invalid'
+                ], 401);
+            }
+
+            $sess = \App\Models\Mcpsession::assertActive($sid);
+            if (!$sess['ok']) {
+                return response()->json([
+                    'success' => 'false',
+                    'message' => 'Token is invalid'
+                ], 401);
+            }
         } catch (TokenExpiredException $e) {
             return response()->json([
                 'success' => 'false',

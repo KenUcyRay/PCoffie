@@ -51,6 +51,26 @@ class C_home extends Controller
             }
         }
 
+        // Validasi sesi untuk reload/me (watcher 30 detik frontend mengandalkan
+        // 401 di sini untuk menendang ke login ulang; auth/* di luar grup jwt).
+        if (in_array($method, ['reload', 'me'])) {
+            try {
+                $mePayload = JWTAuth::parseToken()->getPayload()->toArray();
+                $meSid = trim((string) ($mePayload['jti'] ?? ''));
+                if ($meSid === '' || !\App\Models\Mcpsession::assertActive($meSid)['ok']) {
+                    return response()->json([
+                        'success' => 'false',
+                        'message' => 'Sesi login tidak valid.'
+                    ], 401);
+                }
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => 'false',
+                    'message' => 'Sesi login tidak valid.'
+                ], 401);
+            }
+        }
+
         $result = \App\Models\Mlogin::handleAction($method, $params);
 
         return response($result, 200)->header('Content-Type', 'application/json');
@@ -61,12 +81,19 @@ class C_home extends Controller
         // Ambil user dari token SEBELUM invalidate (sesudahnya token mati).
         // Catatan: hanya menambah pencatatan; respons dan perilaku tidak berubah.
         $typed = '';
+        $sid = null;
         try {
             $payload = JWTAuth::parseToken()->getPayload()->toArray();
             $typed = (string) ($payload['sub'] ?? '');
+            $sid = trim((string) ($payload['jti'] ?? ''));
+            if ($sid === '') {
+                $sid = null;
+            }
         } catch (\Exception $e) {
             // token sudah invalid/expired: tetap catat (user kosong) di bawah
         }
+        // Tandai sesi LOGOUT di T_USER_SESSION (best-effort).
+        \App\Models\Mcpsession::markLogoutBySid($sid, $typed !== '' ? $typed : 'SYSTEM');
         try {
             JWTAuth::parseToken()->invalidate();
         } catch (\Exception $e) {
@@ -78,6 +105,15 @@ class C_home extends Controller
             'success' => 'true',
             'message' => 'Logout berhasil',
         ]);
+    }
+
+    // Identitas publik aplikasi TANPA login. Hanya Mcpsetting::read_public
+    // (4 kolom identitas); tidak ada dispatcher umum di sini.
+    public function public_setting(Request $request)
+    {
+        $result = \App\Models\Mcpsetting::read_public($request->all());
+
+        return response($result, 200)->header('Content-Type', 'application/json');
     }
 
     public function general($A, $B, Request $request)

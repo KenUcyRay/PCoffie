@@ -8,6 +8,7 @@ import { useModal } from './Modal';
 import UserProfileModal from '@/app/cp_usersetting/FRMprofile_user';
 import { useIsNarrow } from '@/lib/useIsNarrow';
 import { toast } from './toast';
+import { InboxBell, UrgentBanner } from './MessageInbox';
 import { Icon, Btn, iconForModule, iconForLeaf } from './Icon';
 import { APP_NAME } from '@/lib/app-config';
 import Sidebar, { type SidebarApi } from './Sidebar';
@@ -250,7 +251,12 @@ export function StandardShell({ title, children }: { title: string; children: Re
               )}
             </span>
           ))}
+          {/* Inbox pesan milik user (tanpa hak akses menu). */}
+          <InboxBell variant="tab" />
         </div>
+
+        {/* Spanduk pesan DARURAT yang belum dibaca. */}
+        <UrgentBanner />
 
         <div className="content">{children}</div>
 

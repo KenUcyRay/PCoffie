@@ -28,6 +28,7 @@ import { useModal } from './Modal';
 import { useIsNarrow } from '@/lib/useIsNarrow';
 import { toast } from './toast';
 import { APP_NAME, STORE } from '@/lib/app-config';
+import { useAppIdentity } from '@/lib/app-identity';
 import { Icon, iconForModule, iconForLeaf, type IconName } from './Icon';
 import UserProfileModal from '@/app/cp_usersetting/FRMprofile_user';
 
@@ -78,8 +79,11 @@ type Props = {
   appName?: string;
 };
 
-const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = APP_NAME }, ref) {
+const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName }, ref) {
   const { profile, menus, logout, checkMenuAccess } = useAuth();
+  // Nama + logo dari General Setting (endpoint publik); prop menang bila diisi.
+  const identity = useAppIdentity();
+  const shownName = appName || identity.name || APP_NAME;
   const { navigate } = useRoute();
   const pathname = useCurrentPath();
   const { openTab } = useTabs();
@@ -313,10 +317,16 @@ const Sidebar = forwardRef<SidebarApi, Props>(function Sidebar({ appName = APP_N
             onClick={() => (isNarrow ? setDrawerOpen(false) : toggleCollapsed())}
           >
             <span className="sb-logo">
-              <span className="sb-logo-app"><Icon name="apps" size={20} /></span>
-              <span className="sb-logo-tog"><Icon name="panel" size={20} /></span>
+              {identity.logoUrl ? (
+                <img src={identity.logoUrl} alt="Logo" style={{ width: 28, height: 28, objectFit: 'contain' }} />
+              ) : (
+                <>
+                  <span className="sb-logo-app"><Icon name="apps" size={20} /></span>
+                  <span className="sb-logo-tog"><Icon name="panel" size={20} /></span>
+                </>
+              )}
             </span>
-            <span className="sb-appname">{appName}</span>
+            <span className="sb-appname">{shownName}</span>
           </button>
           <button
             type="button"

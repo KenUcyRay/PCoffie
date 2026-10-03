@@ -86,6 +86,12 @@ class Mcpuserlogin extends Model
             return json_encode(['success' => 'false', 'message' => 'Username dan Password wajib diisi.']);
         }
 
+        // Kebijakan password dari Security Setting (T_SECURITY_SETTING).
+        $perr = SecurityPolicy::checkPassword($userpassword);
+        if ($perr !== null) {
+            return json_encode(['success' => 'false', 'message' => $perr]);
+        }
+
         $exists = DB::select("SELECT 1 AS X FROM CPUSER WHERE USERLOGIN = ?", [$userlogin]);
 
         if (!empty($exists)) {
@@ -125,6 +131,11 @@ class Mcpuserlogin extends Model
         $beforeUser = DB::selectOne("SELECT USERID, USERLOGIN, USERNAME, USERGROUP, USEREMAIL, USERACTIVE FROM CPUSER WHERE USERID = ?", [$userid]);
 
         if ($userpassword !== '') {
+            // Kebijakan password dari Security Setting (T_SECURITY_SETTING).
+            $perr = SecurityPolicy::checkPassword($userpassword);
+            if ($perr !== null) {
+                return json_encode(['success' => 'false', 'message' => $perr]);
+            }
             // password diisi -> ikut diupdate (re-encrypt)
             DB::update("
                 UPDATE CPUSER

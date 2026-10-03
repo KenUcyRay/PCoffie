@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/auth';
 import { useRoute } from '@/lib/route';
 import { Btn, Icon } from './Icon';
 import { APP_NAME } from '@/lib/app-config';
+import { useAppIdentity } from '@/lib/app-identity';
 
 // Halaman login sekarang jadi komponen biasa, bukan route /login terpisah
 // (URL harus selalu /tiket-app). Di-mount dari app/page.tsx saat status 'guest'.
@@ -14,6 +15,8 @@ import { APP_NAME } from '@/lib/app-config';
 export default function LoginPage() {
   const { login } = useAuth();
   const { navigate } = useRoute();
+  // Nama + logo + slogan dari General Setting (fallback = env).
+  const identity = useAppIdentity();
   const [userlogin, setUserlogin] = useState('');
   const [userpassword, setUserpassword] = useState('');
   const [err, setErr] = useState('');
@@ -36,7 +39,15 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-brand">
-        <h1><Icon name="layout" size={34} /> {APP_NAME}</h1>
+        <h1>
+          {identity.logoUrl ? (
+            <img src={identity.logoUrl} alt="Logo" style={{ width: 38, height: 38, objectFit: 'contain' }} />
+          ) : (
+            <Icon name="layout" size={34} />
+          )}{' '}
+          {identity.name || APP_NAME}
+        </h1>
+        {identity.slogan && <p>{identity.slogan}</p>}
       </div>
       <div className="login-form-wrap">
         <form onSubmit={submit} className="login-form">

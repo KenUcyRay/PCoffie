@@ -1,0 +1,32 @@
+-- Indeks unik T_BANK_ACCOUNT (Finance). Dijalankan SETELAH skrip PHP pengisi
+-- ACCTHASH (HMAC butuh FINANCE_HASH_SECRET, tidak bisa dihitung di SQL).
+-- Cegah rekening ganda (bank+nomor+pemilik) dan dua rekening utama per pemilik.
+-- Idempoten: tiap indeks hanya bila belum ada. Jalankan per pernyataan (GO).
+-- ROLLBACK (hanya development):
+-- DROP INDEX IF EXISTS UX_T_BANK_ACCOUNT_SELLER ON dbo.T_BANK_ACCOUNT;
+-- DROP INDEX IF EXISTS UX_T_BANK_ACCOUNT_ORG ON dbo.T_BANK_ACCOUNT;
+-- DROP INDEX IF EXISTS UX_T_BANK_ACCOUNT_PRIM_SELLER ON dbo.T_BANK_ACCOUNT;
+-- DROP INDEX IF EXISTS UX_T_BANK_ACCOUNT_PRIM_ORG ON dbo.T_BANK_ACCOUNT;
+
+-- Ganda: bank + hash nomor + penjual (SELLER).
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_T_BANK_ACCOUNT_SELLER' AND object_id = OBJECT_ID('dbo.T_BANK_ACCOUNT'))
+CREATE UNIQUE INDEX UX_T_BANK_ACCOUNT_SELLER ON dbo.T_BANK_ACCOUNT (BANKID, ACCTHASH, SELLERID) WHERE SELLERID IS NOT NULL;
+GO
+
+-- Ganda: bank + hash nomor + nama penyelenggara ternormalisasi (ORGANIZER).
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_T_BANK_ACCOUNT_ORG' AND object_id = OBJECT_ID('dbo.T_BANK_ACCOUNT'))
+CREATE UNIQUE INDEX UX_T_BANK_ACCOUNT_ORG ON dbo.T_BANK_ACCOUNT (BANKID, ACCTHASH, ORGNORM) WHERE SELLERID IS NULL;
+GO
+
+-- Satu utama per penjual.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_T_BANK_ACCOUNT_PRIM_SELLER' AND object_id = OBJECT_ID('dbo.T_BANK_ACCOUNT'))
+CREATE UNIQUE INDEX UX_T_BANK_ACCOUNT_PRIM_SELLER ON dbo.T_BANK_ACCOUNT (SELLERID) WHERE ISPRIMARY = 'YES' AND SELLERID IS NOT NULL;
+GO
+
+-- Satu utama per penyelenggara.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_T_BANK_ACCOUNT_PRIM_ORG' AND object_id = OBJECT_ID('dbo.T_BANK_ACCOUNT'))
+CREATE UNIQUE INDEX UX_T_BANK_ACCOUNT_PRIM_ORG ON dbo.T_BANK_ACCOUNT (ORGNORM) WHERE ISPRIMARY = 'YES' AND SELLERID IS NULL;
+GO
+
+-- Verifikasi:
+-- SELECT name, is_unique, filter_definition FROM sys.indexes WHERE object_id = OBJECT_ID('dbo.T_BANK_ACCOUNT') AND name LIKE 'UX_%';

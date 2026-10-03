@@ -138,6 +138,22 @@ class C_home extends Controller
         $payload = $request->all();
         $payload['VUSERLOGIN'] = $jwt_data['sub'];
 
+        // Akun pembeli (GROUP_USER) TIDAK BOLEH memakai Console.
+        // Satu titik pemeriksaan di sini menutup SELURUH dispatcher Console
+        // (home/{A}/{B} dan fallback /{A}/{B}), jadi tidak ada halaman Console
+        // yang bisa dibuka hanya dengan menebak URL API.
+        try {
+            $grp = DB::selectOne("SELECT TOP 1 USERGROUP FROM CPUSER WHERE USERLOGIN = ?", [$jwt_data['sub']]);
+            if ($grp && strtoupper(trim((string) $grp->USERGROUP)) === 'GROUP_USER') {
+                return response()->json([
+                    'success' => 'false',
+                    'message' => 'Akun pembeli tidak punya akses Console. Gunakan portal /tiket-app/.'
+                ], 403);
+            }
+        } catch (\Exception $e) {
+            // bila cek group gagal, biarkan lanjut ke cek hak akses di model
+        }
+
         $modelClass = "\\App\\Models\\" . ucfirst('M' . $A);
 
         if (!class_exists($modelClass)) {

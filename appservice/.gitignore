@@ -5,3 +5,6 @@ Homestead.yaml
 .env
 .phpunit.result.cache
 /public/uploads/
+
+# cache keranjang portal pembeli (data per akun, bukan kode)
+/storage/portal/

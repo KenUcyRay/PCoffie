@@ -19,6 +19,7 @@ import {
   type Column, type Filters, type SortDir,
 } from '@/components/DataTable';
 import FRMmattendee from './FRMmattendee';
+import FRMpayrecord from '../mpayment/FRMpayrecord';
 import { formatTanggal, downloadCSV, downloadSampleCSV, parseImportCSV } from './Cmattendee';
 import { takePickedEvent } from '../meventdata/eventPick';
 import * as proxy from './api';
@@ -143,52 +144,8 @@ function buildColumns(h: {
   ];
 }
 
-// Modal status pembayaran.
-function PayModal({ row, onDone }: { row: AttendeeRow; onDone: () => void }) {
-  const { close } = useModal();
-  const [pay, setPay] = useState(String(row.PAYSTATUS || 'BELUM_BAYAR'));
-  const [busy, setBusy] = useState(false);
-
-  const submit = async () => {
-    if (!await confirmDialog({ message: `Ubah status bayar ${row.TICKETCODE} menjadi ${pay}?` })) return;
-    setBusy(true);
-    try {
-      const res: any = await proxy.process_paystatus({ ATTENDEEID: row.ATTENDEEID, PAYSTATUS: pay });
-      if (parseBoolean(res?.success)) {
-        toast('Success', res.message || 'Status bayar diupdate.', 'ok');
-        onDone();
-        close();
-      } else toast('Error', res?.message || 'Gagal update status.', 'err');
-    } catch (e: any) {
-      toast('Error', e.message, 'err');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Window
-      title={`Status Bayar ${row.TICKETCODE || ''}`}
-      icon="cash"
-      width="400px"
-      footer={
-        <>
-          <Btn pid="btsave" className="primary" icon="save" disabled={busy} onClick={submit}>Simpan</Btn>
-          <span className="frm-foot-gap" />
-          <Btn icon="close" onClick={close}>Batal</Btn>
-        </>
-      }
-    >
-      <FrmRow label="Status">
-        <select value={pay} onChange={(e) => setPay(e.target.value)}>
-          <option value="BELUM_BAYAR">BELUM_BAYAR</option>
-          <option value="LUNAS">LUNAS</option>
-          <option value="REFUND">REFUND</option>
-        </select>
-      </FrmRow>
-    </Window>
-  );
-}
+// Catat pembayaran via form pusat Finance (pakai ulang FRMpayrecord).
+// Status LUNAS kini dicatat sebagai pembayaran (invoice + buku besar).
 
 // Modal batalkan tiket (alasan wajib).
 function CancelModal({ row, onDone }: { row: AttendeeRow; onDone: () => void }) {
@@ -475,7 +432,15 @@ const GRIDmattendee = forwardRef<GridApi>(function GRIDmattendee(_props, ref) {
   }, [open, eventId, types, load, loadSummary]);
 
   const payStatus = useCallback((r: AttendeeRow) => {
-    open(<PayModal row={r} onDone={reload} />);
+    if (r.ATTENDEEID == null) return;
+    open(
+      <FRMpayrecord
+        presetType="TIKET"
+        presetRefId={Number(r.ATTENDEEID)}
+        presetLabel={`${r.NAME || ''} (${r.TICKETCODE || ''})`}
+        onSaved={reload}
+      />
+    );
   }, [open, reload]);
 
   const checkin = useCallback(async (r: AttendeeRow) => {

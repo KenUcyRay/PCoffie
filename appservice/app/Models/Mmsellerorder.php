@@ -336,6 +336,30 @@ class Mmsellerorder extends Model
             return json_encode(['success' => 'false', 'message' => 'Gagal memproses pengembalian.']);
         }
 
+        // Kembali setelah bayar = refund sisa (Finance). Bucket mengikuti
+        // posisi dana (PENDING bila belum SELESAI, AVAILABLE bila sudah).
+        $wasPaid = strtoupper(trim((string) $order->PAYSTATUS)) === 'LUNAS';
+        if ($wasPaid) {
+            $pay = DB::selectOne("
+                SELECT PAYMENTID FROM T_PAYMENT
+                WHERE REFTYPE = 'MERCH' AND REFID = ? AND STATUS = 'BERHASIL'
+            ", [(int) $id]);
+            if ($pay) {
+                $left = PaymentService::remaining((int) $pay->PAYMENTID);
+                if ($left > 0) {
+                    $rf = PaymentService::refund([
+                        'PAYMENTID' => (int) $pay->PAYMENTID, 'AMOUNT' => $left,
+                        'REFUNDTYPE' => 'BATAL_MERCH', 'REFID' => (int) $id, 'ACTOR' => $by,
+                    ]);
+                    if (!$rf['ok']) {
+                        SysLog::log('ERROR', 'API', 'Refund pengembalian gagal.', ['order' => (int) $id]);
+                    }
+                }
+            } else {
+                SysLog::log('WARNING', 'API', 'Kembali pesanan LUNAS tanpa pembayaran.', ['order' => (int) $id]);
+            }
+        }
+
         Mmorder::audit('STATUS', self::MCONTROL, self::PAGE, $order,
             ['ORDERSTATUS' => $st, 'PAYSTATUS' => (string) $order->PAYSTATUS],
             ['ORDERSTATUS' => 'DIKEMBALIKAN', 'PAYSTATUS' => 'REFUND'], $by);

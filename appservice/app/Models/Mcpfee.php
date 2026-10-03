@@ -29,7 +29,7 @@ class Mcpfee extends Model
 
     // Ambil pengaturan yang berlaku pada tanggal Y-m-d (default hari ini).
     // Dipakai halaman (read_effective) dan modul lain (order) dengan hasil sama persis.
-    private static function effectiveOn(?string $date)
+    public static function effectiveOn(?string $date)
     {
         if ($date === null || $date === '') {
             $row = DB::selectOne("

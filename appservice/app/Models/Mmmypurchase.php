@@ -397,6 +397,33 @@ class Mmmypurchase extends Model
             return json_encode(['success' => 'false', 'message' => 'Gagal membatalkan pesanan.']);
         }
 
+        // Batal setelah LUNAS = refund + kembalikan dana tertahan (Finance).
+        $wasPaid = strtoupper(trim((string) $order->PAYSTATUS)) === 'LUNAS';
+        if ($wasPaid) {
+            $pay = DB::selectOne("
+                SELECT PAYMENTID FROM T_PAYMENT
+                WHERE REFTYPE = 'MERCH' AND REFID = ? AND STATUS = 'BERHASIL'
+            ", [$id]);
+            if ($pay) {
+                $left = PaymentService::remaining((int) $pay->PAYMENTID);
+                if ($left > 0) {
+                    $rf = PaymentService::refund([
+                        'PAYMENTID' => (int) $pay->PAYMENTID, 'AMOUNT' => $left,
+                        'REFUNDTYPE' => 'BATAL_MERCH', 'REFID' => $id, 'ACTOR' => $by,
+                    ]);
+                    if (!$rf['ok']) {
+                        SysLog::log('ERROR', 'API', 'Refund batal pesanan gagal.', ['order' => $id]);
+                    }
+                }
+                $rv = PaymentService::reversePending($id, $by, 'Batal pesanan LUNAS.');
+                if (!$rv['ok']) {
+                    SysLog::log('ERROR', 'API', 'Reversal dana batal pesanan gagal.', ['order' => $id]);
+                }
+            } else {
+                SysLog::log('WARNING', 'API', 'Batal pesanan LUNAS tanpa pembayaran.', ['order' => $id]);
+            }
+        }
+
         Mmorder::audit('STATUS', $mcontrol, $page, $order,
             ['ORDERSTATUS' => $st, 'PAYSTATUS' => (string) $order->PAYSTATUS],
             ['ORDERSTATUS' => 'DIBATALKAN', 'PAYSTATUS' => $newPay, 'REASON' => $reason], $by);
@@ -432,12 +459,22 @@ class Mmmypurchase extends Model
             return json_encode(['success' => 'false', 'message' => 'Pesanan sudah tidak BELUM_BAYAR.']);
         }
 
-        DB::update("
-            UPDATE T_MERCH_ORDER
-            SET PAYSTATUS = 'LUNAS', PAIDAT = GETDATE(),
-                SYSUPDATEUSER = ?, SYSUPDATEDATE = GETDATE()
-            WHERE ORDERID = ? AND PAYSTATUS = 'BELUM_BAYAR'
-        ", [$by !== '' ? mb_substr($by, 0, 25) : null, (int) $id]);
+        // Via layanan pembayaran pusat (invoice + buku besar). Butuh metode;
+        // form Catat Pembayaran (FRMpayrecord) mengirimkannya.
+        $methodRaw = trim((string) ($vdata['PAYMETHODID'] ?? ''));
+        if ($methodRaw === '') {
+            return json_encode(['success' => 'false', 'message' => 'Catat pembayaran lewat form Catat Pembayaran (metode wajib).']);
+        }
+        $r = PaymentService::record([
+            'REFTYPE' => 'MERCH', 'REFID' => (int) $id,
+            'PAYMETHODID' => $methodRaw,
+            'PAIDAT' => trim((string) ($vdata['PAIDAT'] ?? '')),
+            'EXTREF' => trim((string) ($vdata['EXTREF'] ?? '')),
+            'SOURCE' => 'MANUAL', 'ACTOR' => $by,
+        ]);
+        if (!$r['ok']) {
+            return json_encode(['success' => 'false', 'message' => $r['message']]);
+        }
 
         Mmorder::addHistory((int) $id, (string) $order->ORDERSTATUS, (string) $order->ORDERSTATUS, 'Pembayaran LUNAS.', $by);
         Mmorder::audit('STATUS', self::MCONTROL, self::PAGE, $order,
@@ -481,7 +518,15 @@ class Mmmypurchase extends Model
         Mmorder::audit('STATUS', self::MCONTROL, self::PAGE, $order,
             ['ORDERSTATUS' => 'DIKIRIM'], ['ORDERSTATUS' => 'SELESAI'], $by);
 
-        return json_encode(['success' => 'true', 'message' => 'Pesanan selesai.']);
+        // Dana tertahan -> tersedia (sekali per pesanan, idempoten).
+        $rel = PaymentService::releaseOrder((int) $id, $by);
+        $msg = 'Pesanan selesai.';
+        if (!($rel['ok'] ?? false)) {
+            SysLog::log('ERROR', 'API', 'Pelepasan dana gagal setelah SELESAI.', ['order' => (int) $id]);
+            $msg .= ' Perhatian: pelepasan dana gagal, hubungi administrator.';
+        }
+
+        return json_encode(['success' => 'true', 'message' => $msg]);
     }
 
     // Buat keluhan: DIKIRIM/SELESAI + dalam batas hari + satu TERBUKA.

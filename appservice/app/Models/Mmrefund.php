@@ -662,12 +662,34 @@ class Mmrefund extends Model
             return json_encode(['success' => 'false', 'message' => 'REFUNDID tidak ditemukan.']);
         }
 
-        $row = DB::selectOne("SELECT REFUNDID, REFUNDNO, STATUS FROM T_TICKET_REFUND WHERE REFUNDID = ?", [$id]);
+        $row = DB::selectOne("SELECT REFUNDID, REFUNDNO, TICKETID, NOMINAL, STATUS FROM T_TICKET_REFUND WHERE REFUNDID = ?", [$id]);
         if (!$row) {
             return json_encode(['success' => 'false', 'message' => 'Data refund tidak ditemukan.']);
         }
         if (strtoupper(trim((string) $row->STATUS)) !== 'DISETUJUI') {
             return json_encode(['success' => 'false', 'message' => 'Hanya refund DISETUJUI yang bisa diselesaikan.']);
+        }
+
+        // Catat refund di pembayaran dulu (dibatasi sisa yang bisa kembali).
+        // Gagal -> SELESAI ikut gagal supaya uang dan status tetap cocok.
+        $pay = DB::selectOne("
+            SELECT PAYMENTID FROM T_PAYMENT
+            WHERE REFTYPE = 'TIKET' AND REFID = ? AND STATUS = 'BERHASIL'
+        ", [(int) $row->TICKETID]);
+        if (!$pay) {
+            return json_encode(['success' => 'false', 'message' => 'Tidak ada pembayaran BERHASIL untuk tiket ini. Catat dulu pembayarannya.']);
+        }
+        $left = PaymentService::remaining((int) $pay->PAYMENTID);
+        $amt = min(Money::r($row->NOMINAL), $left);
+        if ($amt <= 0) {
+            return json_encode(['success' => 'false', 'message' => 'Tidak ada sisa yang bisa dikembalikan dari pembayaran ini.']);
+        }
+        $rf = PaymentService::refund([
+            'PAYMENTID' => (int) $pay->PAYMENTID, 'AMOUNT' => $amt,
+            'REFUNDTYPE' => 'REFUND_TIKET', 'REFID' => (int) $id, 'ACTOR' => $by,
+        ]);
+        if (!$rf['ok']) {
+            return json_encode(['success' => 'false', 'message' => $rf['message']]);
         }
 
         DB::update("

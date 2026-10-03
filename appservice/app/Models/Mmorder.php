@@ -113,6 +113,26 @@ class Mmorder extends Model
                 } catch (\Throwable $ignored) {
                     // abaikan
                 }
+                // Finance: refund sisa + kembalikan dana tertahan (idempoten).
+                try {
+                    $pay = DB::selectOne("
+                        SELECT PAYMENTID FROM T_PAYMENT
+                        WHERE REFTYPE = 'MERCH' AND REFID = ? AND STATUS = 'BERHASIL'
+                    ", [(int) $r->ORDERID]);
+                    if ($pay) {
+                        $left = PaymentService::remaining((int) $pay->PAYMENTID);
+                        if ($left > 0) {
+                            PaymentService::refund([
+                                'PAYMENTID' => (int) $pay->PAYMENTID, 'AMOUNT' => $left,
+                                'REFUNDTYPE' => 'BATAL_MERCH', 'REFID' => (int) $r->ORDERID,
+                                'ACTOR' => 'SYSTEM',
+                            ]);
+                        }
+                        PaymentService::reversePending((int) $r->ORDERID, 'SYSTEM', 'Batal otomatis.');
+                    }
+                } catch (\Throwable $ignored) {
+                    // abaikan (diperbaiki saat disentuh manual)
+                }
             }
 
             // 3) Dikirim lewat batas auto -> SELESAI.
@@ -132,6 +152,12 @@ class Mmorder extends Model
                     self::addHistory((int) $r->ORDERID, 'DIKIRIM', 'SELESAI', 'Otomatis selesai (diterima).', 'SYSTEM');
                 } catch (\Throwable $ignored) {
                     // abaikan
+                }
+                // Finance: lepas dana tertahan -> tersedia (idempoten).
+                try {
+                    PaymentService::releaseOrder((int) $r->ORDERID, 'SYSTEM');
+                } catch (\Throwable $ignored) {
+                    // abaikan (diperbaiki saat disentuh manual)
                 }
             }
         } catch (\Throwable $e) {

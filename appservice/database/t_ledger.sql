@@ -1,0 +1,56 @@
+-- Buku besar seller (Finance, module Finance). Aturan: T_ prefix.
+-- Hanya-tambah seperti T_AUDIT_LOG: tidak bisa diubah/dihapus lewat aplikasi,
+-- dilindungi trigger di level database dengan cara yang sama.
+-- Saldo TIDAK disimpan sebagai kolom; dihitung SUM per bucket. Dana berpindah
+-- lewat pasangan entri lawan dalam satu transaksi. Tanpa koreksi manual.
+-- Idempoten: CREATE/index/trigger hanya bila belum ada. CREATE TRIGGER harus
+-- batch tersendiri (pisahkan tiap GO).
+-- ROLLBACK (jalankan manual bila perlu):
+-- DROP TRIGGER IF EXISTS dbo.TRG_T_LEDGER_NOUPDATE;
+-- DROP TRIGGER IF EXISTS dbo.TRG_T_LEDGER_NODELETE;
+-- DROP TABLE dbo.T_LEDGER;
+
+IF OBJECT_ID('dbo.T_LEDGER', 'U') IS NULL
+CREATE TABLE dbo.T_LEDGER (
+    LEDGERID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    LEDGERTIME DATETIME2 NOT NULL DEFAULT GETDATE(),
+    ACCOUNT VARCHAR(10) NOT NULL DEFAULT 'SELLER',
+    SELLERID INT NOT NULL,
+    BUCKET VARCHAR(10) NOT NULL,
+    ENTRYTYPE VARCHAR(20) NOT NULL,
+    AMOUNT NUMERIC(18,2) NOT NULL DEFAULT 0,
+    REFTYPE VARCHAR(10) NOT NULL,
+    REFID INT NOT NULL,
+    NOTE VARCHAR(200) NULL,
+    ACTOR VARCHAR(25) NULL
+);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_T_LEDGER_SELLER' AND object_id = OBJECT_ID('dbo.T_LEDGER'))
+CREATE INDEX IX_T_LEDGER_SELLER ON dbo.T_LEDGER (SELLERID, BUCKET);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_T_LEDGER_TIME' AND object_id = OBJECT_ID('dbo.T_LEDGER'))
+CREATE INDEX IX_T_LEDGER_TIME ON dbo.T_LEDGER (LEDGERTIME DESC);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_T_LEDGER_REF' AND object_id = OBJECT_ID('dbo.T_LEDGER'))
+CREATE INDEX IX_T_LEDGER_REF ON dbo.T_LEDGER (REFTYPE, REFID);
+GO
+
+IF OBJECT_ID('dbo.TRG_T_LEDGER_NOUPDATE', 'TR') IS NULL
+EXEC('CREATE TRIGGER dbo.TRG_T_LEDGER_NOUPDATE ON dbo.T_LEDGER INSTEAD OF UPDATE AS BEGIN RAISERROR(''T_LEDGER tidak boleh diubah.'',16,1); END');
+GO
+
+IF OBJECT_ID('dbo.TRG_T_LEDGER_NODELETE', 'TR') IS NULL
+EXEC('CREATE TRIGGER dbo.TRG_T_LEDGER_NODELETE ON dbo.T_LEDGER INSTEAD OF DELETE AS BEGIN RAISERROR(''T_LEDGER tidak boleh dihapus.'',16,1); END');
+GO
+
+-- Entri awal dibuat BACKFILL Payment History. Tanpa seed SQL.
+-- Verifikasi:
+-- SELECT SELLERID, BUCKET, ENTRYTYPE, SUM(AMOUNT) AS S FROM dbo.T_LEDGER GROUP BY SELLERID, BUCKET, ENTRYTYPE ORDER BY SELLERID, BUCKET;
+
+-- ROLLBACK (hanya development):
+-- DROP TRIGGER IF EXISTS dbo.TRG_T_LEDGER_NOUPDATE;
+-- DROP TRIGGER IF EXISTS dbo.TRG_T_LEDGER_NODELETE;
+-- DROP TABLE IF EXISTS dbo.T_LEDGER;

@@ -609,8 +609,43 @@ class Mmcampaign extends Model
         return $p ? max(1, (int) $p->CAPACITY) : 1;
     }
 
-    // Catat bayar: MENUNGGU_BAYAR -> AKTIF (transaksi: kunci baris, cek banner
-    // + kapasitas, set PAIDAT). Aktivasi HANYA lewat sini.
+    // Aktivasi berbayar untuk layanan pembayaran (pakai ulang cek banner +
+    // kapasitas). Dipanggil dalam transaksi pemanggil (tanpa audit/transaksi
+    // sendiri). Return pesan error atau null bila lolos.
+    public static function activatePaid(int $id, string $actor): ?string
+    {
+        $row = DB::selectOne("
+            SELECT * FROM T_AD_CAMPAIGN WITH (UPDLOCK, ROWLOCK)
+            WHERE CAMPAIGNID = ?
+        ", [$id]);
+        if (!$row) {
+            return 'Data kampanye tidak ditemukan.';
+        }
+        if (strtoupper(trim((string) $row->STATUS)) !== 'MENUNGGU_BAYAR') {
+            return 'Hanya kampanye MENUNGGU_BAYAR yang bisa dibayar.';
+        }
+        if (empty($row->BANNERIMAGE)) {
+            return 'Upload banner dulu sebelum pembayaran dicatat.';
+        }
+        $cap = self::positionCapacity((int) $row->POSITIONID);
+        $occ = self::occupants((int) $row->POSITIONID, substr((string) $row->STARTDATE, 0, 10), substr((string) $row->ENDDATE, 0, 10), $id);
+        if ($occ >= $cap) {
+            return 'Slot posisi penuh (' . $occ . '/' . $cap . '), pembayaran tidak bisa dicatat.';
+        }
+
+        DB::update("
+            UPDATE T_AD_CAMPAIGN
+            SET STATUS = 'AKTIF', PAIDAT = GETDATE(),
+                SYSUPDATEUSER = ?, SYSUPDATEDATE = GETDATE()
+            WHERE CAMPAIGNID = ?
+        ", [$actor, $id]);
+
+        return null;
+    }
+
+    // Catat bayar: via layanan pembayaran pusat (invoice ikut terbit).
+    // Butuh metode; form Catat Pembayaran (FRMpayrecord) mengirimkannya.
+    // Aktivasi (banner + kapasitas) tetap lewat activatePaid di dalam service.
     public static function record_payment($param)
     {
         $denied = self::requireAccess($param);
@@ -624,45 +659,37 @@ class Mmcampaign extends Model
         if (empty($id)) {
             return json_encode(['success' => 'false', 'message' => 'CAMPAIGNID tidak ditemukan.']);
         }
+        $methodRaw = trim((string) ($vdata['PAYMETHODID'] ?? ''));
+        if ($methodRaw === '') {
+            return json_encode(['success' => 'false', 'message' => 'Catat pembayaran lewat form Catat Pembayaran (metode wajib).']);
+        }
 
-        return DB::transaction(function () use ($param, $id) {
-            $row = DB::selectOne("
-                SELECT * FROM T_AD_CAMPAIGN WITH (UPDLOCK, ROWLOCK)
-                WHERE CAMPAIGNID = ?
-            ", [$id]);
-            if (!$row) {
-                return json_encode(['success' => 'false', 'message' => 'Data kampanye tidak ditemukan.']);
-            }
-            if (strtoupper(trim((string) $row->STATUS)) !== 'MENUNGGU_BAYAR') {
-                return json_encode(['success' => 'false', 'message' => 'Hanya kampanye MENUNGGU_BAYAR yang bisa dibayar.']);
-            }
-            if (empty($row->BANNERIMAGE)) {
-                return json_encode(['success' => 'false', 'message' => 'Upload banner dulu sebelum pembayaran dicatat.']);
-            }
-            $cap = self::positionCapacity((int) $row->POSITIONID);
-            $occ = self::occupants((int) $row->POSITIONID, substr((string) $row->STARTDATE, 0, 10), substr((string) $row->ENDDATE, 0, 10), (int) $id);
-            if ($occ >= $cap) {
-                return json_encode(['success' => 'false', 'message' => 'Slot posisi penuh (' . $occ . '/' . $cap . '), pembayaran tidak bisa dicatat.']);
-            }
+        $row = DB::selectOne("SELECT CAMPAIGNCODE FROM T_AD_CAMPAIGN WHERE CAMPAIGNID = ?", [$id]);
+        if (!$row) {
+            return json_encode(['success' => 'false', 'message' => 'Data kampanye tidak ditemukan.']);
+        }
 
-            DB::update("
-                UPDATE T_AD_CAMPAIGN
-                SET STATUS = 'AKTIF', PAIDAT = GETDATE(),
-                    SYSUPDATEUSER = ?, SYSUPDATEDATE = GETDATE()
-                WHERE CAMPAIGNID = ?
-            ", [$param['VUSERLOGIN'] ?? '', $id]);
+        $r = PaymentService::record([
+            'REFTYPE' => 'IKLAN', 'REFID' => (int) $id,
+            'PAYMETHODID' => $methodRaw,
+            'PAIDAT' => trim((string) ($vdata['PAIDAT'] ?? '')),
+            'EXTREF' => trim((string) ($vdata['EXTREF'] ?? '')),
+            'SOURCE' => 'MANUAL', 'ACTOR' => $param['VUSERLOGIN'] ?? '',
+        ]);
+        if (!$r['ok']) {
+            return json_encode(['success' => 'false', 'message' => $r['message']]);
+        }
 
-            AuditTrail::log([
-                'action' => 'PAYMENT', 'mcontrol' => 'mcampaign', 'page' => 'Ad Campaign',
-                'table' => 'T_AD_CAMPAIGN', 'dataId' => (string) ($row->CAMPAIGNCODE ?? $id),
-                'summary' => 'IKLAN ' . (string) ($row->CAMPAIGNCODE ?? $id) . ' bayar Rp' . number_format((float) $row->TOTALCOST, 0, ',', '.'),
-                'before' => ['STATUS' => 'MENUNGGU_BAYAR'],
-                'after' => ['STATUS' => 'AKTIF'],
-                'userlogin' => $param['VUSERLOGIN'] ?? '',
-            ]);
+        AuditTrail::log([
+            'action' => 'PAYMENT', 'mcontrol' => 'mcampaign', 'page' => 'Ad Campaign',
+            'table' => 'T_AD_CAMPAIGN', 'dataId' => (string) ($row->CAMPAIGNCODE ?? $id),
+            'summary' => 'IKLAN ' . (string) ($row->CAMPAIGNCODE ?? $id) . ' bayar (' . (string) ($r['payment']['PAYNO'] ?? '') . ')',
+            'before' => ['STATUS' => 'MENUNGGU_BAYAR'],
+            'after' => ['STATUS' => 'AKTIF'],
+            'userlogin' => $param['VUSERLOGIN'] ?? '',
+        ]);
 
-            return json_encode(['success' => 'true', 'message' => 'Pembayaran dicatat, kampanye AKTIF.']);
-        });
+        return json_encode(['success' => 'true', 'message' => 'Pembayaran dicatat, kampanye AKTIF.']);
     }
 
     // Root public/ dihitung dari lokasi file (tanpa helper public_path

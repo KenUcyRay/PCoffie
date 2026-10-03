@@ -16,6 +16,7 @@ import {
   type Column, type Filters, type SortDir,
 } from '@/components/DataTable';
 import FRMmmypurchase from './FRMmmypurchase';
+import FRMpayrecord from '../mpayment/FRMpayrecord';
 import OrderDetailModal from './OrderDetail';
 import { formatIDR, formatTanggal } from './Cmmypurchase';
 import * as proxy from './api';
@@ -327,13 +328,16 @@ const GRIDmmypurchase = forwardRef<GridApi>(function GRIDmmypurchase(_props, ref
             {pay === 'BELUM_BAYAR' && st !== 'DIBATALKAN' && st !== 'DIKEMBALIKAN' && (
               <Btn
                 className="btn-sm" icon="check"
-                onClick={async () => {
-                  if (!await confirmDialog({ message: `Tandai LUNAS ${r.ORDERNO}?` })) return;
-                  try {
-                    const res: any = await proxy.process_pay({ ORDERID: oid });
-                    if (parseBoolean(res?.success)) { toast('Success', res.message, 'ok'); reload(); }
-                    else toast('Error', res?.message, 'err');
-                  } catch (e: any) { toast('Error', e.message, 'err'); }
+                onClick={() => {
+                  if (r.ORDERID == null) return;
+                  open(
+                    <FRMpayrecord
+                      presetType="MERCH"
+                      presetRefId={Number(r.ORDERID)}
+                      presetLabel={`${r.ORDERNO || ''} / ${r.BUYERNAME || ''}`}
+                      onSaved={reload}
+                    />
+                  );
                 }}
               >
                 Tandai Lunas

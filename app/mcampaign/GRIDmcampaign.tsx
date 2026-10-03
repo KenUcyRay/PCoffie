@@ -18,6 +18,7 @@ import {
   type Column, type Filters, type SortDir,
 } from '@/components/DataTable';
 import FRMmcampaign from './FRMmcampaign';
+import FRMpayrecord from '../mpayment/FRMpayrecord';
 import { CAMP_STATUS_LABEL, PERIOD_LABEL, formatAdRp, formatAdTgl } from './Cmcampaign';
 import * as proxy from './api';
 import { bannerUrl } from './api';
@@ -144,7 +145,7 @@ function buildColumns(h: {
 function DetailModal({ campaignid, canWrite, onEdit, onChanged }: {
   campaignid: number; canWrite: boolean; onEdit: () => void; onChanged: () => void;
 }) {
-  const { close } = useModal();
+  const { open, close } = useModal();
   const [detail, setDetail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
@@ -193,22 +194,17 @@ function DetailModal({ campaignid, canWrite, onEdit, onChanged }: {
     }
   };
 
-  // Catat bayar: MENUNGGU_BAYAR -> AKTIF (wajib banner, cek kapasitas).
-  const pay = async () => {
-    if (!await confirmDialog({ message: 'Catat pembayaran? Kampanye menjadi AKTIF bila slot tersedia.', okText: 'Ya, Catat Bayar' })) return;
-    setBusy(true);
-    try {
-      const res: any = await proxy.record_payment({ CAMPAIGNID: campaignid });
-      if (parseBoolean(res?.success)) {
-        toast('Success', res.message, 'ok');
-        onChanged();
-        load();
-      } else toast('Error', res?.message, 'err');
-    } catch (e: any) {
-      toast('Error', e.message, 'err');
-    } finally {
-      setBusy(false);
-    }
+  // Catat bayar via form pusat Finance (invoice ikut terbit).
+  // Kampanye menjadi AKTIF bila slot tersedia (dicek backend).
+  const pay = () => {
+    open(
+      <FRMpayrecord
+        presetType="IKLAN"
+        presetRefId={campaignid}
+        presetLabel={`${detail?.CAMPAIGNCODE || ''} ${detail?.TITLE || ''}`}
+        onSaved={() => { onChanged(); load(); }}
+      />
+    );
   };
 
   const st = String(detail?.STATUS || '').toUpperCase();

@@ -50,7 +50,8 @@ class Mmattendee extends Model
     }
 
     // Samarkan email/phone untuk Audit Log (sebagian, tanpa nilai penuh).
-    private static function maskContact(?string $email, ?string $phone): array
+    // Publik supaya dipakai ulang halaman Finance (Payment History dsb).
+    public static function maskContact(?string $email, ?string $phone): array
     {
         $e = trim((string) $email);
         $p = trim((string) $phone);
@@ -99,6 +100,14 @@ class Mmattendee extends Model
             return [$left, 'Kuota tipe tiket tidak mencukupi (sisa ' . max(0, $left) . ').'];
         }
         return [$left, null];
+    }
+
+    // Penjaga kuota untuk layanan pembayaran (pakai ulang quotaLeft).
+    // Dipanggil dalam transaksi pemanggil. Return pesan error atau null.
+    public static function assertQuota(int $typeid, int $need): ?string
+    {
+        [, $qerr] = self::quotaLeft($typeid, $need);
+        return $qerr;
     }
 
     // Ambil tipe + event-nya, pastikan milik event itu dan aktif.
@@ -473,6 +482,48 @@ class Mmattendee extends Model
             return json_encode(['success' => 'true', 'message' => 'Status pembayaran tidak berubah.']);
         }
 
+        // Masuk LUNAS = catat pembayaran via layanan pusat (invoice + promo).
+        // Butuh metode; form Catat Pembayaran (FRMpayrecord) mengirimkannya.
+        if ($pay === 'LUNAS') {
+            $methodRaw = trim((string) ($vdata['PAYMETHODID'] ?? ''));
+            if ($methodRaw === '') {
+                return json_encode(['success' => 'false', 'message' => 'Catat pembayaran lewat form Catat Pembayaran (metode wajib).']);
+            }
+            $r = PaymentService::record([
+                'REFTYPE' => 'TIKET', 'REFID' => (int) $id,
+                'PAYMETHODID' => $methodRaw,
+                'PAIDAT' => trim((string) ($vdata['PAIDAT'] ?? '')),
+                'EXTREF' => trim((string) ($vdata['EXTREF'] ?? '')),
+                'PROMOCODE' => trim((string) ($vdata['PROMOCODE'] ?? '')),
+                'SOURCE' => 'MANUAL',
+                'ACTOR' => $param['VUSERLOGIN'] ?? '',
+            ]);
+            if (!$r['ok']) {
+                return json_encode(['success' => 'false', 'message' => $r['message']]);
+            }
+            AuditTrail::log([
+                'action' => 'STATUS', 'mcontrol' => 'mattendee', 'page' => 'Attendee List',
+                'table' => 'T_ATTENDEE', 'dataId' => (string) ($row->TICKETCODE ?? $id),
+                'summary' => 'BAYAR ' . (string) ($row->TICKETCODE ?? $id) . ' -> LUNAS (' . (string) ($r['payment']['PAYNO'] ?? '') . ')',
+                'before' => ['PAYSTATUS' => (string) $row->PAYSTATUS],
+                'after' => ['PAYSTATUS' => 'LUNAS'],
+                'userlogin' => $param['VUSERLOGIN'] ?? '',
+            ]);
+            return json_encode(['success' => 'true', 'message' => $r['message']]);
+        }
+
+        // Kembali ke BELUM_BAYAR hanya bila belum ada pembayaran BERHASIL
+        // (kalau ada, batalkan pembayarannya dulu di Payment History).
+        if ($pay === 'BELUM_BAYAR') {
+            $hasPay = DB::selectOne("
+                SELECT PAYMENTID FROM T_PAYMENT
+                WHERE REFTYPE = 'TIKET' AND REFID = ? AND STATUS = 'BERHASIL'
+            ", [$id]);
+            if ($hasPay) {
+                return json_encode(['success' => 'false', 'message' => 'Sudah ada pembayaran BERHASIL, batalkan dulu di Payment History.']);
+            }
+        }
+
         $pdo = DB::getPdo();
         try {
             $pdo->beginTransaction();
@@ -801,9 +852,10 @@ class Mmattendee extends Model
             return json_encode(['success' => 'false', 'message' => 'Maksimal ' . self::IMPORT_LIMIT . ' baris per import.']);
         }
 
-        $pdo = DB::getPdo();
+        // Transaksi via DB:: (bersarang savepoint) agar PaymentService::record
+        // (IMPOR per baris LUNAS) ikut atomic dalam import ini.
         try {
-            $pdo->beginTransaction();
+            DB::beginTransaction();
 
             $typeCache = [];
             $valid = [];
@@ -823,7 +875,7 @@ class Mmattendee extends Model
                 $valid[] = ['n' => $n, 'row' => $r, 'typeid' => $typeCache[trim((string) $r['TYPENAME'])]];
             }
             if (!empty($errors) && !$skip) {
-                $pdo->rollBack();
+                DB::rollBack();
                 return json_encode([
                     'success' => 'false',
                     'message' => count($errors) . ' baris gagal validasi. Perbaiki atau pilih lewati baris gagal.',
@@ -845,7 +897,7 @@ class Mmattendee extends Model
             foreach ($needByType as $tid => $need) {
                 [, $qerr] = self::quotaLeft((int) $tid, $need);
                 if ($qerr !== null) {
-                    $pdo->rollBack();
+                    DB::rollBack();
                     return json_encode(['success' => 'false', 'message' => $qerr]);
                 }
             }
@@ -858,28 +910,41 @@ class Mmattendee extends Model
                     $pay = 'BELUM_BAYAR';
                 }
                 $code = self::genTicketCode();
+                // Selalu BELUM_BAYAR dulu; baris LUNAS dilunaskan lewat
+                // layanan pembayaran (IMPOR) di bawah dalam transaksi sama.
                 DB::insert("
                     INSERT INTO T_ATTENDEE
                         (EVENTID, TICKETTYPEID, NAME, EMAIL, PHONE, TICKETCODE,
                          SOURCE, PAYSTATUS, ATTENDSTATUS, TIKETSTATUS, REGDATE,
                          SYSCREATEUSER, SYSCREATEDATE)
                     VALUES (?, ?, ?, ?, ?, ?,
-                         'IMPORT', ?, 'BELUM_HADIR', 'AKTIF', GETDATE(),
+                         'IMPORT', 'BELUM_BAYAR', 'BELUM_HADIR', 'AKTIF', GETDATE(),
                          ?, GETDATE())
                 ", [
                     (int) $eventid, (int) $v['typeid'],
                     mb_substr(trim((string) $r['NAME']), 0, 100),
                     mb_substr(trim((string) $r['EMAIL']), 0, 100),
                     trim((string) ($r['PHONE'] ?? '')) !== '' ? mb_substr(trim((string) $r['PHONE']), 0, 30) : null,
-                    $code, $pay, $param['VUSERLOGIN'] ?? '',
+                    $code, $param['VUSERLOGIN'] ?? '',
                 ]);
+                $newId = (int) DB::getPdo()->lastInsertId();
+                // LUNAS dari CSV = pembayaran sumber IMPOR (metode kosong).
+                if ($pay === 'LUNAS') {
+                    $pr = PaymentService::record([
+                        'REFTYPE' => 'TIKET', 'REFID' => $newId,
+                        'SOURCE' => 'IMPOR', 'ACTOR' => $param['VUSERLOGIN'] ?? '',
+                    ]);
+                    if (!$pr['ok']) {
+                        throw new \RuntimeException('Baris ' . ($saved + 1) . ': ' . $pr['message']);
+                    }
+                }
                 $saved++;
             }
 
-            $pdo->commit();
+            DB::commit();
         } catch (\Throwable $e) {
             try {
-                $pdo->rollBack();
+                DB::rollBack();
             } catch (\Throwable $ignored) {
                 // abaikan
             }

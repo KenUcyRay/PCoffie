@@ -193,8 +193,18 @@ class Mmeventlist extends Model
             $like = '%' . $q . '%';
             array_push($args, $like, $like, $like);
         }
-        if ($sales !== '') {
-            // dihitung setelah ambil baris; tandai bahwa butuh filter pasca-query
+        if (in_array($sales, ['TERSEDIA', 'HAMPIR_HABIS', 'SOLD_OUT'], true)) {
+            // Difilter di SQL (bukan setelah pagination) supaya TotalRows dan
+            // isi halaman tetap benar. Rumus sama dengan eventFlag() di bawah.
+            $q = 'ISNULL(Q.QUOTA, 0)';
+            $s = 'ISNULL(S.SOLD, 0)';
+            if ($sales === 'SOLD_OUT') {
+                $where .= " AND $q > 0 AND $s >= $q";
+            } elseif ($sales === 'HAMPIR_HABIS') {
+                $where .= " AND $q > 0 AND $s < $q AND $s >= FLOOR($q * 0.9)";
+            } else { // TERSEDIA
+                $where .= " AND $q > 0 AND $s < FLOOR($q * 0.9)";
+            }
         }
 
         $where .= $fWhere;
@@ -247,12 +257,6 @@ class Mmeventlist extends Model
             $sold = (int) ($r->SOLD ?? 0);
             $quota = (int) ($r->QUOTA ?? 0);
             $flag = self::eventFlag($sold, $quota);
-            if ($sales !== '' && $flag !== $sales) {
-                // filter sales pasca-query pada level baris (flag null != selain flag)
-                if (!($sales === 'TERSEDIA' && $flag === null)) {
-                    continue;
-                }
-            }
             $arr = (array) $r;
             $arr['SOLD'] = $sold;
             $arr['QUOTA'] = $quota;

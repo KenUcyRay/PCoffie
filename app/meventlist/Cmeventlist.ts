@@ -1,6 +1,8 @@
 // Controller menu meventlist — padanan controller langit_v2.
 // Menyimpan preferensi & filter di sessionStorage agar bisa dibagikan
 // antaroperator; juga penanda "buka detail event ini" antar-halaman.
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/auth';
 import type { GridApi } from './GRIDmeventlist';
 
 export const mcontrol = 'meventlist';
@@ -107,6 +109,22 @@ export const TYPE_STATUS_LABEL: Record<string, string> = {
   DITUTUP: 'Penjualan ditutup',
   TIDAK_AKTIF: 'Tidak aktif',
 };
+
+// Pintasan detail event hanya tampil bila user punya hak ke menu tujuan.
+export function useEventAccess(): { canEvent: boolean; canAttendees: boolean } {
+  const { checkMenuAccess, menus } = useAuth();
+  const [canEvent, setCanEvent] = useState(false);
+  const [canAttendees, setCanAttendees] = useState(false);
+  useEffect(() => {
+    const get = (mc: string) => (menus || []).find((m: any) => String(m.MCONTROL || '').toLowerCase() === mc);
+    const ev = get('meventdata');
+    const at = get('mattendee');
+    if (ev) checkMenuAccess(String(ev.MCODE)).then(setCanEvent).catch(() => setCanEvent(false));
+    if (at) checkMenuAccess(String(at.MCODE)).then(setCanAttendees).catch(() => setCanAttendees(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return { canEvent, canAttendees };
+}
 
 export function init(): void {
   renderpage();

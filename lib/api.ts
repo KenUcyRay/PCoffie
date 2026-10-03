@@ -4,15 +4,6 @@ import { STORE, apiBase } from './app-config';
 
 export class SessionExpiredError extends Error {}
 
-// Dipanggil setiap kali apiPost melempar SessionExpiredError, supaya aplikasi
-// bisa langsung membuka dialog login ulang tanpa menunggu watcher 30 detik.
-type ExpiredHandler = () => void;
-let expiredHandler: ExpiredHandler | null = null;
-
-export function setSessionExpiredHandler(fn: ExpiredHandler | null): void {
-  expiredHandler = fn;
-}
-
 const TOKEN_KEY = STORE('auth::token');
 
 let memoryToken: string | null = null;
@@ -57,12 +48,12 @@ export async function apiPost<T = any>(path: string, body: Record<string, unknow
   let json: any = {};
   try { json = text ? JSON.parse(text) : {}; } catch { json = {}; }
   // 401 = sesi/token ditolak backend. Pesan asli dari server dipakai supaya
-  // penyebabnya terlihat (mis. "Token is invalid", "Sesi login tidak valid."),
-  // bukan menyamar jadi "session habis" generik.
+  // penyebabnya terlihat (mis. "Sesi login sudah dicabut", "Sesi habis karena
+  // tidak aktif"), bukan menyamar jadi "session habis" generik.
   if (res.status === 401 && !opts?.skipAuthExpiredHandler) {
-    const message = String(json?.message || '').trim() || 'Sesi login habis. Silakan login kembali.';
-    try { expiredHandler?.(); } catch { /* abaikan */ }
-    throw new SessionExpiredError(message);
+    throw new SessionExpiredError(
+      String(json?.message || '').trim() || 'Sesi login habis. Silakan login kembali.',
+    );
   }
   return json as T;
 }

@@ -3,7 +3,7 @@
 
 'use client';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { apiPost, getToken, setToken, setSessionExpiredHandler, SessionExpiredError } from './api';
+import { apiPost, getToken, setToken, SessionExpiredError } from './api';
 
 export type Profile = {
   USERLOGIN?: string; USERNAME?: string; USERGROUP?: string; USEREMAIL?: string; GROUPMODEL?: string;
@@ -128,12 +128,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => { refreshMe(); }, []);
-  // 401 dari halaman mana pun -> langsung buka dialog login ulang (tidak
-  // menunggu giliran watcher 30 detik).
-  useEffect(() => {
-    setSessionExpiredHandler(() => setStatus((prev) => (prev === 'authenticated' ? 'expired' : prev)));
-    return () => setSessionExpiredHandler(null);
-  }, []);
+  // Catatan: 401 dari request halaman biasa TIDAK menaikkan status 'expired'
+  // (halaman menampilkan pesan server apa adanya). Hanya auth/me di watcher
+  // bawah yang membuka dialog login ulang.
   // watcher sesi 30 dtk (pengganti UTIL.Session)
   useEffect(() => {
     const t = setInterval(async () => {

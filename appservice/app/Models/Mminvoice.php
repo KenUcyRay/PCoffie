@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 // Daftar invoice (Finance). Tabel dbo.T_INVOICE. Terbit otomatis oleh layanan
 // pembayaran; TANPA tambah/ubah/hapus. Isi tidak berubah setelah terbit.
 // SEGMENT frontend: home/minvoice/minvoice. Menu CPMENU MCONTROL = minvoice.
-class Minvoice extends Model
+class Mminvoice extends Model
 {
     use ColumnFilter;
 

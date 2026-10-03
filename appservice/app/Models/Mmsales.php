@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 // Laporan penjualan (Finance), hanya baca. Sumber: T_PAYMENT,
 // T_PAYMENT_REFUND, T_PAYOUT, T_WITHDRAWAL — konsisten dengan halaman lain.
 // SEGMENT frontend: home/msales/msales. Menu CPMENU MCONTROL = msales.
-class Msales extends Model
+class Mmsales extends Model
 {
     use ColumnFilter;
 

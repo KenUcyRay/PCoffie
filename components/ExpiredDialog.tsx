@@ -19,11 +19,14 @@ export default function ExpiredDialog() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr('');
+    const u = userlogin.trim();
+    if (!u) { setErr('Masukkan user login.'); return; }
+    if (!userpassword) { setErr('Masukkan password.'); return; }
     setBusy(true);
     const prevUser = String(profile?.USERLOGIN || '').toLowerCase();
-    const nextUser = userlogin.trim().toLowerCase();
+    const nextUser = u.toLowerCase();
     try {
-      await login(userlogin, userpassword);
+      await login(u, userpassword);
       if (prevUser && nextUser && prevUser !== nextUser) window.location.reload();
     } catch (e: any) {
       setErr(e.message || 'Login gagal.');
@@ -47,7 +50,8 @@ export default function ExpiredDialog() {
         <div className="toast-err alert-inline"><Icon name="alertCircle" size={16} /><span>Sesi login sudah habis. Silakan login kembali.</span></div>
         {err && <div className="toast-err alert-inline"><Icon name="alertCircle" size={16} /><span>{err}</span></div>}
         <FrmRow label="User Login">
-          <input className="input" value={userlogin || profile?.USERLOGIN || ''} onChange={(e) => setUserlogin(e.target.value)} autoFocus autoComplete="username" />
+          <input className="input" value={userlogin} placeholder={profile?.USERLOGIN || 'Masukkan akun'}
+            onChange={(e) => setUserlogin(e.target.value)} autoFocus autoComplete="username" />
         </FrmRow>
         <FrmRow label="Password">
           <input className="input" type="password" value={userpassword} onChange={(e) => setUserpassword(e.target.value)} autoComplete="current-password" />

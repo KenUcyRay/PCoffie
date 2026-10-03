@@ -14,8 +14,8 @@ class Mcpcategory extends Model
 
     const TABLE = 'T_CATEGORY';
 
-    // Nama tabel event (belum ada) untuk cek pemakaian kategori.
-    const EVENT_TABLE = 'CP_EVENT';
+    // Nama tabel event untuk cek pemakaian kategori.
+    const EVENT_TABLE = 'T_EVENT';
 
     // Kolom yang boleh di-sort (whitelist) => kolom SQL. Selain ini -> default.
     private static function sortMap(): array
@@ -252,8 +252,7 @@ class Mcpcategory extends Model
         return json_encode(['success' => 'true', 'message' => $msg]);
     }
 
-    // true bila kategori sedang dipakai event. Tabel event belum ada -> dianggap
-    // tidak dipakai (hapus jalan). Begitu tabel CP_EVENT dibuat, cek ini otomatis aktif.
+    // true bila kategori sedang dipakai event.
     private static function isUsedByEvent(string $catcode): bool
     {
         $tbl = DB::selectOne("
@@ -273,7 +272,7 @@ class Mcpcategory extends Model
             return false;
         }
         $col = $cols[0]->COLUMN_NAME;
-        $hit = DB::select("SELECT 1 AS X FROM CP_EVENT WHERE [{$col}] = ?", [$catcode]);
+        $hit = DB::select("SELECT 1 AS X FROM T_EVENT WHERE [{$col}] = ?", [$catcode]);
         return !empty($hit);
     }
 

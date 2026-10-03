@@ -1,0 +1,43 @@
+-- Riwayat status pesanan merchandise (My Purchase / Seller Order).
+-- Aturan: tabel baru pakai awalan T_. Satu baris = satu perubahan status.
+-- Hanya-tambah seperti T_AUDIT_LOG: tidak bisa diubah/dihapus lewat aplikasi,
+-- dilindungi trigger di level database dengan cara yang sama.
+-- Idempoten: CREATE/trigger/index hanya bila belum ada. Jalankan per pernyataan
+-- (pisahkan tiap GO) karena CREATE TRIGGER harus batch tersendiri.
+-- ROLLBACK (hanya development): DROP TRIGGER ...; DROP TABLE ... (lihat bawah).
+
+IF OBJECT_ID('dbo.T_MERCH_ORDER_HISTORY', 'U') IS NULL
+CREATE TABLE dbo.T_MERCH_ORDER_HISTORY (
+    HISTORYID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    ORDERID INT NOT NULL,
+    OLDSTATUS VARCHAR(12) NULL,
+    NEWSTATUS VARCHAR(12) NOT NULL,
+    NOTE VARCHAR(200) NULL,
+    ACTOR VARCHAR(25) NULL,
+    ACTTIME DATETIME2 NOT NULL DEFAULT GETDATE()
+);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_T_MERCH_ORDER_HISTORY_ORDER' AND object_id = OBJECT_ID('dbo.T_MERCH_ORDER_HISTORY'))
+CREATE INDEX IX_T_MERCH_ORDER_HISTORY_ORDER ON dbo.T_MERCH_ORDER_HISTORY (ORDERID, ACTTIME DESC);
+GO
+
+-- Tolak UPDATE: tabel tambah-saja.
+IF OBJECT_ID('dbo.TRG_T_MERCH_ORDER_HISTORY_NOUPDATE', 'TR') IS NULL
+EXEC('CREATE TRIGGER dbo.TRG_T_MERCH_ORDER_HISTORY_NOUPDATE ON dbo.T_MERCH_ORDER_HISTORY INSTEAD OF UPDATE AS BEGIN RAISERROR(''T_MERCH_ORDER_HISTORY tidak boleh diubah.'', 16, 1); END');
+GO
+
+-- Tolak DELETE: tabel tambah-saja.
+IF OBJECT_ID('dbo.TRG_T_MERCH_ORDER_HISTORY_NODELETE', 'TR') IS NULL
+EXEC('CREATE TRIGGER dbo.TRG_T_MERCH_ORDER_HISTORY_NODELETE ON dbo.T_MERCH_ORDER_HISTORY INSTEAD OF DELETE AS BEGIN RAISERROR(''T_MERCH_ORDER_HISTORY tidak boleh dihapus.'', 16, 1); END');
+GO
+
+-- Verifikasi:
+-- SELECT ORDERID, OLDSTATUS, NEWSTATUS FROM dbo.T_MERCH_ORDER_HISTORY ORDER BY HISTORYID DESC;
+-- UPDATE dbo.T_MERCH_ORDER_HISTORY SET NOTE='x' WHERE 1=0;  -- harus error
+-- DELETE FROM dbo.T_MERCH_ORDER_HISTORY WHERE 1=0;          -- harus error
+
+-- ROLLBACK (hanya development):
+-- DROP TRIGGER IF EXISTS dbo.TRG_T_MERCH_ORDER_HISTORY_NOUPDATE;
+-- DROP TRIGGER IF EXISTS dbo.TRG_T_MERCH_ORDER_HISTORY_NODELETE;
+-- DROP TABLE IF EXISTS dbo.T_MERCH_ORDER_HISTORY;

@@ -14,8 +14,8 @@ class Mcpcity extends Model
 
     const TABLE = 'T_CITY';
 
-    // Nama tabel event (belum ada) untuk cek pemakaian kota.
-    const EVENT_TABLE = 'CP_EVENT';
+    // Nama tabel event untuk cek pemakaian kota.
+    const EVENT_TABLE = 'T_EVENT';
 
     // Zona waktu yang diizinkan.
     const TIMEZONES = ['WIB', 'WITA', 'WIT'];
@@ -250,8 +250,7 @@ class Mcpcity extends Model
         return json_encode(['success' => 'true', 'message' => $msg]);
     }
 
-    // true bila kota sedang dipakai event. Tabel event belum ada -> dianggap
-    // tidak dipakai (hapus jalan). Begitu tabel CP_EVENT dibuat, cek ini otomatis aktif.
+    // true bila kota sedang dipakai event.
     private static function isUsedByEvent(string $citycode): bool
     {
         $tbl = DB::selectOne("
@@ -271,7 +270,7 @@ class Mcpcity extends Model
             return false;
         }
         $col = $cols[0]->COLUMN_NAME;
-        $hit = DB::select("SELECT 1 AS X FROM CP_EVENT WHERE [{$col}] = ?", [$citycode]);
+        $hit = DB::select("SELECT 1 AS X FROM T_EVENT WHERE [{$col}] = ?", [$citycode]);
         return !empty($hit);
     }
 

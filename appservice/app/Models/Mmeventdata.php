@@ -53,6 +53,27 @@ class Mmeventdata extends Model
         return null;
     }
 
+    // Endpoint pembantu (dropdown event) dipakai lebih dari satu menu, jadi
+    // cukup salah satu menu pemanggil yang dimiliki group user. Dipakai hanya
+    // oleh read_dropdown(); endpoint lain tetap khusus menu Event Data.
+    private static function requireAccessAny($param, array $mcodes): ?string
+    {
+        $user = $param['VUSERLOGIN'] ?? '';
+        if (trim((string) $user) === '') {
+            return 'Data tidak lengkap.';
+        }
+        foreach ($mcodes as $mcode) {
+            $res = json_decode(Mhak_akses::menu_akses([
+                'VUSERLOGIN' => $user,
+                'vdata' => json_encode(['mcode' => $mcode]),
+            ]), true) ?: [];
+            if (strtolower(trim((string) ($res['success'] ?? 'false'))) === 'true') {
+                return null;
+            }
+        }
+        return 'Anda tidak memiliki hak akses untuk membuka menu ini.';
+    }
+
     // ENDED otomatis (lazy): event DRAFT/PUBLISHED yang ENDAT-nya terlewat
     // menjadi ENDED saat data diakses. Tanpa scheduler.
     public static function applyEndedLazy(): void
@@ -301,7 +322,9 @@ class Mmeventdata extends Model
     // open_only=YES (default): hanya yang belum selesai (DRAFT/PUBLISHED).
     public static function read_dropdown($param)
     {
-        $denied = self::requireAccess($param);
+        // Hanya untuk dropdown: boleh bagi user yang punya salah satu dari menu
+        // Event Data (30010002) atau News Data (60020002) - dipakai form News Data.
+        $denied = self::requireAccessAny($param, [self::MCODE, 60020002]);
         if ($denied !== null) {
             return json_encode(['success' => 'false', 'message' => $denied]);
         }

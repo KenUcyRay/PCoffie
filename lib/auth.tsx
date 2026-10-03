@@ -3,7 +3,7 @@
 
 'use client';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { apiPost, getToken, setToken, SessionExpiredError } from './api';
+import { apiPost, getToken, setToken, setSessionExpiredHandler, SessionExpiredError } from './api';
 
 export type Profile = {
   USERLOGIN?: string; USERNAME?: string; USERGROUP?: string; USEREMAIL?: string; GROUPMODEL?: string;
@@ -28,6 +28,11 @@ type AuthState = {
   profile: Profile | null;
   menus: MenuRow[];
   layoutMode: LayoutMode;
+  // Bertambah setiap login berhasil. Dipakai sebagai React key agar isi
+  // halaman (termasuk pesan error lama) di-mount ulang setelah login ulang,
+  // sehingga halaman tidak lagi menampilkan pesan "sesi habis" padahal
+  // sesi baru sudah aktif.
+  sessionEpoch: number;
   login: (userlogin: string, userpassword: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshMe: () => Promise<boolean>;
@@ -48,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<AuthState['status']>('loading');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [menus, setMenus] = useState<MenuRow[]>([]);
+  const [sessionEpoch, setSessionEpoch] = useState(0);
 
   const applyMeResult = (me: any): boolean => {
     const ok = me && (me.success === true || String(me.success).toLowerCase() === 'true');
@@ -85,6 +91,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const me: any = await apiPost('auth/me', { method: 'me' }, { skipAuthExpiredHandler: true });
     if (!applyMeResult(me)) throw new Error(me.message || 'Sesi login tidak valid.');
     setStatus('authenticated');
+    // Sesi baru = konten lama (state error "sesi habis" dll) dibuang.
+    setSessionEpoch((n) => n + 1);
   };
 
   const logout = async () => {
@@ -120,6 +128,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => { refreshMe(); }, []);
+  // 401 dari halaman mana pun -> langsung buka dialog login ulang (tidak
+  // menunggu giliran watcher 30 detik).
+  useEffect(() => {
+    setSessionExpiredHandler(() => setStatus((prev) => (prev === 'authenticated' ? 'expired' : prev)));
+    return () => setSessionExpiredHandler(null);
+  }, []);
   // watcher sesi 30 dtk (pengganti UTIL.Session)
   useEffect(() => {
     const t = setInterval(async () => {
@@ -135,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const layoutMode = normalizeLayoutMode(profile?.GROUPMODEL);
 
-  return <Ctx.Provider value={{ status, profile, menus, layoutMode, login, logout, refreshMe, changeLayout, checkMenuAccess }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ status, profile, menus, layoutMode, sessionEpoch, login, logout, refreshMe, changeLayout, checkMenuAccess }}>{children}</Ctx.Provider>;
 }
 
 export function useAuth(): AuthState {

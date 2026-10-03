@@ -149,7 +149,7 @@ function HomeView() {
 }
 
 export default function Page() {
-  const { status } = useAuth();
+  const { status, sessionEpoch } = useAuth();
   const { current, navigate, ready } = useRoute();
 
   // Normalisasi rute terhadap status auth:
@@ -169,7 +169,10 @@ export default function Page() {
   if (status !== 'authenticated' && status !== 'expired') return <Loading />;
   // transien: effect di atas sedang mengarahkan /login -> /
   if (current === '/login') return <Loading />;
-  if (current === '/') return <HomeView />;
+  // key = sessionEpoch: setiap login berhasil (termasuk login ulang setelah
+  // sesi habis) me-mount ulang isi halaman, sehingga pesan error lama
+  // ("Sesi login habis...") tidak ikut tertinggal di halaman yang sama.
+  if (current === '/') return <HomeView key={`home-${sessionEpoch}`} />;
 
-  return <MenuHost mcontrol={current.replace(/^\//, '')} />;
+  return <MenuHost key={`${current}-${sessionEpoch}`} mcontrol={current.replace(/^\//, '')} />;
 }

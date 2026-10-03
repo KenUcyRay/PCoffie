@@ -65,9 +65,21 @@ class JWTMiddleware
 
             $sess = \App\Models\Mcpsession::assertActive($sid);
             if (!$sess['ok']) {
+                // Pesan sesuai sebab penolakan, supaya pengguna (dan log)
+                // tahu ini sesi kedaluwarsa, dicabut, atau tidak ditemukan -
+                // bukan sekadar "token tidak valid".
+                $msg = [
+                    'NOSESSION' => 'Sesi login tidak ditemukan. Silakan login kembali.',
+                    'EXPIRED' => 'Masa berlaku sesi habis. Silakan login kembali.',
+                    'IDLE' => 'Sesi habis karena tidak aktif. Silakan login kembali.',
+                    'DICABUT' => 'Sesi login sudah dicabut. Silakan login kembali.',
+                    'KEDALUWARSA' => 'Sesi login sudah kedaluwarsa. Silakan login kembali.',
+                    'LOGOUT' => 'Sesi login sudah berakhir. Silakan login kembali.',
+                    'ERROR' => 'Sesi login tidak dapat diperiksa. Silakan login kembali.',
+                ];
                 return response()->json([
                     'success' => 'false',
-                    'message' => 'Token is invalid'
+                    'message' => $msg[(string) ($sess['code'] ?? '')] ?? 'Token is invalid',
                 ], 401);
             }
         } catch (TokenExpiredException $e) {

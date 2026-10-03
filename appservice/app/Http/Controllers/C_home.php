@@ -57,10 +57,26 @@ class C_home extends Controller
             try {
                 $mePayload = JWTAuth::parseToken()->getPayload()->toArray();
                 $meSid = trim((string) ($mePayload['jti'] ?? ''));
-                if ($meSid === '' || !\App\Models\Mcpsession::assertActive($meSid)['ok']) {
+                if ($meSid === '') {
                     return response()->json([
                         'success' => 'false',
-                        'message' => 'Sesi login tidak valid.'
+                        'message' => 'Token tidak valid untuk sesi.'
+                    ], 401);
+                }
+                $meSess = \App\Models\Mcpsession::assertActive($meSid);
+                if (!$meSess['ok']) {
+                    $msg = [
+                        'NOSESSION' => 'Sesi login tidak ditemukan. Silakan login kembali.',
+                        'EXPIRED' => 'Masa berlaku sesi habis. Silakan login kembali.',
+                        'IDLE' => 'Sesi habis karena tidak aktif. Silakan login kembali.',
+                        'DICABUT' => 'Sesi login sudah dicabut. Silakan login kembali.',
+                        'KEDALUWARSA' => 'Sesi login sudah kedaluwarsa. Silakan login kembali.',
+                        'LOGOUT' => 'Sesi login sudah berakhir. Silakan login kembali.',
+                        'ERROR' => 'Sesi login tidak dapat diperiksa. Silakan login kembali.',
+                    ];
+                    return response()->json([
+                        'success' => 'false',
+                        'message' => $msg[(string) ($meSess['code'] ?? '')] ?? 'Sesi login tidak valid.'
                     ], 401);
                 }
             } catch (\Exception $e) {

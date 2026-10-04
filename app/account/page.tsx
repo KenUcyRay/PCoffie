@@ -1,20 +1,27 @@
 'use client';
 
-// Akun pembeli: data diri, ganti password, sesi aktif milik sendiri, inbox,
-// riwayat pembayaran/invoice/refund, dan logout.
+// =============================================================================
+// AKUN PEMBELI
+// -----------------------------------------------------------------------------
+// Data diri, ganti password, sesi aktif milik sendiri, inbox, riwayat
+// pembayaran/invoice/refund, dan logout.
 //
-// Menu ini tidak punya kunci menu di CPMENU (module Account belum dibuat),
-// jadi tidak perlu CPMENUACCESS. Backend tetap memverifikasi kepemilikan data
-// dari token.
+// Endpoint, validasi, dan alur TIDAK berubah. Yang diperbaiki: pada ponsel
+// dua form ini tadinya tampil berdampingan (pf-grid-2) sehingga incredibly
+// sempit; sekarang satu kolom di bawah 640px dan memakai komponen form
+// seragam (label di atas, hint di bawah, tombol status memuat).
+// =============================================================================
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { BASE_PATH } from '@/lib/app-config';
 import { isOk, portalPost } from '@/lib/portal/api';
 import { rp, tanggalJam } from '@/lib/portal/format';
 import PortalShell from '@/components/portal/PortalShell';
-import { PfBadge, PfEmpty, PfError, PfLoading } from '@/components/portal/ui';
+import PfIcon from '@/components/portal/PfIcon';
+import {
+  PfAlert, PfBadge, PfButton, PfEmpty, PfError, PfField, PfLoading,
+} from '@/components/portal/ui';
 
 const TABS = [
   { k: 'profil', l: 'Profil' },
@@ -37,6 +44,9 @@ export default function AccountPage() {
   const [pw, setPw] = useState({ oldpassword: '', newpassword: '', confirm: '' });
   const [busy, setBusy] = useState(false);
   const [lists, setLists] = useState<Record<string, any[]>>({});
+
+  // Pesan validasi di dekat input yang bermasalah (bukan alert di atas form).
+  const [fieldErr, setFieldErr] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -65,6 +75,17 @@ export default function AccountPage() {
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Validasi ringan di sisi tampilan; fokus pindah ke input pertama yang salah.
+    const bad: Record<string, string> = {};
+    if (!form.username.trim()) bad.username = 'Nama wajib diisi.';
+    if (!form.useremail.trim()) bad.useremail = 'Email wajib diisi.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.useremail.trim())) bad.useremail = 'Format email belum benar.';
+    setFieldErr(bad);
+    if (Object.keys(bad).length) {
+      const first = document.getElementById(`pf-${Object.keys(bad)[0]}`);
+      first?.focus();
+      return;
+    }
     setBusy(true); setMsg(''); setError('');
     const r: any = await portalPost('portal/profile', { action: 'update', ...form });
     setBusy(false);
@@ -75,7 +96,13 @@ export default function AccountPage() {
 
   const savePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pw.newpassword !== pw.confirm) { setError('Konfirmasi password tidak sama.'); return; }
+    const bad: Record<string, string> = {};
+    if (pw.newpassword !== pw.confirm) bad.confirm = 'Konfirmasi password tidak sama.';
+    setFieldErr(bad);
+    if (Object.keys(bad).length) {
+      document.getElementById(`pf-${Object.keys(bad)[0]}`)?.focus();
+      return;
+    }
     setBusy(true); setMsg(''); setError('');
     const r: any = await portalPost('portal/profile', { action: 'password', oldpassword: pw.oldpassword, newpassword: pw.newpassword });
     setBusy(false);
@@ -95,128 +122,201 @@ export default function AccountPage() {
 
   return (
     <PortalShell>
-      <div className="pf-col" style={{ gap: 14 }}>
-        <div className="pf-row-between">
-          <h1 style={{ margin: 0, fontSize: 21, fontWeight: 850, letterSpacing: '-.02em' }}>Akun saya</h1>
+      <div className="pf-col pf-gap-md">
+        <div className="pf-row-between pf-wrapx pf-gap-sm">
+          <h1 className="pf-h1">Akun saya</h1>
           <div className="pf-row pf-gap-sm">
-            <Link href={`/console/`} className="pf-btn pf-btn-ghost pf-btn-sm">Console</Link>
-            <button className="pf-btn pf-btn-sm" type="button" onClick={logout}>Keluar</button>
+            <Link href={`/console/`} className="pf-btn pf-btn-ghost pf-btn-sm">
+              <PfIcon name="shield" size={16} /> Console
+            </Link>
+            <PfButton size="sm" variant="ghost" icon="logout" onClick={logout}>Keluar</PfButton>
           </div>
         </div>
 
-        <div className="pf-tabs">
-          {TABS.map((t) => <button key={t.k} type="button" className={`pf-tab-pill${tab === t.k ? ' is-active' : ''}`} onClick={() => setTab(t.k)}>{t.l}</button>)}
+        <div className="pf-tabs" role="tablist" aria-label="Bagian akun">
+          {TABS.map((t) => (
+            <button key={t.k} type="button" role="tab" aria-selected={tab === t.k}
+              className={`pf-tab-pill${tab === t.k ? ' is-active' : ''}`} onClick={() => setTab(t.k)}>
+              {t.l}
+            </button>
+          ))}
         </div>
 
-        {msg ? <div className="pf-alert pf-alert-ok">{msg}</div> : null}
+        {msg ? <PfAlert tone="ok">{msg}</PfAlert> : null}
         {error ? <PfError message={error} onRetry={load} /> : null}
         {loading ? <PfLoading /> : null}
 
-        {!loading && tab === 'profil' && data && (
-          <div className="pf-grid pf-grid-2" style={{ alignItems: 'start' }}>
-            <form className="pf-card" onSubmit={saveProfile}>
-              <div className="pf-card-head"><span className="pf-card-title">Data diri</span><PfBadge>{data.profile?.USERGROUP}</PfBadge></div>
-              <div className="pf-card-pad pf-col" style={{ gap: 12 }}>
-                <span className="pf-dim">Username: <strong>{data.profile?.USERLOGIN}</strong></span>
-                <label className="pf-field"><span className="pf-label">Nama</span>
-                  <input className="pf-input" value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} required /></label>
-                <label className="pf-field"><span className="pf-label">Email</span>
-                  <input className="pf-input" type="email" value={form.useremail} onChange={(e) => setForm((f) => ({ ...f, useremail: e.target.value }))} required /></label>
-                <label className="pf-field"><span className="pf-label">Nomor HP</span>
-                  <input className="pf-input" value={form.userphone} onChange={(e) => setForm((f) => ({ ...f, userphone: e.target.value }))} /></label>
-                <button className="pf-btn" type="submit" disabled={busy}>Simpan profil</button>
+        {/* ------------------------------------------------------------ PROFIL */}
+        {!loading && tab === 'profil' && data ? (
+          <div className="pf-col pf-gap-md">
+            <form className="pf-card" onSubmit={saveProfile} noValidate>
+              <div className="pf-card-head">
+                <span className="pf-card-title"><PfIcon name="user" size={20} /> Data diri</span>
+                <PfBadge tone="accent">{data.profile?.USERGROUP}</PfBadge>
+              </div>
+              <div className="pf-card-pad pf-col pf-gap-md">
+                <div className="pf-panel">
+                  <span className="pf-tiny">Username</span>
+                  <div className="pf-row pf-gap-sm">
+                    <PfIcon name="user" size={20} />
+                    <strong>{data.profile?.USERLOGIN}</strong>
+                  </div>
+                </div>
+
+                <PfField label="Nama" required htmlFor="pf-username" error={fieldErr.username}>
+                  <input id="pf-username" className="pf-input" value={form.username}
+                    onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} required />
+                </PfField>
+
+                <PfField label="Email" required htmlFor="pf-useremail" error={fieldErr.useremail}
+                  hint="Notifikasi pesanan dan tiket dikirim ke email ini.">
+                  <input id="pf-useremail" className="pf-input" type="email" inputMode="email"
+                    value={form.useremail}
+                    onChange={(e) => setForm((f) => ({ ...f, useremail: e.target.value }))} required />
+                </PfField>
+
+                <PfField label="Nomor HP" htmlFor="pf-userphone" hint="Dipakai untuk pemberitahuan lewat pesan singkat.">
+                  <input id="pf-userphone" className="pf-input" type="tel" inputMode="tel"
+                    placeholder="08xxxxxxxxxx" value={form.userphone}
+                    onChange={(e) => setForm((f) => ({ ...f, userphone: e.target.value }))} />
+                </PfField>
+
+                <PfButton type="submit" icon="check" busy={busy} busyLabel="Menyimpan…">Simpan profil</PfButton>
               </div>
             </form>
 
-            <form className="pf-card" onSubmit={savePassword}>
-              <div className="pf-card-head"><span className="pf-card-title">Ganti password</span></div>
-              <div className="pf-card-pad pf-col" style={{ gap: 12 }}>
-                <label className="pf-field"><span className="pf-label">Password lama</span>
-                  <input className="pf-input" type="password" value={pw.oldpassword} onChange={(e) => setPw((s) => ({ ...s, oldpassword: e.target.value }))} required /></label>
-                <label className="pf-field"><span className="pf-label">Password baru</span>
-                  <input className="pf-input" type="password" value={pw.newpassword} onChange={(e) => setPw((s) => ({ ...s, newpassword: e.target.value }))} required />
-                  <span className="pf-tiny">Ikuti aturan Security Setting yang sama dengan Console.</span></label>
-                <label className="pf-field"><span className="pf-label">Ulangi password baru</span>
-                  <input className="pf-input" type="password" value={pw.confirm} onChange={(e) => setPw((s) => ({ ...s, confirm: e.target.value }))} required /></label>
-                <button className="pf-btn" type="submit" disabled={busy}>Ganti password</button>
+            <form className="pf-card" onSubmit={savePassword} noValidate>
+              <div className="pf-card-head">
+                <span className="pf-card-title"><PfIcon name="lock" size={20} /> Ganti password</span>
+              </div>
+              <div className="pf-card-pad pf-col pf-gap-md">
+                <PfField label="Password lama" required htmlFor="pf-oldpassword">
+                  <input id="pf-oldpassword" className="pf-input" type="password" autoComplete="current-password"
+                    value={pw.oldpassword} onChange={(e) => setPw((s) => ({ ...s, oldpassword: e.target.value }))} required />
+                </PfField>
+
+                <PfField label="Password baru" required htmlFor="pf-newpassword"
+                  hint="Ikuti aturan Security Setting yang sama dengan Console.">
+                  <input id="pf-newpassword" className="pf-input" type="password" autoComplete="new-password"
+                    value={pw.newpassword} onChange={(e) => setPw((s) => ({ ...s, newpassword: e.target.value }))} required />
+                </PfField>
+
+                <PfField label="Ulangi password baru" required htmlFor="pf-confirm" error={fieldErr.confirm}>
+                  <input id="pf-confirm" className="pf-input" type="password" autoComplete="new-password"
+                    value={pw.confirm} onChange={(e) => setPw((s) => ({ ...s, confirm: e.target.value }))} required />
+                </PfField>
+
+                <PfButton type="submit" icon="shield" busy={busy} busyLabel="Menyimpan…">Ganti password</PfButton>
               </div>
             </form>
           </div>
-        )}
+        ) : null}
 
-        {!loading && tab === 'sesi' && data && (
+        {/* -------------------------------------------------------------- SESI */}
+        {!loading && tab === 'sesi' && data ? (
           <div className="pf-card">
-            <div className="pf-card-head"><span className="pf-card-title">Sesi aktif</span></div>
-            <div className="pf-card-pad pf-col" style={{ gap: 8 }}>
-              {(data.sessions || []).length === 0 ? <PfEmpty title="Tidak ada sesi lain" /> : null}
-              {(data.sessions || []).map((s: any, i: number) => (
-                <div key={i} className="pf-row-between" style={{ fontSize: 13.5 }}>
-                  <div className="pf-col" style={{ gap: 2 }}>
-                    <span>{s.BROWSER || 'Browser'} · {s.DEVICE || '-'}</span>
-                    <span className="pf-tiny">{s.USERIP || '-'} · masuk {tanggalJam(s.LOGINTIME)}</span>
+            <div className="pf-card-head">
+              <span className="pf-card-title"><PfIcon name="shield" size={20} /> Sesi aktif</span>
+            </div>
+            <div className="pf-card-pad pf-col pf-gap-sm">
+              {(data.sessions || []).length === 0
+                ? <PfEmpty icon="shield" title="Tidak ada sesi lain" />
+                : (data.sessions || []).map((s: any, i: number) => (
+                  <div key={i} className="pf-rowcard">
+                    <div className="pf-rowcard-head">
+                      <div className="pf-col pf-gap-xs" style={{ minWidth: 0 }}>
+                        <span className="pf-rowcard-title">{s.BROWSER || 'Browser'} · {s.DEVICE || '-'}</span>
+                        <span className="pf-tiny">{s.USERIP || '-'} · masuk {tanggalJam(s.LOGINTIME)}</span>
+                      </div>
+                      <PfBadge tone={s.STATUS === 'AKTIF' ? 'ok' : undefined}>{s.STATUS}</PfBadge>
+                    </div>
                   </div>
-                  <PfBadge tone={s.STATUS === 'AKTIF' ? 'ok' : undefined}>{s.STATUS}</PfBadge>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
-        )}
+        ) : null}
 
-        {!loading && tab === 'inbox' && data && (
-          <div className="pf-col" style={{ gap: 10 }}>
-            {(data.inbox || []).length === 0 ? <PfEmpty title="Belum ada pesan" /> : null}
-            {(data.inbox || []).map((m: any) => (
-              <div key={m.MSGID} className="pf-card">
-                <div className="pf-card-pad pf-col" style={{ gap: 6 }}>
-                  <div className="pf-row-between">
-                    <strong>{m.TITLE}</strong>
-                    <PfBadge tone={m.PRIORITY === 'URGENT' ? 'danger' : undefined}>{m.SENTAT ? tanggalJam(m.SENTAT) : ''}</PfBadge>
+        {/* ------------------------------------------------------------- INBOX */}
+        {!loading && tab === 'inbox' && data ? (
+          <div className="pf-col pf-gap-sm">
+            {(data.inbox || []).length === 0
+              ? <div className="pf-card"><PfEmpty icon="mail" title="Belum ada pesan" /></div>
+              : (data.inbox || []).map((m: any) => (
+                <article key={m.MSGID} className="pf-rowcard">
+                  <div className="pf-rowcard-head">
+                    <span className="pf-rowcard-title">{m.TITLE}</span>
+                    <PfBadge tone={m.PRIORITY === 'URGENT' ? 'danger' : undefined}>
+                      {m.SENTAT ? tanggalJam(m.SENTAT) : ''}
+                    </PfBadge>
                   </div>
-                  <span className="pf-dim">{m.BODY}</span>
+                  <p className="pf-art-text">{m.BODY}</p>
+                </article>
+              ))}
+          </div>
+        ) : null}
+
+        {/* -------------------------------------------------------- PEMBAYARAN */}
+        {!loading && tab === 'bayar' ? (
+          <div className="pf-col pf-gap-sm">
+            {(lists.bayar || []).length === 0
+              ? <div className="pf-card"><PfEmpty icon="card" title="Belum ada pembayaran" /></div>
+              : (lists.bayar || []).map((p: any) => (
+                <div key={p.PAYMENTID} className="pf-rowcard">
+                  <div className="pf-rowcard-head">
+                    <span className="pf-ticket-code">{p.PAYNO}</span>
+                    <PfBadge tone={String(p.STATUS).toUpperCase() === 'LUNAS' ? 'ok' : 'warn'}>{p.STATUS}</PfBadge>
+                  </div>
+                  <div className="pf-rowcard-foot">
+                    <span className="pf-tiny">Pembayaran</span>
+                    <span className="pf-price">{rp(p.TOTALPAID)}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
-        )}
+        ) : null}
 
-        {!loading && tab === 'bayar' && (
-          <div className="pf-col" style={{ gap: 8 }}>
-            {(lists.bayar || []).length === 0 ? <PfEmpty title="Belum ada pembayaran" /> : null}
-            {(lists.bayar || []).map((p: any) => (
-              <div key={p.PAYMENTID} className="pf-card"><div className="pf-card-pad pf-row-between">
-                <span className="pf-ticket-code">{p.PAYNO}</span>
-                <span className="pf-row pf-gap-sm"><PfBadge>{p.STATUS}</PfBadge><span className="pf-price">{rp(p.TOTALPAID)}</span></span>
-              </div></div>
-            ))}
-          </div>
-        )}
-
-        {!loading && tab === 'invoice' && (
-          <div className="pf-col" style={{ gap: 8 }}>
-            {(lists.invoice || []).length === 0 ? <PfEmpty title="Belum ada invoice" /> : null}
-            {(lists.invoice || []).map((p: any) => (
-              <div key={p.INVOICEID} className="pf-card"><div className="pf-card-pad pf-row-between">
-                <span className="pf-ticket-code">{p.INVNO}</span>
-                <span className="pf-price">{rp(p.TOTAL)}</span>
-              </div></div>
-            ))}
-          </div>
-        )}
-
-        {!loading && tab === 'refund' && (
-          <div className="pf-col" style={{ gap: 8 }}>
-            {(lists.refund || []).length === 0 ? <PfEmpty title="Belum ada pengajuan refund" /> : null}
-            {(lists.refund || []).map((p: any) => (
-              <div key={p.REFUNDID} className="pf-card"><div className="pf-card-pad pf-row-between">
-                <div className="pf-col" style={{ gap: 2 }}>
-                  <span className="pf-ticket-code">{p.REFUNDNO}</span>
-                  <span className="pf-tiny">{p.EVENTTITLE}</span>
+        {/* ----------------------------------------------------------- INVOICE */}
+        {!loading && tab === 'invoice' ? (
+          <div className="pf-col pf-gap-sm">
+            {(lists.invoice || []).length === 0
+              ? <div className="pf-card"><PfEmpty icon="receipt" title="Belum ada invoice" /></div>
+              : (lists.invoice || []).map((p: any) => (
+                <div key={p.INVOICEID} className="pf-rowcard">
+                  <div className="pf-rowcard-head">
+                    <span className="pf-ticket-code">{p.INVNO}</span>
+                    <PfBadge tone="info">Invoice</PfBadge>
+                  </div>
+                  <div className="pf-rowcard-foot">
+                    <span className="pf-tiny">Total</span>
+                    <span className="pf-price">{rp(p.TOTAL)}</span>
+                  </div>
                 </div>
-                <span className="pf-row pf-gap-sm"><PfBadge tone="warn">{p.STATUS}</PfBadge><span className="pf-price">{rp(p.NOMINAL)}</span></span>
-              </div></div>
-            ))}
+              ))}
           </div>
-        )}
+        ) : null}
+
+        {/* ------------------------------------------------------------ REFUND */}
+        {!loading && tab === 'refund' ? (
+          <div className="pf-col pf-gap-sm">
+            {(lists.refund || []).length === 0
+              ? <div className="pf-card"><PfEmpty icon="refresh" title="Belum ada pengajuan refund" /></div>
+              : (lists.refund || []).map((p: any) => (
+                <div key={p.REFUNDID} className="pf-rowcard">
+                  <div className="pf-rowcard-head">
+                    <div className="pf-col pf-gap-xs" style={{ minWidth: 0 }}>
+                      <span className="pf-ticket-code">{p.REFUNDNO}</span>
+                      <span className="pf-tiny pf-clamp-1">{p.EVENTTITLE}</span>
+                    </div>
+                    <PfBadge tone="warn">{p.STATUS}</PfBadge>
+                  </div>
+                  <div className="pf-rowcard-foot">
+                    <span className="pf-tiny">Nominal</span>
+                    <span className="pf-price">{rp(p.NOMINAL)}</span>
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : null}
       </div>
     </PortalShell>
   );

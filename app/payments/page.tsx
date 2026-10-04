@@ -1,12 +1,19 @@
 'use client';
 
-// Riwayat pembayaran milik pembeli (read-only, data sama dengan Console).
+// =============================================================================
+// RIWAYAT PEMBAYARAN PEMBELI (read-only)
+// -----------------------------------------------------------------------------
+// Di ponsel daftar kartu, di layar lebar tabel. Endpoint tidak berubah.
+// =============================================================================
 
 import { useCallback, useEffect, useState } from 'react';
 import { isOk, portalPost } from '@/lib/portal/api';
 import { rp, tanggalJam } from '@/lib/portal/format';
 import PortalShell from '@/components/portal/PortalShell';
-import { PfBadge, PfEmpty, PfError, PfLoading } from '@/components/portal/ui';
+import PfIcon from '@/components/portal/PfIcon';
+import {
+  PfBadge, PfCrumbs, PfEmpty, PfError, PfLoadingGrid,
+} from '@/components/portal/ui';
 
 type Row = { PAYMENTID: number; PAYNO: string; REFTYPE: string; REFID: number; TOTALPAID: number; STATUS: string; PAIDAT: string };
 
@@ -31,25 +38,72 @@ export default function PaymentsPage() {
 
   return (
     <PortalShell>
-      <div className="pf-col" style={{ gap: 14 }}>
-        <h1 style={{ margin: 0, fontSize: 21, fontWeight: 850, letterSpacing: '-.02em' }}>Riwayat pembayaran</h1>
+      <div className="pf-col pf-gap-md">
+        <PfCrumbs items={[{ label: 'Beranda', href: '/' }, { label: 'Riwayat pembayaran' }]} />
+        <h1 className="pf-h1">Riwayat pembayaran</h1>
+
         {error ? <PfError message={error} onRetry={load} /> : null}
-        {loading ? <PfLoading /> : null}
-        {!loading && !error && rows.length === 0 ? <PfEmpty title="Belum ada pembayaran" /> : null}
-        {rows.map((r) => (
-          <div key={r.PAYMENTID} className="pf-card">
-            <div className="pf-card-pad pf-row-between">
-              <div className="pf-col" style={{ gap: 3 }}>
-                <strong className="pf-ticket-code">{r.PAYNO}</strong>
-                <span className="pf-tiny">{r.REFTYPE} #{r.REFID} · {tanggalJam(r.PAIDAT)}</span>
-              </div>
-              <div className="pf-row pf-gap-sm">
-                <PfBadge tone={r.STATUS === 'BERHASIL' ? 'ok' : 'warn'}>{r.STATUS}</PfBadge>
-                <span className="pf-price">{rp(r.TOTALPAID)}</span>
-              </div>
-            </div>
+        {loading ? <PfLoadingGrid count={3} /> : null}
+
+        {!loading && !error && rows.length === 0 ? (
+          <div className="pf-card">
+            <PfEmpty icon="card" title="Belum ada pembayaran"
+              hint="Pembayaran tercatat di sini setelah dicatat operator." />
           </div>
-        ))}
+        ) : null}
+
+        {!loading && rows.length > 0 ? (
+          <>
+            <div className="pf-rows pf-only-mobile">
+              {rows.map((r) => (
+                <article key={r.PAYMENTID} className="pf-rowcard">
+                  <div className="pf-rowcard-head">
+                    <span className="pf-mono pf-sm pf-strong">{r.PAYNO}</span>
+                    <PfBadge tone={r.STATUS === 'BERHASIL' ? 'ok' : 'warn'}>{r.STATUS}</PfBadge>
+                  </div>
+                  <div className="pf-rowcard-meta">
+                    <span className="pf-rowcard-meta-row">
+                      <PfIcon name="card" size={16} />
+                      <span>{r.REFTYPE} #{r.REFID}</span>
+                    </span>
+                    <span className="pf-rowcard-meta-row">
+                      <PfIcon name="calendar" size={16} /><span>{tanggalJam(r.PAIDAT)}</span>
+                    </span>
+                  </div>
+                  <div className="pf-rowcard-foot">
+                    <span className="pf-tiny">Total dibayar</span>
+                    <span className="pf-price">{rp(r.TOTALPAID)}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="pf-tablewrap pf-hide-mobile">
+              <table className="pf-table">
+                <thead>
+                  <tr>
+                    <th scope="col">No. Pembayaran</th>
+                    <th scope="col">Referensi</th>
+                    <th scope="col">Waktu</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" className="pf-num">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.PAYMENTID}>
+                      <td><span className="pf-mono">{r.PAYNO}</span></td>
+                      <td>{r.REFTYPE} #{r.REFID}</td>
+                      <td>{tanggalJam(r.PAIDAT)}</td>
+                      <td><PfBadge tone={r.STATUS === 'BERHASIL' ? 'ok' : 'warn'}>{r.STATUS}</PfBadge></td>
+                      <td className="pf-num pf-strong">{rp(r.TOTALPAID)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : null}
       </div>
     </PortalShell>
   );

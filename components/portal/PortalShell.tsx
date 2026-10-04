@@ -1,13 +1,22 @@
 'use client';
 
-// Shell portal pembeli: navbar (desktop) + tabbar (ponsel).
+// =============================================================================
+// SHELL PORTAL PEMBELI
+// -----------------------------------------------------------------------------
+// Navbar (desktop) + tabbar bawah (ponsel) + menu selengkapnya di ponsel.
 // Menu sidebar milik Console TIDAK dipakai di sini.
+//
+//.href di dalam app TIDAK memakai basePath (Next menambahkannya sendiri).
+// =============================================================================
+
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BASE_PATH } from '@/lib/app-config';
 import { portalPost, isOk } from '@/lib/portal/api';
 import '@/app/portal.css';
+import PfIcon, { type PfIconName } from './PfIcon';
+import { PfButton, PfSheet } from './ui';
 
 type Props = {
   children: React.ReactNode;
@@ -15,21 +24,26 @@ type Props = {
   cities?: { CITYCODE: string; CITYNAME: string; CITYPROV?: string }[];
 };
 
-const TABS = [
-  { href: `/`, label: 'Beranda', icon: 'M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5' },
-  { href: `/events`, label: 'Event', icon: 'M4 5h16v15H4zM4 9h16M8 3v4M16 3v4' },
-  { href: `/merch`, label: 'Merch', icon: 'M6 7h12l1 13H5L6 7zM9 7a3 3 0 0 1 6 0' },
-  { href: `/tickets`, label: 'Tiket', icon: 'M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8z' },
-  { href: `/account`, label: 'Akun', icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0' },
+const TABS: { href: string; label: string; icon: PfIconName }[] = [
+  { href: '/', label: 'Beranda', icon: 'home' },
+  { href: '/events', label: 'Event', icon: 'calendar' },
+  { href: '/merch', label: 'Merch', icon: 'merch' },
+  { href: '/tickets', label: 'Tiket', icon: 'ticket' },
+  { href: '/account', label: 'Akun', icon: 'user' },
 ];
 
-function Icon({ d, size = 22 }: { d: string; size?: number }) {
-  return (
-    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      <path d={d} />
-    </svg>
-  );
-}
+const MORE: { href: string; label: string; icon: PfIconName }[] = [
+  { href: '/orders', label: 'Pesanan tiket', icon: 'receipt' },
+  { href: '/purchases', label: 'My Purchase', icon: 'package' },
+  { href: '/payments', label: 'Riwayat pembayaran', icon: 'card' },
+  { href: '/invoices', label: 'Invoice', icon: 'receipt' },
+  { href: '/refunds', label: 'Refund', icon: 'refresh' },
+  { href: '/cart', label: 'Keranjang', icon: 'cart' },
+  { href: '/news', label: 'Berita', icon: 'news' },
+  { href: '/promos', label: 'Promo', icon: 'discount' },
+];
+
+const CITY_KEY = `${BASE_PATH.replace(/\//g, '')}::city`;
 
 export default function PortalShell({ children, appName = 'Tiket APP', cities = [] }: Props) {
   const pathname = usePathname() || '';
@@ -38,12 +52,21 @@ export default function PortalShell({ children, appName = 'Tiket APP', cities = 
   const [login, setLogin] = useState<string | null>(null);
   const [cityOpen, setCityOpen] = useState(false);
   const [city, setCity] = useState<string>('');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [stuck, setStuck] = useState(false);
+  const cityBox = useRef<HTMLDivElement>(null);
 
   // Nama aplikasi + kota pilihan disimpan per perangkat.
   useEffect(() => {
-    try {
-      setCity(localStorage.getItem(`${BASE_PATH.replace(/\//g, '')}::city`) || '');
-    } catch { /* ignore */ }
+    try { setCity(localStorage.getItem(CITY_KEY) || ''); } catch { /* ignore */ }
+  }, []);
+
+  // Navbar beri bayangan setelah halaman digulir.
+  useEffect(() => {
+    const onScroll = () => setStuck(window.scrollY > 6);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   // Cek login quietly (hanya untuk tombol Masuk / menu akun).
@@ -55,6 +78,21 @@ export default function PortalShell({ children, appName = 'Tiket APP', cities = 
     return () => { stop = true; };
   }, [pathname]);
 
+  // Tutup dropdown kota saat klik di luar atau tekan Escape.
+  useEffect(() => {
+    if (!cityOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (cityBox.current && !cityBox.current.contains(e.target as Node)) setCityOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setCityOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [cityOpen]);
+
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
     router.push(`/events${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ''}`);
@@ -63,11 +101,13 @@ export default function PortalShell({ children, appName = 'Tiket APP', cities = 
   const pickCity = (c: string) => {
     setCity(c);
     setCityOpen(false);
-    try { localStorage.setItem(`${BASE_PATH.replace(/\//g, '')}::city`, c); } catch { /* ignore */ }
+    try { localStorage.setItem(CITY_KEY, c); } catch { /* ignore */ }
     router.push(`/events${c ? `?city=${encodeURIComponent(c)}` : ''}`);
   };
 
-  // href di dalam app TIDAK memakai basePath (Next menambahkannya sendiri).
+  // Di beranda, pencarian besar & pemilih kota sudah ada di hero.
+  const isHome = pathname === '/';
+
   const isActive = (href: string) => {
     const p = href || '/';
     return p === '/' ? pathname === '/' : pathname.startsWith(p);
@@ -77,45 +117,78 @@ export default function PortalShell({ children, appName = 'Tiket APP', cities = 
 
   return (
     <div className="pf-root">
-      <header className="pf-nav">
+      <header className={`pf-nav${stuck ? ' is-stuck' : ''}`}>
         <div className="pf-wrap pf-nav-inner">
           <Link href={`/`} className="pf-logo">
-            <span className="pf-logo-mark">T</span>
-            <span>{appName}</span>
+            <span className="pf-logo-mark" aria-hidden="true">T</span>
+            <span className="pf-logo-text">
+              {appName}
+              <small>Tiket &amp; merchandise</small>
+            </span>
           </Link>
 
-          <form className="pf-nav-search" onSubmit={submitSearch}>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari event, berita, promo…" aria-label="Cari" />
+          <form className={`pf-nav-search${isHome ? ' is-hero' : ''}`} onSubmit={submitSearch} role="search">
+            <PfIcon name="search" size={20} />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Cari event, berita, promo…"
+              aria-label="Cari event, berita, promo"
+            />
+            <button type="submit" className="pf-btn pf-btn-sm" aria-label="Cari">Cari</button>
           </form>
 
-          <div style={{ position: 'relative' }}>
-            <button type="button" className="pf-city" onClick={() => setCityOpen((v) => !v)} aria-expanded={cityOpen}>
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth={1.8}><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z" /><circle cx="12" cy="10" r="2.6" /></svg>
-              {cityName(city)}
+          <div ref={cityBox} style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className={`pf-city${cityOpen ? ' is-open' : ''}${isHome ? ' is-hero' : ''}`}
+              onClick={() => setCityOpen((v) => !v)}
+              aria-expanded={cityOpen}
+              aria-haspopup="listbox"
+            >
+              <PfIcon name="location" size={20} />
+              <span>{cityName(city)}</span>
+              <PfIcon name="chevronDown" size={16} />
             </button>
-            {cityOpen && (
-              <div className="pf-card" style={{ position: 'absolute', right: 0, top: 46, width: 260, zIndex: 50 }}>
-                <div className="pf-card-pad pf-col" style={{ gap: 2, maxHeight: 320, overflow: 'auto' }}>
-                  <button type="button" className="pf-btn pf-btn-ghost pf-btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => pickCity('')}>
-                    Semua kota
+            {cityOpen ? (
+              <div className="pf-pop" role="listbox" aria-label="Pilih kota">
+                <button type="button" className={`pf-pop-item${!city ? ' is-active' : ''}`}
+                  onClick={() => pickCity('')} role="option" aria-selected={!city}>
+                  Semua kota
+                  {!city ? <PfIcon name="check" size={16} /> : null}
+                </button>
+                {cities.map((c) => (
+                  <button key={c.CITYCODE} type="button" role="option" aria-selected={city === c.CITYCODE}
+                    className={`pf-pop-item${city === c.CITYCODE ? ' is-active' : ''}`}
+                    onClick={() => pickCity(c.CITYCODE)}>
+                    <span>{c.CITYNAME}</span>
+                    {city === c.CITYCODE ? <PfIcon name="check" size={16} /> : null}
                   </button>
-                  {cities.map((c) => (
-                    <button key={c.CITYCODE} type="button" className="pf-btn pf-btn-ghost pf-btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => pickCity(c.CITYCODE)}>
-                      {c.CITYNAME}
-                    </button>
-                  ))}
-                  {cities.length === 0 && <span className="pf-tiny">Kota belum tersedia</span>}
-                </div>
+                ))}
+                {cities.length === 0 ? <span className="pf-hint" style={{ padding: '8px 12px', display: 'block' }}>Kota belum tersedia</span> : null}
               </div>
-            )}
+            ) : null}
           </div>
 
-          {login ? (
-            <Link href={`/account`} className="pf-btn pf-btn-soft pf-btn-sm pf-only-mobile">Akun</Link>
-          ) : (
-            <Link href={`/login`} className="pf-btn pf-btn-sm pf-only-mobile">Masuk</Link>
-          )}
+          <div className="pf-row pf-gap-sm" style={{ marginLeft: 'auto' }}>
+            <Link href={`/cart`} className="pf-iconbtn pf-only-mobile" aria-label="Keranjang">
+              <PfIcon name="cart" size={20} />
+            </Link>
+            {login ? (
+              <Link href={`/account`} className="pf-btn pf-btn-soft pf-btn-sm pf-only-mobile">Akun</Link>
+            ) : (
+              <Link href={`/login`} className="pf-btn pf-btn-sm pf-only-mobile">Masuk</Link>
+            )}
+            <button
+              type="button"
+              className="pf-iconbtn pf-only-mobile"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Buka menu"
+              aria-haspopup="dialog"
+            >
+              <PfIcon name="menu" size={20} />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -123,16 +196,92 @@ export default function PortalShell({ children, appName = 'Tiket APP', cities = 
         <div className="pf-wrap">{children}</div>
       </main>
 
+      <footer className="pf-foot">
+        <div className="pf-wrap">
+          <div className="pf-foot-grid">
+            <div className="pf-col pf-gap-sm">
+              <span className="pf-row pf-gap-sm">
+                <span className="pf-logo-mark" aria-hidden="true" style={{ width: 30, height: 30, fontSize: 14, borderRadius: 9 }}>T</span>
+                <strong style={{ fontSize: 16, letterSpacing: '-.02em' }}>{appName}</strong>
+              </span>
+              <p className="pf-foot-note">
+                Beli tiket event dan merchandise dengan pembayaran yang tercatat rapi.
+                Tiket dan QR langsung tersimpan di akun Anda.
+              </p>
+            </div>
+            <div>
+              <div className="pf-foot-title">Jelajahi</div>
+              <div className="pf-foot-list">
+                <Link href="/events">Event</Link>
+                <Link href="/merch">Merchandise</Link>
+                <Link href="/news">Berita</Link>
+                <Link href="/promos">Promo</Link>
+              </div>
+            </div>
+            <div>
+              <div className="pf-foot-title">Akun</div>
+              <div className="pf-foot-list">
+                <Link href="/tickets">Tiket saya</Link>
+                <Link href="/orders">Pesanan</Link>
+                <Link href="/purchases">My Purchase</Link>
+                <Link href="/cart">Keranjang</Link>
+                <Link href="/account">Profil</Link>
+              </div>
+            </div>
+          </div>
+          <div className="pf-foot-bottom">
+            <span>{appName}. Semua harga dalam Rupiah.</span>
+            <Link href="/console" className="pf-row pf-gap-xs" style={{ fontWeight: 700 }}>
+              <PfIcon name="lock" size={16} />
+              Masuk Console
+            </Link>
+          </div>
+        </div>
+      </footer>
+
       <nav className="pf-tabbar" aria-label="Menu utama">
         <div className="pf-tabbar-inner">
           {TABS.map((t) => (
-            <Link key={t.href} href={t.href} className={`pf-tab${isActive(t.href) ? ' is-active' : ''}`}>
-              <Icon d={t.icon} />
+            <Link key={t.href} href={t.href}
+              className={`pf-tab${isActive(t.href) ? ' is-active' : ''}`}
+              aria-current={isActive(t.href) ? 'page' : undefined}>
+              <PfIcon name={t.icon} size={24} />
               <span>{t.label}</span>
             </Link>
           ))}
         </div>
       </nav>
+
+      <PfSheet open={menuOpen} onClose={() => setMenuOpen(false)} title="Menu">
+        <form className="pf-searchbar" onSubmit={submitSearch} role="search">
+          <PfIcon name="search" size={20} />
+          <input value={q} onChange={(e) => setQ(e.target.value)}
+            placeholder="Cari event, berita, promo…" aria-label="Cari event, berita, promo" />
+          <button type="submit" className="pf-btn pf-btn-sm">Cari</button>
+        </form>
+        {login ? (
+          <Link href="/account" className={`pf-menu-item${isActive('/account') ? ' is-active' : ''}`}
+            onClick={() => setMenuOpen(false)}>
+            <PfIcon name="user" size={20} />
+            Akun saya
+            <PfIcon name="chevronRight" size={16} />
+          </Link>
+        ) : (
+          <PfButton block icon="user" onClick={() => { setMenuOpen(false); router.push('/login'); }}>
+            Masuk ke akun
+          </PfButton>
+        )}
+        <div className="pf-col pf-gap-xs">
+          {MORE.map((m) => (
+            <Link key={m.href} href={m.href}
+              className={`pf-menu-item${isActive(m.href) ? ' is-active' : ''}`}
+              onClick={() => setMenuOpen(false)}>
+              <PfIcon name={m.icon} size={20} />
+              {m.label}
+            </Link>
+          ))}
+        </div>
+      </PfSheet>
     </div>
   );
 }

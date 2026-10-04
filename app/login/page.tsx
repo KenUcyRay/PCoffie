@@ -11,6 +11,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { BASE_PATH } from '@/lib/app-config';
 import { isOk, portalPost } from '@/lib/portal/api';
 import PortalShell from '@/components/portal/PortalShell';
+import PfIcon from '@/components/portal/PfIcon';
+import { PfAlert, PfButton, PfField } from '@/components/portal/ui';
 
 function saveToken(token: string) {
   try {
@@ -28,9 +30,19 @@ function LoginForm() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [info, setInfo] = useState('');
+  const [fieldErr, setFieldErr] = useState<Record<string, string>>({});
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Tampilan saja: tandai isian kosong lalu fokuskan yang pertama salah.
+    const bad: Record<string, string> = {};
+    if (!login.trim()) bad.login = 'Username wajib diisi.';
+    if (!password) bad.password = 'Password wajib diisi.';
+    setFieldErr(bad);
+    if (Object.keys(bad).length) {
+      document.getElementById(`pf-${Object.keys(bad)[0]}`)?.focus();
+      return;
+    }
     setBusy(true);
     setErr('');
     setInfo('');
@@ -39,6 +51,8 @@ function LoginForm() {
       if (!isOk(res) || !res?.token) {
         // Pesan sengaja umum: tidak membedakan username salah vs password salah.
         setErr(res?.message || 'Username atau password salah.');
+        setFieldErr({ password: 'Periksa kembali username dan password Anda.' });
+        document.getElementById('pf-login')?.focus();
         setBusy(false);
         return;
       }
@@ -59,34 +73,47 @@ function LoginForm() {
   };
 
   return (
-    <div className="pf-wrap" style={{ maxWidth: 460, paddingTop: 24 }}>
-      <div className="pf-card">
-        <div className="pf-card-pad pf-col" style={{ gap: 14 }}>
-          <div>
-            <div style={{ fontSize: 20, fontWeight: 850, letterSpacing: '-.02em' }}>Masuk</div>
-            <div className="pf-dim">Gunakan akun yang sudah terdaftar untuk melihat tiket dan pesanan Anda.</div>
-          </div>
+    <div className="pf-auth">
+      <div className="pf-auth-card">
+        <div className="pf-auth-head">
+          <div className="pf-auth-mark"><PfIcon name="user" size={24} /></div>
+          <h1 className="pf-h1">Masuk</h1>
+          <p className="pf-dim" style={{ marginTop: 6 }}>
+            Gunakan akun yang sudah terdaftar untuk melihat tiket dan pesanan Anda.
+          </p>
+        </div>
 
-          {err ? <div className="pf-alert pf-alert-error">{err}</div> : null}
-          {info ? <div className="pf-alert pf-alert-ok">{info}</div> : null}
+        <div className="pf-card">
+          <div className="pf-card-pad pf-col pf-gap-md">
+            {err ? <PfAlert tone="error">{err}</PfAlert> : null}
+            {info ? <PfAlert tone="ok">{info}</PfAlert> : null}
 
-          <form className="pf-col" style={{ gap: 12 }} onSubmit={submit}>
-            <label className="pf-field">
-              <span className="pf-label">Username</span>
-              <input className="pf-input" value={login} onChange={(e) => setLogin(e.target.value)} autoComplete="username" required />
-            </label>
-            <label className="pf-field">
-              <span className="pf-label">Password</span>
-              <input className="pf-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
-            </label>
-            <button className="pf-btn pf-btn-block" type="submit" disabled={busy}>
-              {busy ? 'Memproses…' : 'Masuk'}
-            </button>
-          </form>
+            <form className="pf-col pf-gap-md" onSubmit={submit} noValidate>
+              <PfField label="Username" required htmlFor="pf-login" error={fieldErr.login}>
+                <input id="pf-login" className="pf-input" value={login} autoComplete="username"
+                  autoCapitalize="none" spellCheck={false}
+                  onChange={(e) => setLogin(e.target.value)} required />
+              </PfField>
 
-          <div className="pf-row pf-gap-sm" style={{ justifyContent: 'space-between' }}>
-            <Link href={`/register`} className="pf-dim" style={{ fontWeight: 700, color: 'var(--pf-accent)' }}>Belum punya akun? Daftar</Link>
-            <Link href={`/console/`} className="pf-tiny">Operator / Console</Link>
+              <PfField label="Password" required htmlFor="pf-password" error={fieldErr.password}>
+                <input id="pf-password" className="pf-input" type="password" value={password}
+                  autoComplete="current-password"
+                  onChange={(e) => setPassword(e.target.value)} required />
+              </PfField>
+
+              <PfButton type="submit" size="lg" block icon="logout"
+                busy={busy} busyLabel="Memproses…">
+                Masuk
+              </PfButton>
+            </form>
+
+            <div className="pf-auth-foot">
+              <span className="pf-dim">Belum punya akun?</span>
+              <Link href={`/register`} className="pf-auth-link">Daftar</Link>
+              <Link href={`/console/`} className="pf-auth-link pf-row pf-gap-xs">
+                <PfIcon name="shield" size={16} /> Operator / Console
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -97,7 +124,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <PortalShell>
-      <Suspense fallback={<div className="pf-wrap" style={{ paddingTop: 24 }}><div className="pf-skel" style={{ height: 320, borderRadius: 16 }} /></div>}>
+      <Suspense fallback={<div className="pf-auth"><div className="pf-auth-card"><div className="pf-skel" style={{ height: 340, borderRadius: 18 }} /></div></div>}>
         <LoginForm />
       </Suspense>
     </PortalShell>

@@ -1,19 +1,30 @@
 'use client';
 
-// Tiket Saya: tab Aktif / Menunggu Pembayaran / Sudah Dipakai / Refund.
+// =============================================================================
+// TIKET SAYA
+// -----------------------------------------------------------------------------
+// Tab Aktif / Menunggu Pembayaran / Sudah Dipakai / Refund.
 // QR memakai token bertanda tangan dari backend (TicketQr::issue) - sama
 // dengan yang dipakai Scan Ticket di Console. QR dimatikan untuk tiket yang
 // sudah dipakai, dibatalkan, atau refund.
+//
+// Tampilan: kartu bergaya dompet digital (bagian atas info event, bagian bawah
+// QR dengan garis sobekan dekoratif), badge status konsisten, dan QR besar
+// dalam modal saat diklik.
+// =============================================================================
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import QRCode from 'qrcode';
-import { BASE_PATH } from '@/lib/app-config';
 import { isOk, portalPost } from '@/lib/portal/api';
 import { rp, tanggalJam } from '@/lib/portal/format';
 import PortalShell from '@/components/portal/PortalShell';
-import { PfBadge, PfEmpty, PfError, PfLoading } from '@/components/portal/ui';
+import PfIcon from '@/components/portal/PfIcon';
+import {
+  PfAlert, PfBadge, PfButton, PfCrumbs, PfEmpty, PfError, PfField,
+  PfLoadingGrid, PfModal, useToast,
+} from '@/components/portal/ui';
 
 type Ticket = {
   ATTENDEEID: number; TICKETCODE: string; HOLDER: string; EVENTTITLE: string; EVENTID: number;
@@ -29,57 +40,113 @@ const TABS = [
   { k: 'refund', l: 'Refund/Batal' },
 ];
 
-function TicketCard({ t, onRefund }: { t: Ticket; onRefund: (t: Ticket) => void }) {
+function TicketCard({ t, onRefund, onZoom }: {
+  t: Ticket; onRefund: (t: Ticket) => void; onZoom: (t: Ticket, qr: string) => void;
+}) {
   const [qr, setQr] = useState('');
 
   useEffect(() => {
     let stop = false;
     if (!t.QRACTIVE || !t.QRTOKEN) { setQr(''); return; }
-    QRCode.toDataURL(t.QRTOKEN, { width: 256, margin: 1 })
+    QRCode.toDataURL(t.QRTOKEN, { width: 512, margin: 1 })
       .then((u) => { if (!stop) setQr(u); })
       .catch(() => {});
     return () => { stop = true; };
   }, [t.QRTOKEN, t.QRACTIVE]);
 
-  return (
-    <div className="pf-ticket">
-      <div className="pf-ticket-top">
-        <div className="pf-ticket-qr" style={{ flex: '0 0 auto' }}>
-          {qr
-            ? <img src={qr} alt={`QR tiket ${t.TICKETCODE}`} />
-            : <div style={{ width: 128, height: 128, display: 'grid', placeItems: 'center', color: 'var(--pf-muted)', fontSize: 11, textAlign: 'center', padding: 8 }}>
-                {t.ATTENDSTATUS === 'HADIR' ? 'Sudah dipakai' : t.REFUNDSTATUS ? 'Refund diajukan' : t.PAYSTATUS !== 'LUNAS' ? 'Belum dibayar' : 'QR tidak aktif'}
-              </div>}
-          <span className="pf-ticket-perf" />
-        </div>
+  const off = !t.QRACTIVE || !qr;
+  const offText = t.ATTENDSTATUS === 'HADIR' ? 'Sudah dipakai'
+    : t.REFUNDSTATUS ? 'Refund diajukan'
+    : t.PAYSTATUS !== 'LUNAS' ? 'Belum dibayar'
+    : 'QR tidak aktif';
 
-        <div className="pf-grow pf-col" style={{ gap: 6 }}>
-          <strong style={{ fontSize: 15 }}>{t.EVENTTITLE}</strong>
-          <span className="pf-ticket-code">{t.TICKETCODE}</span>
-          <div className="pf-dim">{t.TYPENAME ? `${t.TYPENAME} · ` : ''}{t.VENUE || ''}{t.CITYNAME ? ` · ${t.CITYNAME}` : ''}</div>
-          <div className="pf-dim">{tanggalJam(t.STARTAT)}</div>
-          <div className="pf-row pf-wrapx pf-gap-sm">
+  return (
+    <article className="pf-ticket">
+      <div className="pf-ticket-head">
+        <div className="pf-grow pf-col pf-gap-sm">
+          <div className="pf-row pf-wrapx pf-gap-xs">
             {t.PAYSTATUS === 'LUNAS'
-              ? <PfBadge tone="ok">Lunas</PfBadge>
-              : <PfBadge tone="warn">{t.PAYSTATUS}</PfBadge>}
-            {t.ATTENDSTATUS === 'HADIR' ? <PfBadge tone="accent">Sudah dipakai</PfBadge> : null}
-            {t.REFUNDSTATUS ? <PfBadge tone="warn">Refund {t.REFUNDSTATUS}</PfBadge> : null}
-            {t.TIKETSTATUS === 'BATAL' ? <PfBadge tone="danger">Dibatalkan</PfBadge> : null}
+              ? <PfBadge tone="ok" icon="checkCircle">Lunas</PfBadge>
+              : <PfBadge tone="warn" icon="clock">{t.PAYSTATUS}</PfBadge>}
+            {t.ATTENDSTATUS === 'HADIR' ? <PfBadge tone="accent" icon="ticket">Sudah dipakai</PfBadge> : null}
+            {t.REFUNDSTATUS ? <PfBadge tone="warn" icon="refresh">Refund {t.REFUNDSTATUS}</PfBadge> : null}
+            {t.TIKETSTATUS === 'BATAL' ? <PfBadge tone="danger" icon="close">Dibatalkan</PfBadge> : null}
           </div>
-          <div className="pf-row-between">
+
+          <h3 className="pf-ticket-title pf-clamp-2">{t.EVENTTITLE}</h3>
+
+          <span className="pf-ticket-code">
+            <PfIcon name="qr" size={16} />
+            {t.TICKETCODE}
+          </span>
+
+          <div className="pf-ticket-meta">
+            {t.TYPENAME ? (
+              <span className="pf-ticket-meta-row">
+                <PfIcon name="ticket" size={16} /><span>{t.TYPENAME}</span>
+              </span>
+            ) : null}
+            {t.STARTAT ? (
+              <span className="pf-ticket-meta-row">
+                <PfIcon name="calendar" size={16} /><span>{tanggalJam(t.STARTAT)}</span>
+              </span>
+            ) : null}
+            {(t.VENUE || t.CITYNAME) ? (
+              <span className="pf-ticket-meta-row">
+                <PfIcon name="location" size={16} />
+                <span>{[t.VENUE, t.CITYNAME].filter(Boolean).join(' · ')}</span>
+              </span>
+            ) : null}
+            {t.HOLDER ? (
+              <span className="pf-ticket-meta-row">
+                <PfIcon name="user" size={16} /><span>{t.HOLDER}</span>
+              </span>
+            ) : null}
+          </div>
+
+          <div className="pf-ticket-foot" style={{ padding: 0, border: 0, background: 'transparent' }}>
             <span className="pf-price">{rp(t.PRICE)}</span>
-            <div className="pf-row pf-gap-sm">
-              {t.CANREFUND && (
-                <button className="pf-btn pf-btn-ghost pf-btn-sm" type="button" onClick={() => onRefund(t)}>Ajukan refund</button>
-              )}
+            <div className="pf-row pf-wrapx pf-gap-sm">
+              {t.CANREFUND ? (
+                <PfButton variant="ghost" size="sm" icon="refresh" onClick={() => onRefund(t)}>
+                  Ajukan refund
+                </PfButton>
+              ) : null}
               {t.ORDERCODE && t.PAYSTATUS !== 'LUNAS' ? (
-                <Link href={`/orders/?code=${encodeURIComponent(t.ORDERCODE)}`} className="pf-btn pf-btn-sm">Bayar</Link>
+                <Link href={`/orders/?code=${encodeURIComponent(t.ORDERCODE)}`} className="pf-btn pf-btn-sm">
+                  Bayar
+                </Link>
               ) : null}
             </div>
           </div>
         </div>
+
+        {/* QR mini di sisi kanan (desktop) — dihapus di ponsel, ada di stub. */}
+        <button type="button"
+          className={`pf-ticket-qr${off ? ' is-off' : ''} pf-hide-mobile`}
+          onClick={() => (off ? undefined : onZoom(t, qr))}
+          aria-label={off ? `QR tidak aktif: ${offText}` : `Perbesar QR tiket ${t.TICKETCODE}`}
+          disabled={off}>
+          {qr ? <img src={qr} alt={`QR tiket ${t.TICKETCODE}`} /> : <PfIcon name="qr" size={24} />}
+        </button>
       </div>
-    </div>
+
+      {/* Stub: garis sobekan dekoratif + QR. */}
+      <div className="pf-ticket-stub">
+        <div className="pf-ticket-stub-info">
+          <span className="pf-tiny">Tunjukkan QR ini di pintu masuk</span>
+          <span className="pf-mono pf-xs">{t.TICKETCODE}</span>
+        </div>
+        <button type="button"
+          className={`pf-ticket-stub-qr${off ? ' is-off' : ''}`}
+          onClick={() => (off ? undefined : onZoom(t, qr))}
+          aria-label={off ? `QR tidak aktif: ${offText}` : `Perbesar QR tiket ${t.TICKETCODE}`}
+          disabled={off}
+          style={{ border: 0, cursor: off ? 'default' : 'pointer', background: '#fff' }}>
+          {qr ? <img src={qr} alt={`QR tiket ${t.TICKETCODE}`} /> : <PfIcon name="qr" size={24} />}
+        </button>
+      </div>
+    </article>
   );
 }
 
@@ -93,7 +160,10 @@ export default function MyTicketsPage() {
   const [refund, setRefund] = useState<Ticket | null>(null);
   const [refundInfo, setRefundInfo] = useState<any | null>(null);
   const [reason, setReason] = useState('');
+  const [reasonErr, setReasonErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [zoom, setZoom] = useState<{ t: Ticket; qr: string } | null>(null);
+  const { toast, toastNode } = useToast();
 
   const load = useCallback(async (which: string) => {
     setLoading(true);
@@ -121,6 +191,7 @@ export default function MyTicketsPage() {
   const openRefund = async (t: Ticket) => {
     setRefund(t);
     setReason('');
+    setReasonErr('');
     setRefundInfo(null);
     const r: any = await portalPost('portal/refund/check', { attendeeid: t.ATTENDEEID });
     if (isOk(r)) setRefundInfo(r);
@@ -128,11 +199,13 @@ export default function MyTicketsPage() {
 
   const sendRefund = async () => {
     if (!refund) return;
+    if (!reason.trim()) { setReasonErr('Alasan refund wajib diisi.'); return; }
     setBusy(true);
     const r: any = await portalPost('portal/refund/apply', { attendeeid: refund.ATTENDEEID, reason: reason.trim() });
     setBusy(false);
     if (!isOk(r)) { setError(String(r?.message || 'Pengajuan gagal.')); return; }
     setRefund(null);
+    toast('Pengajuan refund terkirim', 'ok');
     load(tab);
   };
 
@@ -140,63 +213,117 @@ export default function MyTicketsPage() {
 
   return (
     <PortalShell>
-      <div className="pf-col" style={{ gap: 14 }}>
-        <div className="pf-row-between">
-          <h1 style={{ margin: 0, fontSize: 21, fontWeight: 850, letterSpacing: '-.02em' }}>Tiket saya</h1>
-          <Link href={`/events`} className="pf-btn pf-btn-sm">Cari event</Link>
+      <div className="pf-col pf-gap-md">
+        <PfCrumbs items={[{ label: 'Beranda', href: '/' }, { label: 'Tiket saya' }]} />
+
+        <div className="pf-row-between pf-wrapx pf-gap-sm">
+          <h1 className="pf-h1">Tiket saya</h1>
+          <Link href={`/events`} className="pf-btn pf-btn-soft pf-btn-sm">
+            <PfIcon name="search" size={16} /> Cari event
+          </Link>
         </div>
 
-        <div className="pf-tabs">
+        <div className="pf-tabs" role="tablist" aria-label="Status tiket">
           {TABS.map((t) => (
-            <button key={t.k} type="button" className={`pf-tab-pill${tab === t.k ? ' is-active' : ''}`} onClick={() => setTab(t.k)}>
+            <button key={t.k} type="button" role="tab" aria-selected={tab === t.k}
+              className={`pf-tab-pill${tab === t.k ? ' is-active' : ''}`} onClick={() => setTab(t.k)}>
               {t.l}{counts[t.k] ? ` (${counts[t.k]})` : ''}
             </button>
           ))}
         </div>
 
         {error ? <PfError message={error} onRetry={() => load(tab)} /> : null}
-        {loading ? <PfLoading /> : null}
+        {loading ? <PfLoadingGrid count={2} /> : null}
+
         {!loading && !error && list.length === 0 ? (
-          <PfEmpty title="Belum ada tiket di tab ini" hint="Tiket akan muncul setelah pesanan dibayar operator." />
+          <div className="pf-card">
+            <PfEmpty
+              icon="ticket"
+              title="Belum ada tiket di tab ini"
+              hint="Tiket akan muncul setelah pesanan dibayar operator."
+              action={<Link href="/events" className="pf-btn pf-btn-sm">Cari event</Link>}
+            />
+          </div>
         ) : null}
 
-        <div className="pf-col" style={{ gap: 12 }}>
-          {list.map((t) => <TicketCard key={t.ATTENDEEID} t={t} onRefund={openRefund} />)}
+        <div className="pf-col pf-gap-md">
+          {list.map((t) => (
+            <TicketCard key={t.ATTENDEEID} t={t} onRefund={openRefund}
+              onZoom={(tk, qr) => setZoom({ t: tk, qr })} />
+          ))}
         </div>
       </div>
 
-      {refund && (
-        <div className="pf-card" style={{ marginTop: 16 }}>
-          <div className="pf-card-head">
-            <span className="pf-card-title">Ajukan refund</span>
-            <button className="pf-btn pf-btn-ghost pf-btn-sm" type="button" onClick={() => setRefund(null)}>Tutup</button>
+      {/* ------------------------------------------------ QR besar dalam modal */}
+      <PfModal open={!!zoom} onClose={() => setZoom(null)}
+        title={zoom ? `Tiket ${zoom.t.TICKETCODE}` : 'Tiket'}>
+        {zoom ? (
+          <div className="pf-qrbig">
+            <div className="pf-qrbig-frame">
+              <img src={zoom.qr} alt={`QR tiket ${zoom.t.TICKETCODE}`} width={280} height={280} />
+            </div>
+            <div className="pf-col pf-gap-xs" style={{ width: '100%' }}>
+              <strong className="pf-h3">{zoom.t.EVENTTITLE}</strong>
+              <span className="pf-dim">{[zoom.t.TYPENAME, tanggalJam(zoom.t.STARTAT), zoom.t.VENUE, zoom.t.CITYNAME]
+                .filter(Boolean).join(' · ')}</span>
+              <span className="pf-mono pf-xs">{zoom.t.TICKETCODE}</span>
+            </div>
+            <p className="pf-brightness">
+              <PfIcon name="brightness" size={16} />
+              <span>Naikkan kecerahan layar supaya QR mudah dipindai di pintu masuk.</span>
+            </p>
           </div>
-          <div className="pf-card-pad pf-col" style={{ gap: 10 }}>
-            <span className="pf-dim">{refund.EVENTTITLE} · <span className="pf-ticket-code">{refund.TICKETCODE}</span></span>
+        ) : null}
+      </PfModal>
+
+      {/* ------------------------------------------------------ form pengajuan */}
+      <PfModal
+        open={!!refund}
+        onClose={() => setRefund(null)}
+        title="Ajukan refund"
+        footer={
+          <>
+            <PfButton variant="ghost" onClick={() => setRefund(null)}>Batal</PfButton>
+            <PfButton busy={busy} busyLabel="Mengirim…" disabled={!refundInfo?.ok || !reason.trim()}
+              onClick={sendRefund}>Kirim pengajuan</PfButton>
+          </>
+        }
+      >
+        {refund ? (
+          <div className="pf-col pf-gap-md">
+            <div className="pf-panel">
+              <span className="pf-sm pf-strong">{refund.EVENTTITLE}</span>
+              <span className="pf-mono pf-xs">{refund.TICKETCODE}</span>
+            </div>
 
             {refundInfo ? (
-              <div className={`pf-alert ${refundInfo.ok ? 'pf-alert-ok' : 'pf-alert-error'}`}>
-                {refundInfo.ok
-                  ? `Syarat refund terpenuhi. Nominal yang akan direfund: ${rp(refundInfo.price)}${refundInfo.deadline ? `. Batas pengajuan: ${tanggalJam(refundInfo.deadline)}` : ''}`
-                  : `Syarat belum terpenuhi: ${(refundInfo.reasons || []).join('; ')}`}
-              </div>
-            ) : null}
+              refundInfo.ok ? (
+                <PfAlert tone="ok">
+                  Syarat refund terpenuhi. Nominal yang akan direfund: {rp(refundInfo.price)}
+                  {refundInfo.deadline ? `. Batas pengajuan: ${tanggalJam(refundInfo.deadline)}` : ''}
+                </PfAlert>
+              ) : (
+                <PfAlert tone="error">
+                  Syarat belum terpenuhi: {(refundInfo.reasons || []).join('; ')}
+                </PfAlert>
+              )
+            ) : <PfLoadingGrid count={1} />}
 
             {refundInfo?.ok ? (
-              <>
-                <label className="pf-field">
-                  <span className="pf-label">Alasan refund *</span>
-                  <textarea className="pf-textarea" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={200} />
-                </label>
-                <button className="pf-btn" type="button" disabled={busy || !reason.trim()} onClick={sendRefund}>
-                  {busy ? 'Mengirim…' : 'Kirim pengajuan'}
-                </button>
-                <span className="pf-tiny">Keputusan tetap dilakukan operator di Console.</span>
-              </>
+              <PfField label="Alasan refund" required htmlFor="pf-reason" error={reasonErr}
+                hint="Maksimal 200 karakter.">
+                <textarea id="pf-reason" className="pf-textarea" rows={4} value={reason} maxLength={200}
+                  onChange={(e) => { setReason(e.target.value); if (reasonErr) setReasonErr(''); }}
+                  placeholder="Ceritakan singkat alasan pengajuan refund." />
+              </PfField>
             ) : null}
+
+            <span className="pf-tiny">Keputusan tetap dilakukan operator di Console.</span>
           </div>
-        </div>
-      )}
+        ) : null}
+      </PfModal>
+
+      {toastNode}
     </PortalShell>
   );
 }

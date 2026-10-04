@@ -9,12 +9,15 @@ import { useState } from 'react';
 import { BASE_PATH } from '@/lib/app-config';
 import { isOk, portalPost } from '@/lib/portal/api';
 import PortalShell from '@/components/portal/PortalShell';
+import PfIcon from '@/components/portal/PfIcon';
+import { PfAlert, PfButton, PfField } from '@/components/portal/ui';
 
 export default function RegisterPage() {
   const router = useRouter();
   const [f, setF] = useState({ userlogin: '', username: '', useremail: '', userphone: '', userpassword: '', confirm: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [fieldErr, setFieldErr] = useState<Record<string, string>>({});
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setF((s) => ({ ...s, [k]: e.target.value }));
 
@@ -56,50 +59,63 @@ export default function RegisterPage() {
 
   return (
     <PortalShell>
-      <div className="pf-wrap" style={{ maxWidth: 520, paddingTop: 24 }}>
-        <div className="pf-card">
-          <div className="pf-card-pad pf-col" style={{ gap: 14 }}>
-            <div>
-              <div style={{ fontSize: 20, fontWeight: 850, letterSpacing: '-.02em' }}>Daftar akun</div>
-              <div className="pf-dim">Akun ini khusus untuk portal pembeli, terpisah dari akun operator Console.</div>
-            </div>
+      <div className="pf-auth">
+        <div className="pf-auth-card" style={{ maxWidth: 520 }}>
+          <div className="pf-auth-head">
+            <div className="pf-auth-mark"><PfIcon name="user" size={24} /></div>
+            <h1 className="pf-h1">Daftar akun</h1>
+            <p className="pf-dim" style={{ marginTop: 6 }}>
+              Akun ini khusus untuk portal pembeli, terpisah dari akun operator Console.
+            </p>
+          </div>
 
-            {err ? <div className="pf-alert pf-alert-error">{err}</div> : null}
+          <div className="pf-card">
+            <div className="pf-card-pad pf-col pf-gap-md">
+              {err ? <PfAlert tone="error">{err}</PfAlert> : null}
 
-            <form className="pf-col" style={{ gap: 12 }} onSubmit={submit}>
-              <label className="pf-field">
-                <span className="pf-label">Username</span>
-                <input className="pf-input" value={f.userlogin} onChange={set('userlogin')} placeholder="mis. budi" required />
-                <span className="pf-tiny">3-30 karakter: huruf kecil, angka, titik, garis.</span>
-              </label>
-              <label className="pf-field">
-                <span className="pf-label">Nama lengkap</span>
-                <input className="pf-input" value={f.username} onChange={set('username')} required />
-              </label>
-              <label className="pf-field">
-                <span className="pf-label">Email</span>
-                <input className="pf-input" type="email" value={f.useremail} onChange={set('useremail')} required />
-              </label>
-              <label className="pf-field">
-                <span className="pf-label">Nomor HP (opsional)</span>
-                <input className="pf-input" value={f.userphone} onChange={set('userphone')} />
-              </label>
-              <label className="pf-field">
-                <span className="pf-label">Password</span>
-                <input className="pf-input" type="password" value={f.userpassword} onChange={set('userpassword')} required />
-              </label>
-              <label className="pf-field">
-                <span className="pf-label">Ulangi password</span>
-                <input className="pf-input" type="password" value={f.confirm} onChange={set('confirm')} required />
-              </label>
-              <button className="pf-btn pf-btn-block" type="submit" disabled={busy}>
-                {busy ? 'Membuat akun…' : 'Daftar sekarang'}
-              </button>
-            </form>
+              <form className="pf-col pf-gap-md" onSubmit={submit} noValidate>
+                <PfField label="Username" required htmlFor="pf-userlogin" error={fieldErr.userlogin}
+                  hint="3-30 karakter: huruf kecil, angka, titik, garis.">
+                  <input id="pf-userlogin" className="pf-input" value={f.userlogin} onChange={set('userlogin')}
+                    placeholder="mis. budi" autoCapitalize="none" spellCheck={false} required />
+                </PfField>
 
-            <div className="pf-row pf-gap-sm" style={{ justifyContent: 'space-between' }}>
-              <Link href={`/login`} className="pf-dim" style={{ fontWeight: 700, color: 'var(--pf-accent)' }}>Sudah punya akun? Masuk</Link>
-              <Link href={`/`} className="pf-tiny">Lanjut tanpa akun</Link>
+                <PfField label="Nama lengkap" required htmlFor="pf-username" error={fieldErr.username}>
+                  <input id="pf-username" className="pf-input" value={f.username} onChange={set('username')} required />
+                </PfField>
+
+                <PfField label="Email" required htmlFor="pf-useremail" error={fieldErr.useremail}
+                  hint="Dipakai untuk menerima tiket dan notifikasi pesanan.">
+                  <input id="pf-useremail" className="pf-input" type="email" inputMode="email"
+                    value={f.useremail} onChange={set('useremail')} required />
+                </PfField>
+
+                <PfField label="Nomor HP (opsional)" htmlFor="pf-userphone">
+                  <input id="pf-userphone" className="pf-input" type="tel" inputMode="tel"
+                    placeholder="08xxxxxxxxxx" value={f.userphone} onChange={set('userphone')} />
+                </PfField>
+
+                <PfField label="Password" required htmlFor="pf-userpassword" error={fieldErr.userpassword}>
+                  <input id="pf-userpassword" className="pf-input" type="password" autoComplete="new-password"
+                    value={f.userpassword} onChange={set('userpassword')} required />
+                </PfField>
+
+                <PfField label="Ulangi password" required htmlFor="pf-confirm" error={fieldErr.confirm}>
+                  <input id="pf-confirm" className="pf-input" type="password" autoComplete="new-password"
+                    value={f.confirm} onChange={set('confirm')} required />
+                </PfField>
+
+                <PfButton type="submit" size="lg" block icon="check"
+                  busy={busy} busyLabel="Membuat akun…">
+                  Daftar sekarang
+                </PfButton>
+              </form>
+
+              <div className="pf-auth-foot">
+                <span className="pf-dim">Sudah punya akun?</span>
+                <Link href={`/login`} className="pf-auth-link">Masuk</Link>
+                <Link href={`/`} className="pf-auth-link">Lanjut tanpa akun</Link>
+              </div>
             </div>
           </div>
         </div>

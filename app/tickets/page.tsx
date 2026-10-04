@@ -23,7 +23,7 @@ import PortalShell from '@/components/portal/PortalShell';
 import PfIcon from '@/components/portal/PfIcon';
 import {
   PfAlert, PfBadge, PfButton, PfCrumbs, PfEmpty, PfError, PfField,
-  PfLoadingGrid, PfModal, useToast,
+  PfLoadingGrid, PfModal, PfState, useToast,
 } from '@/components/portal/ui';
 
 type Ticket = {
@@ -157,6 +157,7 @@ export default function MyTicketsPage() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [needsLogin, setNeedsLogin] = useState(false);
   const [refund, setRefund] = useState<Ticket | null>(null);
   const [refundInfo, setRefundInfo] = useState<any | null>(null);
   const [reason, setReason] = useState('');
@@ -168,23 +169,28 @@ export default function MyTicketsPage() {
   const load = useCallback(async (which: string) => {
     setLoading(true);
     setError('');
+    setNeedsLogin(false);
     try {
       const r: any = await portalPost('portal/ticket/list', { tab: which });
       if (!isOk(r)) {
-        setError(String(r?.message || 'Gagal memuat tiket.'));
+        const m = String(r?.message || 'Gagal memuat tiket.');
+        if (/silakan masuk/i.test(m)) { setNeedsLogin(true); setError(''); return; }
+        setError(m);
         return;
       }
       setLists((s) => ({ ...s, [which]: (r[which] as Ticket[]) || [] }));
       setCounts((r.counts as any) || {});
-      if (!isOk(await portalPost('portal/whoami', {}))) {
-        router.push(`/login/?next=${encodeURIComponent('/tickets/')}`);
-      }
     } catch (e: any) {
-      setError(e?.message || 'Silakan masuk terlebih dahulu.');
+      const m = String(e?.message || '');
+      if (e?.portalUnauth || /silakan masuk|sesi login/i.test(m)) {
+        setNeedsLogin(true); setError('');
+      } else {
+        setError(m || 'Gagal memuat tiket.');
+      }
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => { load(tab); }, [tab, load]);
 
@@ -232,10 +238,24 @@ export default function MyTicketsPage() {
           ))}
         </div>
 
-        {error ? <PfError message={error} onRetry={() => load(tab)} /> : null}
+        {needsLogin ? (
+          <div className="pf-card">
+            <PfState
+              icon="ticket"
+              title="Masuk untuk melihat tiket"
+              text="Silakan masuk terlebih dahulu untuk melihat tiket, QR, dan refund Anda."
+              action={
+                <Link href={`/login/?next=${encodeURIComponent('/tickets/')}`} className="pf-btn pf-btn-sm">
+                  Masuk
+                </Link>
+              }
+            />
+          </div>
+        ) : null}
+        {!needsLogin && error ? <PfError message={error} onRetry={() => load(tab)} /> : null}
         {loading ? <PfLoadingGrid count={2} /> : null}
 
-        {!loading && !error && list.length === 0 ? (
+        {!loading && !needsLogin && !error && list.length === 0 ? (
           <div className="pf-card">
             <PfEmpty
               icon="ticket"
@@ -246,12 +266,14 @@ export default function MyTicketsPage() {
           </div>
         ) : null}
 
-        <div className="pf-col pf-gap-md">
-          {list.map((t) => (
-            <TicketCard key={t.ATTENDEEID} t={t} onRefund={openRefund}
-              onZoom={(tk, qr) => setZoom({ t: tk, qr })} />
-          ))}
-        </div>
+        {!needsLogin ? (
+          <div className="pf-col pf-gap-md">
+            {list.map((t) => (
+              <TicketCard key={t.ATTENDEEID} t={t} onRefund={openRefund}
+                onZoom={(tk, qr) => setZoom({ t: tk, qr })} />
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {/* ------------------------------------------------ QR besar dalam modal */}

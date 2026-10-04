@@ -59,7 +59,7 @@ export async function portalPost<T = any>(
   let json: any = {};
   try { json = text ? JSON.parse(text) : {}; } catch { json = {}; }
   if (res.status === 401) {
-    const err: any = new Error(String(json?.message || 'Sesi login habis. Silakan masuk kembali.'));
+    const err: any = new Error(String(json?.message || 'Silakan masuk terlebih dahulu.'));
     err.portalUnauth = true;
     throw err;
   }

@@ -15,8 +15,8 @@ class JWTMiddleware
         if (!$request->header('Authorization')) {
             return response()->json([
                 'success' => 'false',
-                'message' => 'Authorization Token not found'
-            ], 400);
+                'message' => 'Silakan masuk terlebih dahulu.'
+            ], 401);
         }
 
         try {
@@ -26,8 +26,8 @@ class JWTMiddleware
             } else {
                 return response()->json([
                     'success' => 'false',
-                    'message' => 'Authorization Token format is invalid'
-                ], 400);
+                    'message' => 'Silakan masuk terlebih dahulu.'
+                ], 401);
             }
 
             $payload = JWTAuth::parseToken()->getPayload()->toArray();
@@ -59,7 +59,7 @@ class JWTMiddleware
             if ($sid === '') {
                 return response()->json([
                     'success' => 'false',
-                    'message' => 'Token is invalid'
+                    'message' => 'Sesi login tidak valid. Silakan masuk kembali.'
                 ], 401);
             }
 
@@ -85,12 +85,12 @@ class JWTMiddleware
         } catch (TokenExpiredException $e) {
             return response()->json([
                 'success' => 'false',
-                'message' => 'Token has expired'
+                'message' => 'Sesi login habis. Silakan masuk kembali.'
             ], 401);
         } catch (JWTException $e) {
             return response()->json([
                 'success' => 'false',
-                'message' => 'Token is invalid'
+                'message' => 'Silakan masuk terlebih dahulu.'
             ], 401);
         }
 

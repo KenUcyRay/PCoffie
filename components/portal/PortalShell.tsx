@@ -192,8 +192,8 @@ export default function PortalShell({ children, appName = 'Tiket APP', cities = 
         </div>
       </header>
 
-      <main className="pf-main">
-        <div className="pf-wrap">{children}</div>
+      <main className={`pf-main${isHome ? ' pf-main--home' : ''}`}>
+        {isHome ? children : <div className="pf-wrap">{children}</div>}
       </main>
 
       <footer className="pf-foot">

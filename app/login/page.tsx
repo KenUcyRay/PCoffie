@@ -10,7 +10,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { BASE_PATH } from '@/lib/app-config';
 import { isOk, portalPost } from '@/lib/portal/api';
-import PortalShell from '@/components/portal/PortalShell';
+import '@/app/portal.css';
 import PfIcon from '@/components/portal/PfIcon';
 import { PfAlert, PfButton, PfField } from '@/components/portal/ui';
 
@@ -103,23 +103,16 @@ function LoginForm() {
                 </button>
               </div>
             </PfField>
-            <PfButton type="submit" size="lg" block busy={busy} busyLabel="Checking…" style={{ borderRadius: 9999, background: '#6b5cff', borderColor: '#6b5cff', boxShadow: '0 10px 20px rgba(107,92,255,.18)' } as any}>
+            <PfButton type="submit" size="lg" block busy={busy} busyLabel="Checking…" style={{ borderRadius: 9999, background: '#06b6d4', borderColor: '#06b6d4', boxShadow: '0 10px 20px rgba(6,182,214,.18)' } as any}>
               {busy ? 'Checking…' : 'Sign In'}
             </PfButton>
           </form>
           <p style={{ marginTop: 24, textAlign: 'center', fontSize: 12, color: '#71717a' }}>
-            Don&apos;t have an account? <Link href={`/register`} style={{ fontWeight: 600, color: '#3f3f46' }}>Daftar</Link> · <Link href={`/console/`} style={{ fontWeight: 600, color: '#6b5cff' }}>Operator / Console</Link>
+            Don&apos;t have an account? <Link href={`/register`} style={{ fontWeight: 600, color: '#3f3f46' }}>Daftar</Link> · <Link href={`/console/`} style={{ fontWeight: 600, color: '#06b6d4' }}>Operator / Console</Link>
           </p>
         </div>
         <div className="pf-auth-side" aria-hidden="true">
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(140deg,#6b5cff,#312e81)', opacity: .98 }} />
-          <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: 'rgba(255,255,255,.9)', padding: 24, textAlign: 'center' }}>
-            <div>
-              <div style={{ width: 64, height: 64, borderRadius: 16, background: 'rgba(255,255,255,.16)', display: 'grid', placeItems: 'center', margin: '0 auto 16px', border: '1px solid rgba(255,255,255,.2)' }}><PfIcon name="ticket" size={24} /></div>
-              <p style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Tiket APP</p>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,.82)', marginTop: 6, maxWidth: 260, lineHeight: 1.5 }}>Platform tiket terbesar — cari event, beli tiket, QR langsung di akun.</p>
-            </div>
-          </div>
+          <img src={`${BASE_PATH}/login-card.png`} alt="" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       </div>
     </div>
@@ -128,10 +121,10 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <PortalShell>
-      <Suspense fallback={<div className="pf-auth"><div className="pf-auth-card"><div className="pf-skel" style={{ height: 340, borderRadius: 18 }} /></div></div>}>
+    <div className="pf-root" style={{ background: '#ecfeff' }}>
+      <Suspense fallback={<div className="pf-auth" style={{ margin: 0, minHeight: '100vh' }}><div className="pf-auth-card"><div className="pf-skel" style={{ height: 340, borderRadius: 18 }} /></div></div>}>
         <LoginForm />
       </Suspense>
-    </PortalShell>
+    </div>
   );
 }

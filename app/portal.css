@@ -37,13 +37,13 @@
 
 /* ========================================================== 1. TOKEN ====== */
 .pf-root {
-  /* -- warna: satu aksen + netral + status ------------------------------- */
-  --pf-accent:        #e11d48;
-  --pf-accent-strong: #be123c;
-  --pf-accent-deep:   #9f1239;
-  --pf-accent-soft:   #fff1f2;
-  --pf-accent-line:   #fecdd3;
-  --pf-accent-ring:   rgba(225, 29, 72, .16);
+  /* -- warna: violet dari referensi frontend (HomePage/Auth: #6b5cff) --- */
+  --pf-accent:        #6b5cff;
+  --pf-accent-strong: #5a4af0;
+  --pf-accent-deep:   #312e81;
+  --pf-accent-soft:   #f4f1ff;
+  --pf-accent-line:   #ddd6fe;
+  --pf-accent-ring:   rgba(107, 92, 255, .18);
 
   --pf-bg:            #f6f7f9;
   --pf-surface:       #ffffff;
@@ -106,7 +106,8 @@
   --pf-sh-1: 0 1px 2px rgba(24, 24, 27, .05);
   --pf-sh-2: 0 1px 2px rgba(24, 24, 27, .04), 0 6px 16px rgba(24, 24, 27, .06);
   --pf-sh-3: 0 2px 4px rgba(24, 24, 27, .05), 0 16px 40px rgba(24, 24, 27, .10);
-  --pf-sh-accent: 0 6px 18px rgba(225, 29, 72, .22);
+  --pf-sh-accent: 0 6px 18px rgba(107, 92, 255, .22);
+  --pf-sh-violet: 0 24px 64px -24px rgba(80, 60, 180, .35);
 
   --pf-tap: 44px;              /* tinggi sentuh minimum */
   --pf-nav-h: 64px;
@@ -842,29 +843,49 @@
 .pf-toast-close svg { width: 16px; height: 16px; }
 
 /* ================================== 14. KOMPONEN KHUSUS HALAMAN ========== */
-/* Hero beranda. */
+/* Hero beranda — ikut referensi HomePage.jsx: dark #0b0518 + foto + gradient violet. */
 .pf-hero {
   position: relative; overflow: hidden;
-  border-radius: var(--pf-r-xl);
-  background: linear-gradient(135deg, #9f1239 0%, #e11d48 52%, #f43f5e 100%);
+  border-radius: 24px;
+  background: #0b0518;
   color: #fff;
-  padding: var(--pf-s6) var(--pf-s5);
-  box-shadow: var(--pf-sh-accent);
+  padding: 0;
+  box-shadow: var(--pf-sh-2);
+  isolation: isolate;
 }
-.pf-hero::before, .pf-hero::after {
-  content: ""; position: absolute; border-radius: 50%; pointer-events: none;
-  background: rgba(255, 255, 255, .12);
+.pf-hero-media {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .6;
 }
-.pf-hero::before { width: 240px; height: 240px; right: -70px; top: -110px; }
-.pf-hero::after { width: 150px; height: 150px; right: 60px; bottom: -90px; background: rgba(255, 255, 255, .08); }
-.pf-hero-inner { position: relative; z-index: 1; max-width: 620px; }
-.pf-hero-title { font-size: var(--pf-fs-display); line-height: var(--pf-lh-tight); font-weight: 850; letter-spacing: -.028em; }
-.pf-hero-text { font-size: var(--pf-fs-body); color: rgba(255, 255, 255, .92); margin-top: var(--pf-s2); line-height: var(--pf-lh-body); }
-.pf-hero-actions { display: flex; gap: var(--pf-s2); margin-top: var(--pf-s5); flex-wrap: wrap; }
-.pf-hero .pf-btn-ghost { background: rgba(255, 255, 255, .16); color: #fff; border-color: rgba(255, 255, 255, .34); backdrop-filter: blur(4px); }
-.pf-hero .pf-btn-ghost:hover:not(:disabled) { background: rgba(255, 255, 255, .26); color: #fff; }
-.pf-hero .pf-btn-soft { background: #fff; color: var(--pf-accent-deep); border-color: #fff; }
-.pf-hero .pf-btn-soft:hover:not(:disabled) { background: #fff; color: var(--pf-accent-deep); }
+.pf-hero-grad {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, #1a0533 0%, rgba(74, 26, 138, .6) 55%, transparent 100%),
+              linear-gradient(0deg, rgba(11, 5, 24, .4) 0%, transparent 55%);
+}
+.pf-hero-dots {
+  position: absolute; right: 16px; bottom: 16px; display: flex; gap: 6px; z-index: 1;
+}
+.pf-hero-dots i { display: block; height: 6px; border-radius: 999px; background: rgba(255,255,255,.4); }
+.pf-hero-dots i.is-on { width: 24px; background: #fff; }
+.pf-hero-dots i:not(.is-on) { width: 6px; }
+.pf-hero-inner { position: relative; z-index: 1; display: grid; gap: 24px; padding: 24px; }
+@media (min-width: 1024px) { .pf-hero-inner { grid-template-columns: 1.1fr .9fr; padding: 48px; } }
+@media (min-width: 640px) { .pf-hero-inner { padding: 32px; } }
+.pf-hero-badge {
+  display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+  border-radius: 999px; background: rgba(255,255,255,.1); color: #ddd6fe;
+  padding: 4px 10px; font-size: 10px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1);
+  backdrop-filter: blur(6px);
+}
+.pf-hero-title { font-size: 28px; line-height: 1.05; font-weight: 850; letter-spacing: -.03em; color: #fff; max-width: 520px; }
+@media (min-width: 640px) { .pf-hero-title { font-size: 36px; } }
+.pf-hero-text { font-size: 14px; line-height: 1.6; color: rgba(221, 214, 254, .82); margin-top: 12px; max-width: 480px; }
+@media (min-width: 640px) { .pf-hero-text { font-size: 14px; } }
+.pf-hero-actions { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+.pf-hero .pf-btn-soft { background: #fff; color: #312e81; border-color: #fff; }
+.pf-hero .pf-btn-soft:hover:not(:disabled) { background: #f5f3ff; color: #312e81; }
+.pf-hero .pf-btn-ghost { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.2); backdrop-filter: blur(6px); }
+.pf-hero .pf-btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,.15); color: #fff; }
 
 /* Pencarian besar + pemilih kota di hero. */
 .pf-hero-search {
@@ -911,7 +932,8 @@
 .pf-chip svg { width: 17px; height: 17px; }
 .pf-chip:hover { border-color: var(--pf-accent-line); color: var(--pf-accent); }
 .pf-chip:active { transform: scale(.96); }
-.pf-chip.is-active { background: var(--pf-surface-inv); border-color: var(--pf-surface-inv); color: #fff; }
+.pf-chip.is-active { background: var(--pf-accent); border-color: var(--pf-accent); color: #fff; }
+.pf-chip:focus-visible { outline: 2px solid var(--pf-accent); outline-offset: 2px; }
 
 /* Rail horizontal (event populer, berita). */
 .pf-rail {
@@ -1060,16 +1082,37 @@
 .pf-sum-total dt { font-weight: 750; font-size: var(--pf-fs-body); }
 .pf-sum-total dd { margin: 0; }
 
-/* Halaman autentikasi: terpusat. */
-.pf-auth { min-height: calc(100vh - var(--pf-nav-h) - var(--pf-tabbar-h)); display: flex; align-items: center; justify-content: center; padding: var(--pf-s6) 0; }
-.pf-auth-card { width: 100%; max-width: 420px; }
-.pf-auth-head { text-align: center; margin-bottom: var(--pf-s5); }
+/* Halaman autentikasi — ikut Auth.jsx: split card 980px, bg #f4f1ff, violet side. */
+.pf-auth { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: #f4f1ff; margin: calc(var(--pf-s5) * -1) calc(var(--pf-s4) * -1) calc((var(--pf-tabbar-h) + var(--pf-s8)) * -1); }
+.pf-auth-card {
+  width: 100%; max-width: 980px; overflow: hidden;
+  background: #fff; border-radius: 32px;
+  box-shadow: 0 24px 64px -24px rgba(80, 60, 180, .35);
+  border: 1px solid #e4e4e7;
+  display: grid;
+}
+@media (min-width: 768px) { .pf-auth-card { grid-template-columns: 1.05fr .95fr; } }
+.pf-auth-form { display: flex; flex-direction: column; padding: 28px 28px; }
+@media (min-width: 640px) { .pf-auth-form { padding: 32px 40px; } }
+.pf-auth-back {
+  display: inline-flex; align-items: center; gap: 4px; width: fit-content;
+  font-size: 12px; font-weight: 500; color: #71717a; margin-bottom: 16px;
+}
+.pf-auth-back:hover { color: #3f3f46; }
+.pf-auth-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+.pf-auth-brand-mark { width: 36px; height: 36px; border-radius: 12px; background: #18181b; color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 14px; }
+.pf-auth-title { font-size: 30px; font-weight: 800; letter-spacing: -.03em; line-height: 1; color: #18181b; }
+.pf-auth-sub { margin-top: 10px; font-size: 14px; line-height: 1.5; color: #71717a; }
+.pf-auth-head { text-align: left; margin-bottom: 24px; }
 .pf-auth-mark {
-  width: 52px; height: 52px; border-radius: var(--pf-r); margin: 0 auto var(--pf-s3);
+  width: 52px; height: 52px; border-radius: var(--pf-r); margin: 0 0 var(--pf-s3);
   background: linear-gradient(140deg, var(--pf-accent), var(--pf-accent-deep));
   color: #fff; display: grid; place-items: center; box-shadow: var(--pf-sh-accent);
 }
 .pf-auth-mark svg { width: 26px; height: 26px; }
+.pf-auth-side { position: relative; overflow: hidden; background: #6b5cff; display: none; }
+@media (min-width: 768px) { .pf-auth-side { display: block; } }
+.pf-auth-side img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .pf-auth-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--pf-s3); flex-wrap: wrap; margin-top: var(--pf-s4); font-size: var(--pf-fs-sm); }
 .pf-auth-link {
   display: inline-flex; align-items: center;

@@ -72,47 +72,52 @@ function LoginForm() {
     }
   };
 
+  const [showPw, setShowPw] = useState(false);
   return (
     <div className="pf-auth">
       <div className="pf-auth-card">
-        <div className="pf-auth-head">
-          <div className="pf-auth-mark"><PfIcon name="user" size={24} /></div>
-          <h1 className="pf-h1">Masuk</h1>
-          <p className="pf-dim" style={{ marginTop: 6 }}>
-            Gunakan akun yang sudah terdaftar untuk melihat tiket dan pesanan Anda.
+        <div className="pf-auth-form">
+          <Link href={`/`} className="pf-auth-back">← Back to Homepage</Link>
+          <div className="pf-auth-brand">
+            <span className="pf-auth-brand-mark">T</span>
+            <span style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-.02em' }}>Tiket APP</span>
+          </div>
+          <h1 className="pf-auth-title">Sign In</h1>
+          <p className="pf-auth-sub">Sign in to manage the application. Accounts are created by admin.</p>
+          {err ? <div style={{ marginTop: 16 }}><PfAlert tone="error">{err}</PfAlert></div> : null}
+          {info ? <div style={{ marginTop: 16 }}><PfAlert tone="ok">{info}</PfAlert></div> : null}
+          <form className="pf-col pf-gap-md" onSubmit={submit} noValidate style={{ marginTop: 16 }}>
+            <PfField label="Username" required htmlFor="pf-login" error={fieldErr.login}>
+              <input id="pf-login" className="pf-input" value={login} autoComplete="username"
+                autoCapitalize="none" spellCheck={false} placeholder="username"
+                onChange={(e) => setLogin(e.target.value)} required />
+            </PfField>
+            <PfField label="Password" required htmlFor="pf-password" error={fieldErr.password}>
+              <div style={{ position: 'relative' }}>
+                <input id="pf-password" className="pf-input" type={showPw ? 'text' : 'password'} value={password}
+                  autoComplete="current-password" placeholder="••••••••" style={{ paddingRight: 44 }}
+                  onChange={(e) => setPassword(e.target.value)} required />
+                <button type="button" onClick={() => setShowPw((v) => !v)} aria-label={showPw ? 'Sembunyikan password' : 'Tampilkan password'}
+                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 0, color: '#71717a', cursor: 'pointer', display: 'grid', placeItems: 'center', width: 28, height: 28, borderRadius: 6 }}>
+                  <PfIcon name={showPw ? 'close' : 'shield'} size={16} />
+                </button>
+              </div>
+            </PfField>
+            <PfButton type="submit" size="lg" block busy={busy} busyLabel="Checking…" style={{ borderRadius: 9999, background: '#6b5cff', borderColor: '#6b5cff', boxShadow: '0 10px 20px rgba(107,92,255,.18)' } as any}>
+              {busy ? 'Checking…' : 'Sign In'}
+            </PfButton>
+          </form>
+          <p style={{ marginTop: 24, textAlign: 'center', fontSize: 12, color: '#71717a' }}>
+            Don&apos;t have an account? <Link href={`/register`} style={{ fontWeight: 600, color: '#3f3f46' }}>Daftar</Link> · <Link href={`/console/`} style={{ fontWeight: 600, color: '#6b5cff' }}>Operator / Console</Link>
           </p>
         </div>
-
-        <div className="pf-card">
-          <div className="pf-card-pad pf-col pf-gap-md">
-            {err ? <PfAlert tone="error">{err}</PfAlert> : null}
-            {info ? <PfAlert tone="ok">{info}</PfAlert> : null}
-
-            <form className="pf-col pf-gap-md" onSubmit={submit} noValidate>
-              <PfField label="Username" required htmlFor="pf-login" error={fieldErr.login}>
-                <input id="pf-login" className="pf-input" value={login} autoComplete="username"
-                  autoCapitalize="none" spellCheck={false}
-                  onChange={(e) => setLogin(e.target.value)} required />
-              </PfField>
-
-              <PfField label="Password" required htmlFor="pf-password" error={fieldErr.password}>
-                <input id="pf-password" className="pf-input" type="password" value={password}
-                  autoComplete="current-password"
-                  onChange={(e) => setPassword(e.target.value)} required />
-              </PfField>
-
-              <PfButton type="submit" size="lg" block icon="logout"
-                busy={busy} busyLabel="Memproses…">
-                Masuk
-              </PfButton>
-            </form>
-
-            <div className="pf-auth-foot">
-              <span className="pf-dim">Belum punya akun?</span>
-              <Link href={`/register`} className="pf-auth-link">Daftar</Link>
-              <Link href={`/console/`} className="pf-auth-link pf-row pf-gap-xs">
-                <PfIcon name="shield" size={16} /> Operator / Console
-              </Link>
+        <div className="pf-auth-side" aria-hidden="true">
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(140deg,#6b5cff,#312e81)', opacity: .98 }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: 'rgba(255,255,255,.9)', padding: 24, textAlign: 'center' }}>
+            <div>
+              <div style={{ width: 64, height: 64, borderRadius: 16, background: 'rgba(255,255,255,.16)', display: 'grid', placeItems: 'center', margin: '0 auto 16px', border: '1px solid rgba(255,255,255,.2)' }}><PfIcon name="ticket" size={24} /></div>
+              <p style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Tiket APP</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,.82)', marginTop: 6, maxWidth: 260, lineHeight: 1.5 }}>Platform tiket terbesar — cari event, beli tiket, QR langsung di akun.</p>
             </div>
           </div>
         </div>

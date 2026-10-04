@@ -107,67 +107,74 @@ export default function PortalHomeClient({ initial, appName, cities }: Props) {
     <PortalShell appName={appName} cities={cities}>
       {error && !src ? <PfError message={error} onRetry={reload} /> : null}
 
-      {/* ------------------------------------------------------------ HERO */}
+      {/* ------------------------------------------------------------ HERO (ala HomePage.jsx) */}
       <section className="pf-hero pf-rise">
+        <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1200&q=80" alt="" className="pf-hero-media" aria-hidden="true" />
+        <div className="pf-hero-grad" aria-hidden="true" />
         <div className="pf-hero-inner">
-          <h1 className="pf-hero-title">Temukan event seru, beli tiketnya gampang</h1>
-          <p className="pf-hero-text">
-            Pilih event, pilih tiket, lalu selesaikan pembayaran. Tiket dan QR-nya langsung muncul di akun Anda.
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <p className="pf-hero-badge">✦ FEATURED EVENT</p>
+            <h1 className="pf-hero-title" style={{ marginTop: 12 }}>Feel the Biggest Music Vibes of the Year!</h1>
+            <p className="pf-hero-text">
+              Get your Jakarta Soundscape ticket now — pilih event, pilih tiket, bayar, QR langsung di akun Anda.
+            </p>
 
-          <form className="pf-hero-search" onSubmit={submitSearch} role="search">
-            <PfIcon name="search" size={20} />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Cari event, berita, promo…"
-              aria-label="Cari event, berita, promo"
-            />
-            <button type="submit" className="pf-btn pf-btn-sm">Cari</button>
-          </form>
+            <form className="pf-hero-search" onSubmit={submitSearch} role="search">
+              <PfIcon name="search" size={20} />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Cari event, berita, promo…"
+                aria-label="Cari event, berita, promo"
+              />
+              <button type="submit" className="pf-btn pf-btn-sm" style={{ background: '#6b5cff', borderColor: '#6b5cff', color: '#fff' }}>Cari</button>
+            </form>
 
-          <div className="pf-row pf-gap-sm pf-wrapx" style={{ marginTop: 'var(--pf-s3)' }}>
-            <div ref={cityBox} style={{ position: 'relative' }}>
-              <button
-                type="button"
-                className="pf-hero-city"
-                onClick={() => setCityOpen((v) => !v)}
-                aria-expanded={cityOpen}
-                aria-haspopup="listbox"
-              >
-                <PfIcon name="location" size={20} />
-                {cityName}
-                <PfIcon name="chevronDown" size={16} />
-              </button>
-              {cityOpen ? (
-                <div className="pf-pop" role="listbox" aria-label="Pilih kota" style={{ minWidth: 220 }}>
-                  <button type="button" role="option" aria-selected={!city}
-                    className={`pf-pop-item${!city ? ' is-active' : ''}`} onClick={() => pickCity('')}>
-                    Semua kota
-                    {!city ? <PfIcon name="check" size={16} /> : null}
-                  </button>
-                  {cities.map((c) => (
-                    <button key={c.CITYCODE} type="button" role="option" aria-selected={city === c.CITYCODE}
-                      className={`pf-pop-item${city === c.CITYCODE ? ' is-active' : ''}`}
-                      onClick={() => pickCity(c.CITYCODE)}>
-                      <span>{c.CITYNAME}</span>
-                      {city === c.CITYCODE ? <PfIcon name="check" size={16} /> : null}
+            <div className="pf-row pf-gap-sm pf-wrapx" style={{ marginTop: 'var(--pf-s3)' }}>
+              <div ref={cityBox} style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  className="pf-hero-city"
+                  onClick={() => setCityOpen((v) => !v)}
+                  aria-expanded={cityOpen}
+                  aria-haspopup="listbox"
+                >
+                  <PfIcon name="location" size={20} />
+                  {cityName}
+                  <PfIcon name="chevronDown" size={16} />
+                </button>
+                {cityOpen ? (
+                  <div className="pf-pop" role="listbox" aria-label="Pilih kota" style={{ minWidth: 220 }}>
+                    <button type="button" role="option" aria-selected={!city}
+                      className={`pf-pop-item${!city ? ' is-active' : ''}`} onClick={() => pickCity('')}>
+                      Semua kota
+                      {!city ? <PfIcon name="check" size={16} /> : null}
                     </button>
-                  ))}
-                </div>
-              ) : null}
+                    {cities.map((c) => (
+                      <button key={c.CITYCODE} type="button" role="option" aria-selected={city === c.CITYCODE}
+                        className={`pf-pop-item${city === c.CITYCODE ? ' is-active' : ''}`}
+                        onClick={() => pickCity(c.CITYCODE)}>
+                        <span>{c.CITYNAME}</span>
+                        {city === c.CITYCODE ? <PfIcon name="check" size={16} /> : null}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="pf-hero-actions">
+              <Link href={`/events`} className="pf-btn pf-btn-soft">
+                Lihat semua event <PfIcon name="arrowRight" size={20} />
+              </Link>
+              <Link href={`/tickets`} className="pf-btn pf-btn-ghost">
+                <PfIcon name="ticket" size={20} /> Tiket saya
+              </Link>
             </div>
           </div>
-
-          <div className="pf-hero-actions">
-            <Link href={`/events`} className="pf-btn pf-btn-soft">
-              Lihat semua event <PfIcon name="arrowRight" size={20} />
-            </Link>
-            <Link href={`/tickets`} className="pf-btn pf-btn-ghost">
-              <PfIcon name="ticket" size={20} /> Tiket saya
-            </Link>
-          </div>
+          <div className="pf-hide-mobile" aria-hidden="true" />
         </div>
+        <div className="pf-hero-dots" aria-hidden="true"><i className="is-on" /><i /><i /></div>
       </section>
 
       {/* ------------------------------------------------- IKLAN (carousel) */}

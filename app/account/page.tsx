@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { isOk, portalPost } from '@/lib/portal/api';
-import { rp, tanggalJam } from '@/lib/portal/format';
+import { tanggalJam } from '@/lib/portal/format';
 import PortalShell from '@/components/portal/PortalShell';
 import PfIcon from '@/components/portal/PfIcon';
 import {
@@ -27,9 +27,6 @@ const TABS = [
   { k: 'profil', l: 'Profil' },
   { k: 'sesi', l: 'Sesi' },
   { k: 'inbox', l: 'Pesan' },
-  { k: 'bayar', l: 'Pembayaran' },
-  { k: 'invoice', l: 'Invoice' },
-  { k: 'refund', l: 'Refund' },
 ];
 
 export default function AccountPage() {
@@ -43,7 +40,6 @@ export default function AccountPage() {
   const [form, setForm] = useState({ username: '', useremail: '', userphone: '' });
   const [pw, setPw] = useState({ oldpassword: '', newpassword: '', confirm: '' });
   const [busy, setBusy] = useState(false);
-  const [lists, setLists] = useState<Record<string, any[]>>({});
 
   // Pesan validasi di dekat input yang bermasalah (bukan alert di atas form).
   const [fieldErr, setFieldErr] = useState<Record<string, string>>({});
@@ -67,11 +63,7 @@ export default function AccountPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  useEffect(() => {
-    if (tab === 'bayar') portalPost('portal/payment/list', {}).then((r) => isOk(r) && setLists((s) => ({ ...s, bayar: r.rows || [] }))).catch(() => {});
-    if (tab === 'invoice') portalPost('portal/invoice/list', {}).then((r) => isOk(r) && setLists((s) => ({ ...s, invoice: r.rows || [] }))).catch(() => {});
-    if (tab === 'refund') portalPost('portal/refund/list', {}).then((r) => isOk(r) && setLists((s) => ({ ...s, refund: r.rows || [] }))).catch(() => {});
-  }, [tab]);
+
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,7 +106,7 @@ export default function AccountPage() {
   const logout = async () => {
     await portalPost('auth/logout', { method: 'logout' }).catch(() => {});
     try {
-      const slug = (process.env.NEXT_PUBLIC_BASE_PATH || '/tiket-app').replace(/^\/|\/+$/g, '');
+      const slug = (process.env.NEXT_PUBLIC_BASE_PATH || '/pcoffie').replace(/^\/|\/+$/g, '');
       localStorage.removeItem(`${slug}::auth::token`);
     } catch { /* ignore */ }
     router.push(`/`);
@@ -255,68 +247,7 @@ export default function AccountPage() {
           </div>
         ) : null}
 
-        {/* -------------------------------------------------------- PEMBAYARAN */}
-        {!loading && tab === 'bayar' ? (
-          <div className="pf-col pf-gap-sm">
-            {(lists.bayar || []).length === 0
-              ? <div className="pf-card"><PfEmpty icon="card" title="Belum ada pembayaran" /></div>
-              : (lists.bayar || []).map((p: any) => (
-                <div key={p.PAYMENTID} className="pf-rowcard">
-                  <div className="pf-rowcard-head">
-                    <span className="pf-ticket-code">{p.PAYNO}</span>
-                    <PfBadge tone={String(p.STATUS).toUpperCase() === 'LUNAS' ? 'ok' : 'warn'}>{p.STATUS}</PfBadge>
-                  </div>
-                  <div className="pf-rowcard-foot">
-                    <span className="pf-tiny">Pembayaran</span>
-                    <span className="pf-price">{rp(p.TOTALPAID)}</span>
-                  </div>
-                </div>
-              ))}
-          </div>
-        ) : null}
 
-        {/* ----------------------------------------------------------- INVOICE */}
-        {!loading && tab === 'invoice' ? (
-          <div className="pf-col pf-gap-sm">
-            {(lists.invoice || []).length === 0
-              ? <div className="pf-card"><PfEmpty icon="receipt" title="Belum ada invoice" /></div>
-              : (lists.invoice || []).map((p: any) => (
-                <div key={p.INVOICEID} className="pf-rowcard">
-                  <div className="pf-rowcard-head">
-                    <span className="pf-ticket-code">{p.INVNO}</span>
-                    <PfBadge tone="info">Invoice</PfBadge>
-                  </div>
-                  <div className="pf-rowcard-foot">
-                    <span className="pf-tiny">Total</span>
-                    <span className="pf-price">{rp(p.TOTAL)}</span>
-                  </div>
-                </div>
-              ))}
-          </div>
-        ) : null}
-
-        {/* ------------------------------------------------------------ REFUND */}
-        {!loading && tab === 'refund' ? (
-          <div className="pf-col pf-gap-sm">
-            {(lists.refund || []).length === 0
-              ? <div className="pf-card"><PfEmpty icon="refresh" title="Belum ada pengajuan refund" /></div>
-              : (lists.refund || []).map((p: any) => (
-                <div key={p.REFUNDID} className="pf-rowcard">
-                  <div className="pf-rowcard-head">
-                    <div className="pf-col pf-gap-xs" style={{ minWidth: 0 }}>
-                      <span className="pf-ticket-code">{p.REFUNDNO}</span>
-                      <span className="pf-tiny pf-clamp-1">{p.EVENTTITLE}</span>
-                    </div>
-                    <PfBadge tone="warn">{p.STATUS}</PfBadge>
-                  </div>
-                  <div className="pf-rowcard-foot">
-                    <span className="pf-tiny">Nominal</span>
-                    <span className="pf-price">{rp(p.NOMINAL)}</span>
-                  </div>
-                </div>
-              ))}
-          </div>
-        ) : null}
       </div>
     </PortalShell>
   );

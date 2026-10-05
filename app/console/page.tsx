@@ -10,9 +10,7 @@ import LoginPage from '@/components/LoginPage';
 import { Icon, iconForModule, iconForLeaf } from '@/components/Icon';
 import { BASE_PATH } from '@/lib/app-config';
 
-// Route Next.js untuk control panel: /tiket-app/console (basePath /tiket-app).
-// Halaman aktif tetap ditentukan state internal lib/route, bukan URL - sama
-// seperti sebelumnya, hanya dipindah ke sub-path /console.
+// Route Next.js untuk control panel: /pcoffie/console (basePath /pcoffie).
 
 function Loading() {
   return (

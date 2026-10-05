@@ -12,9 +12,9 @@
 // Yang TIDAK ikut (di luar repo / infra, lihat checklist rebrand):
 //   httpd.conf (ProxyPass/Location), nama folder, nama database,
 //   APP_URL backend, package.json name.
-const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '/tiket-app';
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH || '/pcoffie';
 
-export const APP_NAME: string = process.env.NEXT_PUBLIC_APP_NAME || 'Tiket APP';
+export const APP_NAME: string = process.env.NEXT_PUBLIC_APP_NAME || 'PCOFFIE';
 
 /** Prefix URL aplikasi, mis. '/tiket-app'. Selalu diawali slash, tanpa trailing slash. */
 export const BASE_PATH: string = BASE.length > 1 ? BASE.replace(/\/+$/, '') : BASE;

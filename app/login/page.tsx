@@ -16,7 +16,7 @@ import { PfAlert, PfButton, PfField } from '@/components/portal/ui';
 
 function saveToken(token: string) {
   try {
-    const slug = (process.env.NEXT_PUBLIC_BASE_PATH || '/tiket-app').replace(/^\/|\/+$/g, '');
+    const slug = (process.env.NEXT_PUBLIC_BASE_PATH || '/pcoffie').replace(/^\/|\/+$/g, '');
     localStorage.setItem(`${slug}::auth::token`, token);
   } catch { /* ignore */ }
 }
@@ -79,8 +79,8 @@ function LoginForm() {
         <div className="pf-auth-form">
           <Link href={`/`} className="pf-auth-back">← Back to Homepage</Link>
           <div className="pf-auth-brand">
-            <span className="pf-auth-brand-mark">T</span>
-            <span style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-.02em' }}>Tiket APP</span>
+            <span className="pf-auth-brand-mark">P</span>
+            <span style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-.02em' }}>PCOFFIE</span>
           </div>
           <h1 className="pf-auth-title">Sign In</h1>
           <p className="pf-auth-sub">Sign in to manage the application. Accounts are created by admin.</p>
@@ -108,7 +108,7 @@ function LoginForm() {
             </PfButton>
           </form>
           <p style={{ marginTop: 24, textAlign: 'center', fontSize: 12, color: '#71717a' }}>
-            Don&apos;t have an account? <Link href={`/register`} style={{ fontWeight: 600, color: '#3f3f46' }}>Daftar</Link> · <Link href={`/console/`} style={{ fontWeight: 600, color: '#06b6d4' }}>Operator / Console</Link>
+            Don&apos;t have an account? Hubungi admin untuk pembuatan akun · <Link href={`/console/`} style={{ fontWeight: 600, color: '#06b6d4' }}>Console</Link>
           </p>
         </div>
         <div className="pf-auth-side" aria-hidden="true">

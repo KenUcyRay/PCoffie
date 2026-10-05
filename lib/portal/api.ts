@@ -40,7 +40,7 @@ export async function portalPost<T = any>(
     // Token Console disimpan di localStorage dengan prefix app.
     // Diambil langsung supaya tidak bentrok dengan lib/api.ts yang memakai memori.
     try {
-      const slug = (process.env.NEXT_PUBLIC_BASE_PATH || '/tiket-app').replace(/^\/|\/+$/g, '');
+      const slug = (process.env.NEXT_PUBLIC_BASE_PATH || '/pcoffie').replace(/^\/|\/+$/g, '');
       token = localStorage.getItem(`${slug}::auth::token`);
     } catch { token = null; }
   }

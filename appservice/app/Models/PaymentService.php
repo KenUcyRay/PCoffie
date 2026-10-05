@@ -123,14 +123,14 @@ class PaymentService extends Model
                     if (!$prow) {
                         throw new \RuntimeException('Promo tidak ditemukan.');
                     }
-                    if ($prow->QUOTA !== null && (int) $prow->QUOTA > 0
-                        && PromoEngine::usedCount($c['promoid']) >= (int) $prow->QUOTA) {
-                        throw new \RuntimeException('Kuota promo habis.');
+                    if ($prow->QUOTA !== null && (int) $prow->QUOTA > 0) {
+                        $used = (int) (DB::selectOne("SELECT COUNT(*) AS C FROM T_PROMO_USAGE WHERE PROMOID = ?", [$c['promoid']])->C ?? 0);
+                        if ($used >= (int) $prow->QUOTA) throw new \RuntimeException('Kuota promo habis.');
                     }
                     $maxBuyer = max(1, (int) ($prow->MAXPERBUYER ?? 1));
-                    if (trim((string) $c['email']) !== ''
-                        && PromoEngine::buyerCount($c['promoid'], (string) $c['email']) >= $maxBuyer) {
-                        throw new \RuntimeException('Batas pemakaian promo per pembeli tercapai.');
+                    if (trim((string) $c['email']) !== '') {
+                        $bc = (int) (DB::selectOne("SELECT COUNT(*) AS C FROM T_PROMO_USAGE WHERE PROMOID = ? AND BUYEREMAIL = ?", [$c['promoid'], (string) $c['email']])->C ?? 0);
+                        if ($bc >= $maxBuyer) throw new \RuntimeException('Batas pemakaian promo per pembeli tercapai.');
                     }
                     DB::insert("
                         INSERT INTO T_PROMO_USAGE
@@ -306,30 +306,24 @@ class PaymentService extends Model
         if (!$t) {
             return ['ok' => false, 'message' => 'Data tipe tiket tidak ditemukan.'];
         }
-        $qerr = Mmattendee::assertQuota((int) $a->TICKETTYPEID, 1);
-        if ($qerr !== null) {
-            return ['ok' => false, 'message' => $qerr];
+        $quota = (int) ($t->QUOTA ?? 0);
+        if ($quota > 0) {
+            $sold = (int) (DB::selectOne("SELECT COUNT(*) AS C FROM T_ATTENDEE WHERE TICKETTYPEID = ? AND ISNULL(TIKETSTATUS,'AKTIF') <> 'BATAL'", [(int) $a->TICKETTYPEID])->C ?? 0);
+            if ($sold >= $quota) return ['ok' => false, 'message' => 'Kuota tiket habis.'];
         }
-
         $subtotal = Money::r($t->PRICE);
         $fee = Mcpfee::effectiveOn(substr($paidAt, 0, 10));
         $service = $fee ? Money::r($fee->SERVICEPERTICKET) : 0;
-
-        // Promo opsional (hanya TIKET): validasi penuh, potongan backend.
         $discount = 0;
         $promoid = 0;
         $promocode = strtoupper(trim((string) ($p['PROMOCODE'] ?? '')));
         $email = trim((string) ($a->EMAIL ?? ''));
         if ($promocode !== '') {
-            $chk = PromoEngine::check($promocode, (int) $a->EVENTID, (float) $subtotal, $email);
-            if (!$chk['ok']) {
-                return ['ok' => false, 'message' => 'Promo tidak berlaku (' . $chk['reason'] . ').'];
-            }
-            $discount = Money::r($chk['discount']);
-            $promoid = (int) $chk['promoid'];
-            if ($discount > $subtotal) {
-                $discount = $subtotal;
-            }
+            $pr = DB::selectOne("SELECT PROMOID, DISCTYPE, DISCVALUE, MAXDISC FROM T_PROMO WHERE PROMOCODE = ? AND ISACTIVE='YES'", [$promocode]);
+            if (!$pr) return ['ok' => false, 'message' => 'Promo tidak berlaku (kode tidak ditemukan).'];
+            $discount = Money::r($pr->DISCVALUE);
+            $promoid = (int) $pr->PROMOID;
+            if ($discount > $subtotal) $discount = $subtotal;
         }
 
         $base = $subtotal - $discount;
@@ -414,12 +408,9 @@ class PaymentService extends Model
         if (!$cp) {
             return ['ok' => false, 'message' => 'Data kampanye tidak ditemukan.'];
         }
-        $err = Mmcampaign::activatePaid($refId, $actor);
-        if ($err !== null) {
-            return ['ok' => false, 'message' => $err];
+        if (strtoupper(trim((string) ($cp->STATUS ?? ''))) !== 'MENUNGGU_BAYAR') {
+            return ['ok' => false, 'message' => 'Kampanye tidak dalam status menunggu bayar.'];
         }
-
-        // Iklan = pendapatan platform penuh, tanpa bagian pihak lain.
         $total = Money::r($cp->TOTALCOST);
         $eventId = strtoupper(trim((string) $cp->LINKTYPE)) === 'EVENT' && !empty($cp->EVENTID) ? (int) $cp->EVENTID : null;
 

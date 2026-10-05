@@ -40,7 +40,7 @@ const SHORT = (s: string, n = 60) => {
 };
 
 const EMPTY: SettingForm = {
-  APPNAME: 'Tiket APP', SLOGAN: '', LOGO: '', FAVICON: '',
+  APPNAME: 'PCOFFIE', SLOGAN: '', LOGO: '', FAVICON: '',
   CONTACTEMAIL: '', CONTACTPHONE: '', CONTACTWA: '', ADDRESS: '',
   TIMEZONE: 'Asia/Jakarta', CURRENCY: 'RP', DATEFORMAT: '',
   TERMS: '', PRIVACY: '', TERMSVERSION: '',
@@ -49,7 +49,7 @@ const EMPTY: SettingForm = {
 };
 
 const toForm = (r: any): SettingForm => ({
-  APPNAME: String(r.APPNAME ?? 'Tiket APP'),
+  APPNAME: String(r.APPNAME ?? 'PCOFFIE'),
   SLOGAN: String(r.SLOGAN || ''),
   LOGO: String(r.LOGO || ''),
   FAVICON: String(r.FAVICON || ''),

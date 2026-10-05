@@ -13,9 +13,8 @@ export function serverApiBase(): string {
   if (raw.startsWith('http://') || raw.startsWith('https://')) {
     return raw.replace(/\/+$/, '');
   }
-  // Produksi: path relatif. Server Next ada di host yang sama dengan backend,
-  // jadi alamat absolutnya=http://127.0.0.1:80 + path.
-  return `http://127.0.0.1:80${raw.replace(/\/+$/, '')}`;
+  const port = process.env.NODE_ENV === 'production' ? '80' : '83';
+  return `http://127.0.0.1:${port}${raw.replace(/\/+$/, '')}`;
 }
 
 export async function serverPortal<T = any>(

@@ -1,16 +1,4 @@
 'use client';
-
-// =============================================================================
-// KATALOG EVENT
-// -----------------------------------------------------------------------------
-// Semua filter disimpan di URL (search params) supaya bisa dibagikan/di-refresh
-// tanpa kehilangan state. Query, urutan, dan harga dihitung backend.
-//
-// Yang diubah dari versi lama hanya TAMPILAN (bar filter lengket, panel filter
-// di ponsel, dropdown seragam, pagination) plus satu perbaikan navigasi: URL
-// tidak boleh ikut memuat basePath, kalau tidak jadi /tiket-app/tiket-app/...
-// =============================================================================
-
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { isOk, portalPost } from '@/lib/portal/api';
@@ -50,6 +38,7 @@ function CatalogInner({ cities }: { cities: { CITYCODE: string; CITYNAME: string
   const [cats, setCats] = useState<{ CATCODE: string; CATNAME: string }[]>([]);
   const [search, setSearch] = useState(q);
   const [sheet, setSheet] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(true);
 
   useEffect(() => { setSearch(q); }, [q]);
 
@@ -85,8 +74,6 @@ function CatalogInner({ cities }: { cities: { CITYCODE: string; CITYNAME: string
 
   useEffect(() => { load(); }, [load]);
 
-  // PERBAIKAN: pathname di router.push TIDAK boleh memuat basePath. Next.js
-  // menambahkannya sendiri; memuatnya dua kali membuat /tiket-app/tiket-app/...
   const setParam = (patch: Record<string, string>) => {
     const next = new URLSearchParams(sp.toString());
     Object.entries(patch).forEach(([k, v]) => {
@@ -102,7 +89,6 @@ function CatalogInner({ cities }: { cities: { CITYCODE: string; CITYNAME: string
   const hasFilter = Boolean(q || cat || city || minp || maxp);
   const activeCount = [cat, city, minp, maxp].filter(Boolean).length;
 
-  /* ------------------------------------------------------ kontrol filter */
   const controls = (
     <>
       <PfField label="Kategori">
@@ -111,27 +97,23 @@ function CatalogInner({ cities }: { cities: { CITYCODE: string; CITYNAME: string
           {cats.map((c) => <option key={c.CATCODE} value={c.CATCODE}>{c.CATNAME}</option>)}
         </PfSelectWrap>
       </PfField>
-
       <PfField label="Kota">
         <PfSelectWrap value={city} onChange={(e) => setParam({ city: e.target.value })} aria-label="Kota">
           <option value="">Semua kota</option>
           {cities.map((c) => <option key={c.CITYCODE} value={c.CITYCODE}>{c.CITYNAME}</option>)}
         </PfSelectWrap>
       </PfField>
-
       <PfField label="Urutkan">
         <PfSelectWrap value={sort} onChange={(e) => setParam({ sort: e.target.value })} aria-label="Urutkan">
           {SORTS.map((s) => <option key={s.v} value={s.v}>{s.l}</option>)}
         </PfSelectWrap>
       </PfField>
-
-      <PfField label="Harga minimum">
-        <input className="pf-input" inputMode="numeric" placeholder="Min" aria-label="Harga minimum"
+      <PfField label="Harga min">
+        <input className="pf-input" inputMode="numeric" placeholder="0" aria-label="Harga minimum"
           value={minp} onChange={(e) => setParam({ minprice: e.target.value.replace(/\D/g, '') })} />
       </PfField>
-
-      <PfField label="Harga maksimum">
-        <input className="pf-input" inputMode="numeric" placeholder="Maks" aria-label="Harga maksimum"
+      <PfField label="Harga maks">
+        <input className="pf-input" inputMode="numeric" placeholder="—" aria-label="Harga maksimum"
           value={maxp} onChange={(e) => setParam({ maxprice: e.target.value.replace(/\D/g, '') })} />
       </PfField>
     </>
@@ -139,9 +121,8 @@ function CatalogInner({ cities }: { cities: { CITYCODE: string; CITYNAME: string
 
   return (
     <PortalShell cities={cities}>
-      {/* ------------------------------------------------- pencarian + filter */}
       <div className="pf-filterbar">
-        <div className="pf-col pf-gap-md">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <form className="pf-searchbar"
             onSubmit={(e) => { e.preventDefault(); setParam({ q: search }); }} role="search">
             <PfIcon name="search" size={20} />
@@ -151,14 +132,17 @@ function CatalogInner({ cities }: { cities: { CITYCODE: string; CITYNAME: string
             <button type="submit" className="pf-btn pf-btn-sm">Cari</button>
           </form>
 
-          <div className="pf-row-between pf-wrapx pf-gap-sm">
-            <span className="pf-sm pf-muted" aria-live="polite">
+          <div className="pf-filter-top">
+            <span className="pf-filter-status pf-sm pf-muted" aria-live="polite">
               {loading ? 'Memuat…' : `${total} event ditemukan`}
               {hasFilter ? <PfBadge tone="accent" icon="filter">{activeCount + (q ? 1 : 0)} filter aktif</PfBadge> : null}
             </span>
-
-            <div className="pf-row pf-gap-sm">
-              {/* Di ponsel filter masuk sheet; di layar lebar tampil langsung. */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <button type="button" className="pf-btn pf-btn-ghost pf-btn-sm pf-hide-mobile"
+                onClick={() => setFilterOpen((v) => !v)} aria-expanded={filterOpen} aria-controls="pf-filter-panel">
+                <PfIcon name="filter" size={16} /> Filter
+                {activeCount ? <PfBadge tone="accent">{activeCount}</PfBadge> : null}
+              </button>
               <button type="button" className="pf-btn pf-btn-ghost pf-btn-sm pf-only-mobile"
                 onClick={() => setSheet(true)} aria-haspopup="dialog">
                 <PfIcon name="filter" size={16} /> Filter
@@ -173,11 +157,15 @@ function CatalogInner({ cities }: { cities: { CITYCODE: string; CITYNAME: string
             </div>
           </div>
 
-          <div className="pf-filtergrid pf-hide-mobile">{controls}</div>
+          <div id="pf-filter-panel" className={`pf-filter-card ${filterOpen ? '' : 'pf-hide-mobile'}`} style={filterOpen ? undefined : { display: 'none' } as any}>
+            <div className="pf-filtergrid">{controls}</div>
+          </div>
+          <div className="pf-only-mobile" style={{ display: 'none' }} aria-hidden="true">
+            <div className="pf-filtergrid">{controls}</div>
+          </div>
         </div>
       </div>
 
-      {/* ------------------------------------------------------------ hasil */}
       {error ? <PfError message={error} onRetry={load} /> : null}
       {loading ? <PfLoadingGrid count={PER_PAGE} /> : null}
 
@@ -218,9 +206,36 @@ function CatalogInner({ cities }: { cities: { CITYCODE: string; CITYNAME: string
         </nav>
       ) : null}
 
-      {/* ------------------------------------------- panel filter untuk ponsel */}
       <PfSheet open={sheet} onClose={() => setSheet(false)} title="Filter event">
-        {controls}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <PfField label="Kategori">
+            <PfSelectWrap value={cat} onChange={(e) => setParam({ cat: e.target.value })} aria-label="Kategori">
+              <option value="">Semua kategori</option>
+              {cats.map((c) => <option key={c.CATCODE} value={c.CATCODE}>{c.CATNAME}</option>)}
+            </PfSelectWrap>
+          </PfField>
+          <PfField label="Kota">
+            <PfSelectWrap value={city} onChange={(e) => setParam({ city: e.target.value })} aria-label="Kota">
+              <option value="">Semua kota</option>
+              {cities.map((c) => <option key={c.CITYCODE} value={c.CITYCODE}>{c.CITYNAME}</option>)}
+            </PfSelectWrap>
+          </PfField>
+          <div style={{ gridColumn: 'span 2' }}>
+            <PfField label="Urutkan">
+              <PfSelectWrap value={sort} onChange={(e) => setParam({ sort: e.target.value })} aria-label="Urutkan">
+                {SORTS.map((s) => <option key={s.v} value={s.v}>{s.l}</option>)}
+              </PfSelectWrap>
+            </PfField>
+          </div>
+          <PfField label="Harga min">
+            <input className="pf-input" inputMode="numeric" placeholder="0" aria-label="Harga minimum"
+              value={minp} onChange={(e) => setParam({ minprice: e.target.value.replace(/\D/g, '') })} />
+          </PfField>
+          <PfField label="Harga maks">
+            <input className="pf-input" inputMode="numeric" placeholder="—" aria-label="Harga maksimum"
+              value={maxp} onChange={(e) => setParam({ maxprice: e.target.value.replace(/\D/g, '') })} />
+          </PfField>
+        </div>
         <PfButton block size="lg" icon="check" onClick={() => setSheet(false)}>
           Tampilkan {total} event
         </PfButton>

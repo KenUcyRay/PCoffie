@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Model;
 // kecuali LedgerService::add (argumen tidak valid = bug pemanggil).
 class PaymentService extends Model
 {
-    const TYPES = ['TIKET', 'MERCH', 'IKLAN'];
+    const TYPES = ['MERCH', 'IKLAN'];
 
     // Batas export CSV (ikuti pola halaman lain).
     const EXPORT_LIMIT = 10000;

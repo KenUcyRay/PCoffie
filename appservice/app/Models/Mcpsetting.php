@@ -77,7 +77,7 @@ class Mcpsetting extends Model
         ");
 
         return json_encode(['success' => true, 'Rows' => [$row ?: [
-            'APPNAME' => 'Tiket APP', 'SLOGAN' => '', 'LOGO' => null, 'FAVICON' => null,
+            'APPNAME' => 'PCOFFIE', 'SLOGAN' => '', 'LOGO' => null, 'FAVICON' => null,
         ]]]);
     }
 
@@ -388,7 +388,7 @@ class Mcpsetting extends Model
 
         $sent = SmtpMailer::send(
             $cfg, $to,
-            'Email Uji - ' . trim((string) ($vdata['APPNAME'] ?? 'Tiket APP')),
+            'Email Uji - ' . trim((string) ($vdata['APPNAME'] ?? 'PCOFFIE')),
             "Ini email uji dari halaman General Setting.\n\nPengaturan SMTP Anda berfungsi dengan baik."
         );
 

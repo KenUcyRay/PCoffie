@@ -2,7 +2,7 @@
 -- Idempotent: Cek dulu apakah sudah ada, baru INSERT
 -- Module System (1) sudah ada, tidak diubah
 -- Module Discovery (2) -> DEFSHORT=2
--- Module Event (3) -> DEFSHORT=3
+-- Module Event removed (was 3) — PCOFFIE warnet
 -- Module Ticketing (4) -> DEFSHORT=4
 -- Module Merchandise (5) -> DEFSHORT=5
 -- Module Marketing (6) -> DEFSHORT=6
@@ -14,10 +14,7 @@ INSERT INTO CPMATRIX (DEFMODULE, DEFCODE, DEFNAME, DEFSHORT, DEFIMAGE)
 SELECT 'MODULE MENU', 'MODDISC', 'Module Discovery', 2, 'planet'
 WHERE NOT EXISTS (SELECT 1 FROM CPMATRIX WHERE DEFMODULE='MODULE MENU' AND DEFCODE='MODDISC');
 
--- 2) Module Event (icon: calendarEvent) -> MODEVENT
-INSERT INTO CPMATRIX (DEFMODULE, DEFCODE, DEFNAME, DEFSHORT, DEFIMAGE)
-SELECT 'MODULE MENU', 'MODEVENT', 'Module Event', 3, 'calendarEvent'
-WHERE NOT EXISTS (SELECT 1 FROM CPMATRIX WHERE DEFMODULE='MODULE MENU' AND DEFCODE='MODEVENT');
+-- 2) Module Event removed — PCOFFIE warnet (was MODEVENT)
 
 -- 3) Module Ticketing (icon: ticket) -> MODTICKET
 INSERT INTO CPMATRIX (DEFMODULE, DEFCODE, DEFNAME, DEFSHORT, DEFIMAGE)

@@ -147,7 +147,7 @@ class C_home extends Controller
             if ($grp && strtoupper(trim((string) $grp->USERGROUP)) === 'GROUP_USER') {
                 return response()->json([
                     'success' => 'false',
-                    'message' => 'Akun pembeli tidak punya akses Console. Gunakan portal /tiket-app/.'
+                    'message' => 'Akun pembeli tidak punya akses Console. Gunakan portal /pcoffie/.'
                 ], 403);
             }
         } catch (\Exception $e) {

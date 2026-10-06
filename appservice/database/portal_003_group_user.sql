@@ -60,19 +60,9 @@ END
 --    MCODE mcontrol portal + induknya (MPARRENT), supaya pohon menu utuh.
 DECLARE @MENUS TABLE (MNAME varchar(100), MCONTROL varchar(50));
 
+-- PCOFFIE warnet — hanya Home untuk GROUP_USER (event/tiket removed)
 INSERT INTO @MENUS (MNAME, MCONTROL) VALUES
-    ('Home',            'mhome'),
-    ('Event List',      'meventlist'),
-    ('Event by Category','meventcategory'),
-    ('Event by City',   'meventcity'),
-    ('News List',       'mnewslist'),
-    ('Promo List',      'mpromolist'),
-    ('Product List',    'mproduct'),
-    ('My Ticket',       'mmyticket'),
-    ('Ticket Refund',   'mrefund'),
-    ('My Purchase',     'mmypurchase'),
-    ('Payment History', 'mpayment'),
-    ('Invoice List',    'minvoice');
+    ('Home',            'mhome');
 
 DECLARE @INS int = 0;
 DECLARE @MNAME varchar(100), @MCONTROL varchar(50), @MCODE numeric, @MMODULE varchar(50), @MPARENT numeric;

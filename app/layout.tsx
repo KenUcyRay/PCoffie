@@ -1,6 +1,7 @@
 import type { Viewport } from 'next';
 import { APP_NAME } from '@/lib/app-config';
 import Providers from './providers';
+import './portal.css';
 
 export const metadata = { title: APP_NAME, description: 'Core universal — login + usergroup + usersetting' };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, maximumScale: 1 };

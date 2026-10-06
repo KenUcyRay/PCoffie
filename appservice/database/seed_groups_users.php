@@ -29,22 +29,7 @@ use Illuminate\Support\Facades\DB;
 // Definisi group baru: kode => [nama, daftar MCODE leaf yang diizinkan]
 // ---------------------------------------------------------------------------
 $GROUPS = [
-    'GROUP_EVENT' => [
-        'name'  => 'Operator Event',
-        'menus' => [
-            20000001, // Home (Discovery, top-level)
-            20010002, // Event List
-            20010003, // Event by Category
-            20010004, // Event by City
-            20020002, // News List
-            20020003, // Promo List
-            30010002, // Event Data
-            30010003, // Ticket Type
-            30010004, // Attendee List
-            40010002, // My Ticket
-            40010003, // Ticket Refund
-        ],
-    ],
+    // GROUP_EVENT removed — PCOFFIE warnet (see z_drop_event_family.sql)
     'GROUP_OFFICER' => [
         'name'  => 'Petugas Gerbang',
         'menus' => [
@@ -66,7 +51,6 @@ $GROUPS = [
         'name'  => 'Operator Pemasaran',
         'menus' => [
             20000001, // Home (Discovery, top-level)
-            20010002, // Event List
             20020002, // News List
             20020003, // Promo List
             60010002, // Promo Code
@@ -91,7 +75,6 @@ $GROUPS = [
 
 // Akun: userlogin => [nama tampilan, group]
 $USERS = [
-    'event'     => ['Operator Event',       'GROUP_EVENT'],
     'officer'   => ['Petugas Gerbang',      'GROUP_OFFICER'],
     'merch'     => ['Operator Merchandise', 'GROUP_MERCH'],
     'marketing' => ['Operator Pemasaran',   'GROUP_MARKETING'],

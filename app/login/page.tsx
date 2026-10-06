@@ -1,24 +1,14 @@
 'use client';
-
-// Login portal. Memakai endpoint auth/login yang SAMA dengan Console
-// (Mlogin -> SP_USERLOGIN -> JWT + T_USER_SESSION + LoginTrail).
-// Tidak ada pendaftaran mandiri di backend yang berbeda; daftar akun memakai
-// endpoint portal/public/auth/register (GROUP_USER).
-
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
-import { BASE_PATH } from '@/lib/app-config';
+import { Suspense, useState } from 'react';
 import { isOk, portalPost } from '@/lib/portal/api';
-import '@/app/portal.css';
-import PfIcon from '@/components/portal/PfIcon';
-import { PfAlert, PfButton, PfField } from '@/components/portal/ui';
 
 function saveToken(token: string) {
   try {
     const slug = (process.env.NEXT_PUBLIC_BASE_PATH || '/pcoffie').replace(/^\/|\/+$/g, '');
     localStorage.setItem(`${slug}::auth::token`, token);
-  } catch { /* ignore */ }
+  } catch {}
 }
 
 function LoginForm() {
@@ -26,33 +16,26 @@ function LoginForm() {
   const sp = useSearchParams();
   const next = sp.get('next') || '';
   const [login, setLogin] = useState('');
-  const [password, setPassword] = useState('');
+  const [pw, setPw] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [remember, setRemember] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const [info, setInfo] = useState('');
   const [fieldErr, setFieldErr] = useState<Record<string, string>>({});
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Tampilan saja: tandai isian kosong lalu fokuskan yang pertama salah.
     const bad: Record<string, string> = {};
-    if (!login.trim()) bad.login = 'Username wajib diisi.';
-    if (!password) bad.password = 'Password wajib diisi.';
+    if (!login.trim()) bad.login = 'Email wajib diisi.';
+    if (!pw) bad.password = 'Password wajib diisi.';
     setFieldErr(bad);
-    if (Object.keys(bad).length) {
-      document.getElementById(`pf-${Object.keys(bad)[0]}`)?.focus();
-      return;
-    }
+    if (Object.keys(bad).length) return;
     setBusy(true);
     setErr('');
-    setInfo('');
     try {
-      const res: any = await portalPost('auth/login', { method: 'login', userlogin: login, userpassword: password }, { auth: false });
+      const res: any = await portalPost('auth/login', { method: 'login', userlogin: login, userpassword: pw }, { auth: false });
       if (!isOk(res) || !res?.token) {
-        // Pesan sengaja umum: tidak membedakan username salah vs password salah.
-        setErr(res?.message || 'Username atau password salah.');
-        setFieldErr({ password: 'Periksa kembali username dan password Anda.' });
-        document.getElementById('pf-login')?.focus();
+        setErr(res?.message || 'Email atau password salah.');
         setBusy(false);
         return;
       }
@@ -60,59 +43,84 @@ function LoginForm() {
       const me: any = await portalPost('auth/me', { method: 'me' });
       const profile = (typeof me?.profile === 'string' ? JSON.parse(me.profile) : me?.profile) || {};
       const group = String(profile.USERGROUP || '').toUpperCase();
-      if (group === 'GROUP_USER') {
-        router.push(next || '/');
-      } else {
-        // Akun operator diarahkan ke Console.
-        router.push(`/console/`);
-      }
+      if (group === 'GROUP_USER') router.push(next || '/');
+      else router.push('/console/');
     } catch (e: any) {
       setErr(e?.message || 'Gagal masuk. Coba lagi.');
       setBusy(false);
     }
   };
 
-  const [showPw, setShowPw] = useState(false);
   return (
-    <div className="pf-auth">
-      <div className="pf-auth-card">
-        <div className="pf-auth-form">
-          <Link href={`/`} className="pf-auth-back">← Back to Homepage</Link>
-          <div className="pf-auth-brand">
-            <span className="pf-auth-brand-mark">P</span>
-            <span style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-.02em' }}>PCOFFIE</span>
+    <div className="pc-dark" style={{ minHeight: '100vh', background: '#020617' }}>
+      <div className="pc-login">
+        <div className="pc-login-left">
+          <div style={{ position: 'absolute', inset: 0, opacity: .35, background: `repeating-linear-gradient(90deg,transparent 0 40px,rgba(59,130,246,.08) 40px 41px,transparent 41px 80px),radial-gradient(600px 500px at 40% 30%,rgba(6,182,214,.12),transparent)` }} aria-hidden="true" />
+          <div className="pc-login-logo" style={{ zIndex: 1 }}><span className="pc-login-logo-mark">🎮</span>PCoffie</div>
+          <div className="pc-login-hero" style={{ zIndex: 1 }}>
+            <h1>Booking PC Jadi<br /><em>Lebih Mudah</em></h1>
           </div>
-          <h1 className="pf-auth-title">Sign In</h1>
-          <p className="pf-auth-sub">Sign in to manage the application. Accounts are created by admin.</p>
-          {err ? <div style={{ marginTop: 16 }}><PfAlert tone="error">{err}</PfAlert></div> : null}
-          {info ? <div style={{ marginTop: 16 }}><PfAlert tone="ok">{info}</PfAlert></div> : null}
-          <form className="pf-col pf-gap-md" onSubmit={submit} noValidate style={{ marginTop: 16 }}>
-            <PfField label="Username" required htmlFor="pf-login" error={fieldErr.login}>
-              <input id="pf-login" className="pf-input" value={login} autoComplete="username"
-                autoCapitalize="none" spellCheck={false} placeholder="username"
-                onChange={(e) => setLogin(e.target.value)} required />
-            </PfField>
-            <PfField label="Password" required htmlFor="pf-password" error={fieldErr.password}>
-              <div style={{ position: 'relative' }}>
-                <input id="pf-password" className="pf-input" type={showPw ? 'text' : 'password'} value={password}
-                  autoComplete="current-password" placeholder="••••••••" style={{ paddingRight: 44 }}
-                  onChange={(e) => setPassword(e.target.value)} required />
-                <button type="button" onClick={() => setShowPw((v) => !v)} aria-label={showPw ? 'Sembunyikan password' : 'Tampilkan password'}
-                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 0, color: '#71717a', cursor: 'pointer', display: 'grid', placeItems: 'center', width: 28, height: 28, borderRadius: 6 }}>
-                  <PfIcon name={showPw ? 'close' : 'shield'} size={16} />
+          <div style={{ display: 'grid', gap: 12, zIndex: 1 }}>
+            {[
+              { i: '⚡', t: 'Booking Online', d: 'Pesan tempat favoritmu kapan saja dan di mana saja.' },
+              { i: '🛡', t: 'Tanpa Antri', d: 'Langsung main tanpa harus menunggu giliran di kasir.' },
+              { i: '⭐', t: 'Harga Transparan', d: 'Biaya jelas tanpa ada biaya tambahan tersembunyi.' },
+            ].map(c => (
+              <div key={c.t} className="pc-login-card">
+                <span className="pc-login-card-ico">{c.i}</span>
+                <div><b>{c.t}</b><p>{c.d}</p></div>
+              </div>
+            ))}
+          </div>
+          <div className="pc-login-avatars" style={{ zIndex: 1 }}>
+            <span className="pc-login-avatars-stack"><i>U</i><i>U</i><i>U</i><i>U</i></span>
+            <span>Bergabung dengan <b>2.500+</b> gamer aktif lainnya.</span>
+          </div>
+        </div>
+
+        <div className="pc-login-right">
+          <form onSubmit={submit} noValidate className="pc-login-box">
+            <h2>Selamat Datang Kembali</h2>
+            <p className="pc-login-sub">Masuk untuk mulai booking PC pilihanmu.</p>
+            {err ? <div style={{ background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', color: '#fca5a5', padding: '8px 12px', borderRadius: 8, fontSize: 12 }}>{err}</div> : null}
+
+            <div className="pc-field">
+              <label htmlFor="pc-email">Email</label>
+              <div className="pc-input-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16v16H4z" /><path d="M4 8l8 6 8-6" /></svg>
+                <input id="pc-email" className="pc-input" value={login} onChange={e => setLogin(e.target.value)} placeholder="nama@email.com" autoComplete="username" autoCapitalize="none" spellCheck={false} required style={fieldErr.login ? { borderColor: '#ef4444' } : undefined} />
+              </div>
+              {fieldErr.login ? <span style={{ fontSize: 11, color: '#fca5a5' }}>{fieldErr.login}</span> : null}
+            </div>
+
+            <div className="pc-field">
+              <label htmlFor="pc-pw">Password <Link href="#">Lupa password?</Link></label>
+              <div className="pc-input-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                <input id="pc-pw" className="pc-input" type={showPw ? 'text' : 'password'} value={pw} onChange={e => setPw(e.target.value)} placeholder="••••••••" autoComplete="current-password" required style={{ paddingRight: 40, borderColor: fieldErr.password ? '#ef4444' : undefined }} />
+                <button type="button" className="pc-eye" onClick={() => setShowPw(v => !v)} aria-label={showPw ? 'Sembunyi' : 'Lihat'}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" /><circle cx="12" cy="12" r="3" /></svg>
                 </button>
               </div>
-            </PfField>
-            <PfButton type="submit" size="lg" block busy={busy} busyLabel="Checking…" style={{ borderRadius: 9999, background: '#06b6d4', borderColor: '#06b6d4', boxShadow: '0 10px 20px rgba(6,182,214,.18)' } as any}>
-              {busy ? 'Checking…' : 'Sign In'}
-            </PfButton>
+              {fieldErr.password ? <span style={{ fontSize: 11, color: '#fca5a5' }}>{fieldErr.password}</span> : null}
+            </div>
+
+            <label className="pc-check"><input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} />Ingat saya di perangkat ini</label>
+
+            <button type="submit" disabled={busy} className="pc-btn-primary" style={{ width: '100%', height: 42, borderRadius: 6, justifyContent: 'center' }}>
+              {busy ? 'Memproses…' : 'Masuk'} <span aria-hidden="true">→</span>
+            </button>
+
+            <div className="pc-divider">ATAU</div>
+
+            <button type="button" className="pc-btn-ghost" style={{ width: '100%', justifyContent: 'center', gap: 8 }}>
+              <span style={{ width: 16, height: 16, background: '#fff', borderRadius: 2, display: 'inline-block' }} />
+              Masuk dengan Google
+            </button>
+
+            <p className="pc-login-foot">Belum punya akun? <Link href="#">Daftar</Link></p>
+            <p style={{ textAlign: 'center', fontSize: 10, color: '#475569' }}><Link href="/" style={{ color: '#475569' }}>← Kembali ke Beranda</Link> · <Link href="/console" style={{ color: '#3b82f6' }}>Console</Link></p>
           </form>
-          <p style={{ marginTop: 24, textAlign: 'center', fontSize: 12, color: '#71717a' }}>
-            Don&apos;t have an account? Hubungi admin untuk pembuatan akun · <Link href={`/console/`} style={{ fontWeight: 600, color: '#06b6d4' }}>Console</Link>
-          </p>
-        </div>
-        <div className="pf-auth-side" aria-hidden="true">
-          <img src={`${BASE_PATH}/login-card.png`} alt="" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       </div>
     </div>
@@ -121,10 +129,8 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="pf-root" style={{ background: '#ecfeff' }}>
-      <Suspense fallback={<div className="pf-auth" style={{ margin: 0, minHeight: '100vh' }}><div className="pf-auth-card"><div className="pf-skel" style={{ height: 340, borderRadius: 18 }} /></div></div>}>
-        <LoginForm />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div className="pc-dark" style={{ minHeight: '100vh', background: '#020617', display: 'grid', placeItems: 'center', color: '#64748b' }}>Memuat…</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

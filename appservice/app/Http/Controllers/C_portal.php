@@ -38,4 +38,10 @@ class C_portal extends Controller
     {
         return self::send(Mportal::profile($r->all()));
     }
+
+    public function warnetPakets(Request $r) { return self::send(Mportal::warnetPakets($r->all())); }
+    public function warnetPcs(Request $r) { return self::send(Mportal::warnetPcs($r->all())); }
+    public function warnetBookingRequest(Request $r) { return self::send(Mportal::warnetBookingRequest($r->all())); }
+    public function warnetMyBookings(Request $r) { return self::send(Mportal::warnetMyBookings($r->all())); }
+    public function warnetBookingCancel(Request $r) { return self::send(Mportal::warnetBookingCancel($r->all())); }
 }

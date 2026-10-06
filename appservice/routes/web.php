@@ -21,11 +21,16 @@ $router->group(['prefix' => 'api/core'], function () use ($router) {
         $router->post('/home', 'C_portal@public_home');
         $router->post('/cities', 'C_portal@public_cities');
         $router->post('/auth/register', 'C_portal@register');
+        $router->post('/warnet-pakets', 'C_portal@warnetPakets');
+        $router->post('/warnet-pcs', 'C_portal@warnetPcs');
     });
 
     $router->group(['prefix' => 'portal', 'middleware' => 'jwt'], function () use ($router) {
         $router->post('/whoami', 'C_portal@whoami');
         $router->post('/profile', 'C_portal@profile');
+        $router->post('/warnet-booking-request', 'C_portal@warnetBookingRequest');
+        $router->post('/warnet-my-bookings', 'C_portal@warnetMyBookings');
+        $router->post('/warnet-booking-cancel', 'C_portal@warnetBookingCancel');
     });
 
     $router->group(['middleware' => 'jwt'], function () use ($router) {

@@ -1,6 +1,6 @@
 // Pengambilan data di sisi SERVER untuk halaman publik portal.
 //
-// Halaman publik (beranda, katalog, detail event, berita, promo, merch)
+// Halaman publik (beranda, reservasi, akun)
 // dirender di server supaya HTML pertama sudah berisi konten. Data tetap
 // diambil dari backend yang sama seperti halaman Console - tidak ada logika
 // yang diduplikasi.

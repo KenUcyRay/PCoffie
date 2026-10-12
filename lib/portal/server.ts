@@ -7,15 +7,30 @@
 //
 // Only dipanggil dari Server Component (tidak boleh pakai di client).
 
-/** Base URL API absolut untuk sisi server (dev & produksi). */
-export function serverApiBase(): string {
-  const raw = process.env.NEXT_PUBLIC_API_BASE || '';
-  if (raw.startsWith('http://') || raw.startsWith('https://')) {
-    return raw.replace(/\/+$/, '');
+  /** Base URL API absolut untuk sisi server (dev & produksi).
+   *
+   *  PENTANG: port Apache PCoffie di server produksi adalah 82 (bukan 80/83).
+   *  Dulu port ini ditulis hardcoded dan selalu mengarah ke 80, sehingga SSR diam-diam
+   *  mengambil data dari backend aplikasi lain yang kebetulan listen di 80.
+   *  Karena itu port sekarang diambil dari env:
+   *    1. SERVER_API_BASE            (penuh, paling eksplisit — dipakai produksi)
+   *    2. NEXT_PUBLIC_API_BASE       (kalau sudah absolut, mis. di mode dev)
+   *    3. SERVER_API_PORT + path relatif (fallback)
+   */
+  export function serverApiBase(): string {
+    const absolute = (process.env.SERVER_API_BASE || '').trim();
+    if (absolute.startsWith('http://') || absolute.startsWith('https://')) {
+      return absolute.replace(/\/+$/, '');
+    }
+
+    const raw = process.env.NEXT_PUBLIC_API_BASE || '';
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return raw.replace(/\/+$/, '');
+    }
+
+    const port = process.env.SERVER_API_PORT || '80';
+    return `http://127.0.0.1:${port}${raw.replace(/\/+$/, '')}`;
   }
-  const port = process.env.NODE_ENV === 'production' ? '80' : '83';
-  return `http://127.0.0.1:${port}${raw.replace(/\/+$/, '')}`;
-}
 
 export async function serverPortal<T = any>(
   path: string,

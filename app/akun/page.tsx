@@ -25,10 +25,18 @@ function AkunInner(){
     setLoading(false);
   };
   useEffect(()=>{ load(); },[]);
+  useEffect(()=>{
+    const id=setInterval(()=>{ if(document.visibilityState==='visible') load(); },15000);
+    const onVis=()=>{ if(document.visibilityState==='visible') load(); };
+    document.addEventListener('visibilitychange',onVis);
+    const onFocus=()=>load();
+    window.addEventListener('focus',onFocus);
+    return()=>{ clearInterval(id); document.removeEventListener('visibilitychange',onVis); window.removeEventListener('focus',onFocus); };
+  },[]);
   const filtered=useMemo(()=>{
     let r=[...rows];
     if(tab==='aktif') r=r.filter(x=>['pending','approved','running'].includes(x.STATUS));
-    if(tab==='riwayat') r=r.filter(x=>['done','cancel'].includes(x.STATUS));
+    if(tab==='riwayat') { /* history tampil semua status */ }
     if(f!=='all') r=r.filter(x=>x.STATUS===f);
     if(q.trim()){ const s=q.toLowerCase(); r=r.filter(x=> `${x.BOOKNO} ${x.PCNO} ${x.PAKETNAMA||''}`.toLowerCase().includes(s)); }
     return r;

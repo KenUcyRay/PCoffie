@@ -1569,7 +1569,7 @@
 .pc-dark .pc-kv dd{ font-weight:700; color:#f1f5f9; }
 .pc-dark .pc-kv.is-total{ border-top:1px dashed #1e3a5f; padding-top:12px; margin-top:4px; }
 .pc-dark .pc-kv.is-total dd{ color:#3b82f6; font-size:16px; }
-.pc-dark .pc-pay-opt{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; border:1.5px solid #1e3a5f; background:#020617; cursor:pointer; width:100%; text-align:left; }
+.pc-dark .pc-pay-opt{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; border:1.5px solid #1e3a5f; background:#020617; cursor:pointer; width:100%; text-align:left; color:#fff; }
 .pc-dark .pc-pay-opt.is-on{ border-color:#3b82f6; background:rgba(59,130,246,.08); }
 .pc-dark .pc-pay-opt input{ accent-color:#3b82f6; }
 .pc-dark .pc-dash-wrap{ max-width:1180px; margin:0 auto; padding:24px; display:grid; gap:20px; }

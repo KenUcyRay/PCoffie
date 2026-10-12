@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useMemo, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { isOk, portalPost } from '@/lib/portal/api';
 import PortalNav from '@/components/PortalNav';
 
@@ -9,7 +9,7 @@ type Paket = { PAKETID:number; KODE:string; NAMA:string; ZONA:string; DURASI_MEN
 type Pc = { PCID:number; PCNO:string; ZONA:string; SPEK:string; HARGA_PERJAM:number; STATUS:string; AVAILABLE?:string };
 
 function ReservasiInner() {
-  const sp = useSearchParams();
+  const sp = useSearchParams(); const router = useRouter();
   const [pakets,setPakets]=useState<Paket[]>([]); const [pcs,setPcs]=useState<Pc[]>([]);
   const [zone,setZone]=useState<'all'|'REGULER'|'VIP'|'VVIP'>('all');
   const [paketId,setPaketId]=useState<string>(''); const [pick,setPick]=useState<string>('');
@@ -40,7 +40,7 @@ function ReservasiInner() {
     setBusy(true);
     try{
       const r:any=await portalPost('portal/warnet-booking-request',{ pcid: Number(pick), paketid: paketId?Number(paketId):null, tgl, jam, dur, paymethod: pay });
-      if(isOk(r)) pop(`Request pending: ${r.bookno||'OK'} — tunggu approve operator.`);
+      if(isOk(r)){ pop(`Request pending: ${r.bookno||'OK'} — tunggu approve operator.`); setTimeout(()=>router.push('/akun?tab=aktif'),900); }
       else pop(r?.message||'Gagal request.');
     }catch(e:any){ pop(e?.message||'Gagal request — login dulu.'); }
     setBusy(false);

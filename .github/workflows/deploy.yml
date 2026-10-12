@@ -1,0 +1,92 @@
+name: Deploy PCoffie ke Server
+
+# Trigger otomatis setiap ada push ke branch main.
+on:
+  push:
+    branches: [main]
+  # Bisa dipicu manual dari tab Actions -> Run workflow.
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-pcoffie-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build, restart, health check
+    # Runner jalan di server Tiket/Cafe/PCoffie itu sendiri (self-hosted).
+    # Runner GitHub bawaan tidak bisa menjangkau 100.93.147.60 (IP Tailscale).
+    runs-on: [self-hosted, production, pcoffie]
+
+    steps:
+      - name: Ringkasan deploy
+        run: |
+          echo "### Deploy PCoffie" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit : \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Pesan  : ${GITHUB_COMMIT_MESSAGE:-}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Oleh   : @${GITHUB_ACTOR}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Waktu  : $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Runner : $(hostname)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Situs  : https://pcoffie.trialab.web.id/" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Deploy (fetch, build, restart, health check)
+        run: |
+          export GITHUB_SHA="${GITHUB_SHA}"
+          # Trigger manual = paksa deploy walau commit sama.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            export FORCE=1
+            echo "::notice::Deploy manual dipaksa (FORCE=1)"
+          fi
+          bash /var/www/pcoffie/deploy.sh
+
+      - name: Verifikasi situs publik
+        run: |
+          echo "Mengecek https://pcoffie.trialab.web.id/ ..."
+          sleep 5
+          FAILED=0
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Verifikasi endpoint publik" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Endpoint | Status | Hasil |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+
+          for path in "/" "/reservasi/" "/control/" "/login/"; do
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "https://pcoffie.trialab.web.id${path}" || echo 000)
+            OK="❌"
+            [ "$CODE" = "200" ] && { OK="✅"; } || FAILED=1
+            echo "  ${path} -> ${CODE}"
+            echo "| \`${path}\` | \`${CODE}\` | ${OK} |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+          API=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
+            -X POST -H 'Content-Type: application/json' -d '{}' \
+            "https://pcoffie.trialab.web.id/appservice/public/api/core/portal/public/warnet-pakets" || echo 000)
+          AOK="❌"
+          [ "$API" = "200" ] && AOK="✅" || FAILED=1
+          echo "  POST api/core/portal/public/warnet-pakets -> ${API}"
+          echo "| \`POST /appservice/.../warnet-pakets\` | \`${API}\` | ${AOK} |" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$FAILED" -eq 0 ]; then
+            echo "✅ **Deploy sukses** - semua endpoint 200" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "❌ **Deploy gagal** - ada endpoint tidak 200" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Catatan kalau gagal
+        if: failure()
+        run: |
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### 🛠️ Cara cek manual" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```bash' >> "$GITHUB_STEP_SUMMARY"
+          echo "ssh mahora@100.93.147.60" >> "$GITHUB_STEP_SUMMARY"
+          echo "sudo journalctl -u pcoffie-next -n 50 --no-pager" >> "$GITHUB_STEP_SUMMARY"
+          echo "sudo tail -30 /var/log/apache2/pcoffie-error.log" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Detail ada di step **Deploy (fetch, build, restart, health check)**." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "> Rollback manual: \`cd /var/www/pcoffie && git reset --hard <commit>\` lalu \`bash deploy.sh\`" >> "$GITHUB_STEP_SUMMARY"

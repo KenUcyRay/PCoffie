@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { portalPost } from '@/lib/portal/api';
+import { APP_SLUG } from '@/lib/app-config';
 
 export default function PortalNav({ appName }: { appName?: string }) {
   const router = useRouter();
@@ -12,7 +13,7 @@ export default function PortalNav({ appName }: { appName?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     try {
-      const slug = (process.env.NEXT_PUBLIC_BASE_PATH || '/pcoffie').replace(/^\/|\/+$/g, '');
+      const slug = APP_SLUG;
       const tok = localStorage.getItem(`${slug}::auth::token`);
       setAuthed(!!tok);
       if (tok) {
@@ -30,7 +31,7 @@ export default function PortalNav({ appName }: { appName?: string }) {
   const logout = async () => {
     try { await portalPost('auth/logout', { method: 'logout' }).catch(() => {}); } catch {}
     try {
-      const slug = (process.env.NEXT_PUBLIC_BASE_PATH || '/pcoffie').replace(/^\/|\/+$/g, '');
+      const slug = APP_SLUG;
       localStorage.removeItem(`${slug}::auth::token`);
     } catch {}
     setAuthed(false); setOpen(false); router.push('/login');

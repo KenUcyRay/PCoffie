@@ -10,7 +10,9 @@ import LoginPage from '@/components/LoginPage';
 import { Icon, iconForModule, iconForLeaf } from '@/components/Icon';
 import { BASE_PATH } from '@/lib/app-config';
 
-// Route Next.js untuk control panel: /pcoffie/console (basePath /pcoffie).
+// Route Next.js untuk control panel: /control.
+// Dulu foldernya app/console dengan sub-path /pcoffie/console. Sekarang
+// aplikasi hidup di root subdomain (portal '/', console '/control').
 
 function Loading() {
   return (

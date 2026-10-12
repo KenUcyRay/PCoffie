@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { isOk, portalPost } from '@/lib/portal/api';
+import { APP_SLUG } from '@/lib/app-config';
 import { tanggalJam } from '@/lib/portal/format';
 import PortalShell from '@/components/portal/PortalShell';
 import PfIcon from '@/components/portal/PfIcon';
@@ -106,7 +107,7 @@ export default function AccountPage() {
   const logout = async () => {
     await portalPost('auth/logout', { method: 'logout' }).catch(() => {});
     try {
-      const slug = (process.env.NEXT_PUBLIC_BASE_PATH || '/pcoffie').replace(/^\/|\/+$/g, '');
+      const slug = APP_SLUG;
       localStorage.removeItem(`${slug}::auth::token`);
     } catch { /* ignore */ }
     router.push(`/`);
@@ -118,7 +119,7 @@ export default function AccountPage() {
         <div className="pf-row-between pf-wrapx pf-gap-sm">
           <h1 className="pf-h1">Akun saya</h1>
           <div className="pf-row pf-gap-sm">
-            <Link href={`/console/`} className="pf-btn pf-btn-ghost pf-btn-sm">
+            <Link href={`/control/`} className="pf-btn pf-btn-ghost pf-btn-sm">
               <PfIcon name="shield" size={16} /> Console
             </Link>
             <PfButton size="sm" variant="ghost" icon="logout" onClick={logout}>Keluar</PfButton>

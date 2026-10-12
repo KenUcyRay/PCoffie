@@ -4,7 +4,7 @@
     </IfModule>
 
     RewriteEngine On
-    RewriteBase /pcoffie/appservice/public/
+    RewriteBase /appservice/public/
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

@@ -3,10 +3,11 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { isOk, portalPost } from '@/lib/portal/api';
+import { APP_SLUG } from '@/lib/app-config';
 
 function saveToken(token: string) {
   try {
-    const slug = (process.env.NEXT_PUBLIC_BASE_PATH || '/pcoffie').replace(/^\/|\/+$/g, '');
+    const slug = APP_SLUG;
     localStorage.setItem(`${slug}::auth::token`, token);
   } catch {}
 }
@@ -44,7 +45,7 @@ function LoginForm() {
       const profile = (typeof me?.profile === 'string' ? JSON.parse(me.profile) : me?.profile) || {};
       const group = String(profile.USERGROUP || '').toUpperCase();
       if (group === 'GROUP_USER') router.push(next || '/');
-      else router.push('/console/');
+      else router.push('/control/');
     } catch (e: any) {
       setErr(e?.message || 'Gagal masuk. Coba lagi.');
       setBusy(false);
@@ -119,7 +120,7 @@ function LoginForm() {
             </button>
 
             <p className="pc-login-foot">Belum punya akun? <Link href="#">Daftar</Link></p>
-            <p style={{ textAlign: 'center', fontSize: 10, color: '#475569' }}><Link href="/" style={{ color: '#475569' }}>← Kembali ke Beranda</Link> · <Link href="/console" style={{ color: '#3b82f6' }}>Console</Link></p>
+            <p style={{ textAlign: 'center', fontSize: 10, color: '#475569' }}><Link href="/" style={{ color: '#475569' }}>← Kembali ke Beranda</Link> · <Link href="/control" style={{ color: '#3b82f6' }}>Console</Link></p>
           </form>
         </div>
       </div>

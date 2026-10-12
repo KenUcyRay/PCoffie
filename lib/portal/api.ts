@@ -3,7 +3,7 @@
 // Semua endpoint memakai prefix "portal/..." yang dipetakan di routes/web.php
 // backend. Formát balasan sama dengan model lain: { success: 'true'|'false',
 // message, ... } (lihat lib/api.ts untuk versi Console).
-import { apiBase } from '../app-config';
+import { apiBase, APP_SLUG } from '../app-config';
 
 export type PortalResult<T = any> = {
   success: string | boolean;
@@ -40,7 +40,7 @@ export async function portalPost<T = any>(
     // Token Console disimpan di localStorage dengan prefix app.
     // Diambil langsung supaya tidak bentrok dengan lib/api.ts yang memakai memori.
     try {
-      const slug = (process.env.NEXT_PUBLIC_BASE_PATH || '/pcoffie').replace(/^\/|\/+$/g, '');
+      const slug = APP_SLUG;
       token = localStorage.getItem(`${slug}::auth::token`);
     } catch { token = null; }
   }

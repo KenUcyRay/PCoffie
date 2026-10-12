@@ -66,9 +66,9 @@ export default function PortalShell({ children, appName = 'PCOFFIE' }: Props) {
               <span className="pf-row pf-gap-sm"><span className="pf-logo-mark" aria-hidden="true" style={{ width: 30, height: 30, fontSize: 14, borderRadius: 9 }}>P</span><strong style={{ fontSize: 16 }}>{appName}</strong></span>
               <p className="pf-foot-note">Sistem warnet PCOFFIE — kelola PC, paket, sesi, dan billing.</p>
             </div>
-            <div><div className="pf-foot-title">Akun</div><div className="pf-foot-list"><Link href="/account">Profil</Link><Link href="/console">Console</Link></div></div>
+            <div><div className="pf-foot-title">Akun</div><div className="pf-foot-list"><Link href="/account">Profil</Link><Link href="/control">Console</Link></div></div>
           </div>
-          <div className="pf-foot-bottom"><span>{appName}. Warnet system.</span><Link href="/console" className="pf-row pf-gap-xs" style={{ fontWeight: 700 }}><PfIcon name="lock" size={16} />Masuk Console</Link></div>
+          <div className="pf-foot-bottom"><span>{appName}. Warnet system.</span><Link href="/control" className="pf-row pf-gap-xs" style={{ fontWeight: 700 }}><PfIcon name="lock" size={16} />Masuk Console</Link></div>
         </div>
       </footer>
       <nav className="pf-tabbar" aria-label="Menu utama">
